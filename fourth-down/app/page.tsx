@@ -50,6 +50,9 @@ function Logo({ src }: { src?: string }) {
     <img
       src={src}
       alt=""
+      width={33}
+      height={33}
+      decoding="async"
       loading="lazy"
       onError={(e) => {
         e.currentTarget.style.visibility = "hidden";
@@ -101,6 +104,17 @@ export default function Page() {
     [query, setQuery] = useState(""),
     [tab, setTab] = useState("outlook"),
     [now, setNow] = useState(Date.now());
+  const [theme, setTheme] = useState("stadium");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("fourth-down-theme");
+      if (saved && ["stadium", "turf", "prime"].includes(saved)) setTheme(saved);
+    } catch { /* Storage may be disabled; the default theme still works. */ }
+  }, []);
+  function chooseTheme(value: string) {
+    setTheme(value);
+    try { localStorage.setItem("fourth-down-theme", value); } catch {}
+  }
   const [chosenSource, setChosenSource] = useState<SourceId | null>(null);
   const [rankingView, setRankingView] = useState("list");
   const selectedPoll = data?.polls?.find(
@@ -227,7 +241,7 @@ export default function Page() {
       <a className="skip" href="#content">
         Skip to tracker
       </a>
-      <div className="shell">
+      <div className="shell" data-theme={theme}>
         <nav aria-label="Main">
           <a href="#" className="brand">
             <span className="mark">
@@ -241,6 +255,16 @@ export default function Page() {
             <Radio size={15} /> Scoreboard <span>{live}</span>
           </a>
         </nav>
+        <div className="gameDayStrip">
+          <span>COLLEGE FOOTBALL / THE PLAYOFF PICTURE</span>
+          <label className="themePicker">COLORWAY
+            <select aria-label="Colorway" value={theme} onChange={e => chooseTheme(e.target.value)}>
+              <option value="stadium">Stadium Gold</option>
+              <option value="turf">Turf Electric</option>
+              <option value="prime">Prime Time</option>
+            </select>
+          </label>
+        </div>
         <main id="content">
           <header>
             <div>
@@ -269,7 +293,7 @@ export default function Page() {
               </div>
             </div>
           </header>
-          <div className="statusBar">
+          <div className="statusBar" role="status" aria-live="polite">
             <div>
               <span className={"dot " + (stale || error ? "amber" : "")} />
               <b>
@@ -302,6 +326,11 @@ export default function Page() {
               {stale ? "This snapshot is more than three minutes old." : ""}
             </div>
           )}
+          <div className="quickLinks" aria-label="Jump to section">
+            <a href="#rankings-heading">01 <span>Rankings</span> <ArrowRight size={16}/></a>
+            <a href="#outlook">02 <span>Playoff race</span> <ArrowRight size={16}/></a>
+            <a href="#scores">03 <span>Scoreboard</span> <ArrowRight size={16}/></a>
+          </div>
           <section
             className="publishedRankings"
             aria-labelledby="rankings-heading"
@@ -490,7 +519,7 @@ export default function Page() {
               </>
             )}
           </section>
-          <div className="sectionNav" aria-label="Tracker views">
+          <div id="outlook" className="sectionNav" aria-label="Tracker views">
             {[
               ["outlook", "Playoff outlook"],
               ["bracket", "12-team bracket"],
@@ -739,7 +768,7 @@ export default function Page() {
                 >
                   <div className="gameTop">
                     <b>
-                      {g.status === "in" && <span className="dot" />}
+                      {g.status === "in" && <><span className="dot" /> LIVE · </>}
                       {g.status === "pre"
                         ? new Date(g.date).toLocaleTimeString([], {
                             hour: "numeric",
@@ -866,7 +895,7 @@ export default function Page() {
             <span className="brandSub">STAY IN THE GAME.</span>
           </a>
           <p>
-            Independent, unofficial college football tracker.
+            v0.3 · Independent, unofficial college football tracker.
             <br />
             Not affiliated with the CFP, ESPN, or any team. Team marks belong to
             their owners.

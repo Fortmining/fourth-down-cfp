@@ -1,11 +1,11 @@
 :root {
   color-scheme: dark;
-  --bg: #0b1015;
-  --panel: #131b23;
-  --border: #26313b;
-  --muted: #9aa9b7;
-  --mint: #8de0bd;
-  --gold: #edc378;
+  --bg: #080f20;
+  --panel: #101e35;
+  --border: #2c3c54;
+  --muted: #b0bed0;
+  --mint: #ffc44a;
+  --gold: #ffc44a;
   font-family: Arial, Helvetica, sans-serif;
   color: #f1f4f5;
   background: var(--bg);
@@ -20,7 +20,7 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse at 85% 10%, #18352d55, transparent 35%), var(--bg);
+    var(--bg);
 }
 a {
   color: inherit;
@@ -1225,3 +1225,127 @@ footer p {
     font-size: 14px;
   }
 }
+
+/* Fourth Down v0.3 — Saturday Night Stadium */
+.shell { --accent-ink: #101726; --live: #ff9a8d; color: #f6f3e9; }
+.shell[data-theme="turf"] { --mint: #baff59; --gold: #baff59; }
+.shell[data-theme="prime"] { --mint: #c2acff; --gold: #c2acff; }
+nav { height: 88px; border-bottom: 2px solid var(--mint); }
+.brand { font-family: Impact, 'Arial Narrow', sans-serif; font-size: 23px; letter-spacing: 1.3px; font-weight: 900; }
+.brandSub { font: 10px Arial, sans-serif; letter-spacing: 2px; color: var(--muted); }
+.mark { background: var(--mint); color: var(--accent-ink); border-radius: 2px; transform: skew(-7deg); border: 0; }
+.navScore { font-size: 13px; font-weight: 700; min-height: 44px; }
+.navScore span { background: var(--mint); color: var(--accent-ink); }
+.gameDayStrip { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; color: var(--muted); font-size: 10px; letter-spacing: 1.5px; font-weight: 700; }
+.themePicker { display: flex; align-items: center; gap: 10px; font-size: 9px; }
+.themePicker select { background: var(--panel); color: #f6f3e9; border: 1px solid var(--border); border-radius: 4px; min-height: 44px; padding: 0 12px; font: 12px Arial, sans-serif; }
+header { position: relative; isolation: isolate; overflow: hidden; padding: 58px 38px; min-height: 320px; background: linear-gradient(105deg, #142641, #0b172c); border: 1px solid var(--border); border-left: 5px solid var(--mint); }
+header::before { content: ''; position: absolute; z-index: -1; inset: 0; opacity: .14; background: repeating-linear-gradient(90deg, transparent 0, transparent calc(10% - 1px), #cbd8e7 calc(10% - 1px), #cbd8e7 10%); transform: skew(-12deg) scale(1.2); mask-image: linear-gradient(90deg, transparent, black); }
+header::after { content: '4TH'; position: absolute; z-index: -1; right: 28px; bottom: -42px; color: #f6f3e9; opacity: .035; font: 280px Impact, sans-serif; letter-spacing: -10px; }
+h1, h2, .seasonCard strong, .gameTeam strong { font-family: Impact, 'Arial Narrow', 'Helvetica Neue', sans-serif; font-weight: 900; }
+h1 { text-transform: uppercase; font-size: clamp(50px, 6.5vw, 88px); letter-spacing: -1.8px; line-height: .98; max-width: 650px; margin: 22px 0; }
+h1 em { display: block; font: inherit; color: var(--mint); }
+header p { color: #c7d2e1; font-size: 14px; }
+.eyebrow { color: var(--mint); font-size: 10px; letter-spacing: 1.8px; }
+.seasonCard { border: 1px solid var(--border); border-top: 3px solid var(--mint); background: #081326cc; border-radius: 2px; padding: 24px; }
+.seasonCard strong { font-size: 42px; }
+.statusBar { border-radius: 0 0 4px 4px; background: #101d31; padding: 8px 16px; }
+.statusBar button { min-height: 44px; color: #f6f3e9; }
+.quickLinks { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 20px; border: 1px solid var(--border); }
+.quickLinks a { display: flex; gap: 14px; align-items: center; padding: 18px; color: var(--mint); font-size: 12px; font-weight: 800; }
+.quickLinks a + a { border-left: 1px solid var(--border); }
+.quickLinks span { flex: 1; color: #f6f3e9; text-transform: uppercase; letter-spacing: 1px; }
+.quickLinks a:hover { background: var(--panel); }
+h2 { font-size: 32px; text-transform: uppercase; letter-spacing: .1px; }
+.badge { background: #15223a; border-color: #465978; color: #dbe4f0; border-radius: 2px; line-height: 1.5; }
+.publishedRankings { margin-top: 40px; }
+.context { max-width: 850px; font-size: 13px; }
+.pollStatus { border-radius: 4px; border-top: 3px solid var(--border); }
+.pollStatus.selectedPoll { border-color: var(--mint); background: linear-gradient(135deg, color-mix(in srgb, var(--mint) 9%, var(--panel)), var(--panel)); }
+.pollStatus a { font-size: 14px; }
+.pollStatus b { font-size: 11px; }
+.pollStatus p, .pollStatus small { font-size: 12px; }
+.publishedList { grid-auto-flow: column; grid-template-rows: repeat(13, auto); gap: 0 28px; }
+.publishedList li { padding: 14px 10px; min-height: 78px; }
+.publishedList li:hover { background: var(--panel); }
+.rank { font-family: Impact, 'Arial Narrow', sans-serif; font-size: 20px; color: #c0cddd; min-width: 28px; }
+.teamIdentity b { font-size: 14px; }
+.teamIdentity small { font-size: 11px; }
+.filters { background: #0b172a; }
+.filters .active { background: var(--mint); color: var(--accent-ink); }
+.filters button, .sectionNav button { min-height: 44px; }
+.sectionNav { scroll-margin-top: 20px; }
+.sectionNav button { padding: 20px 0; font-size: 14px; }
+.tier, .game, .match { border-radius: 4px; }
+.tierHead { border-left: 3px solid var(--tone); }
+.tierHead h3 { font-size: 16px; }
+.game { padding: 0 18px 16px; overflow: hidden; }
+.gameTop { background: #182943; margin: 0 -18px 8px; padding: 12px 18px; min-height: 42px; font-size: 11px; }
+.gameTop b { font-weight: 800; }
+.game.liveGame { border-color: var(--live); }
+.liveGame .gameTop { background: #3b2531; }
+.liveGame .gameTop b, .liveBadge { color: var(--live); }
+.liveGame .dot { background: var(--live); }
+.liveBadge { background: #3b2531; border: 1px solid #80504f; border-radius: 3px; padding: 10px 12px; font-weight: 800; }
+.gameTeam strong { font-size: 36px; line-height: 1; min-width: 44px; text-align: right; }
+.gameTeam b { font-size: 14px; }
+.gameTeam.winner strong { color: var(--mint); }
+.gameTeam small, .gameBottom { font-size: 11px; }
+.gameBottom a { min-height: 32px; }
+.gameBottom { align-items: center; }
+.search { background: #0b172a; min-height: 44px; }
+.search input { font-size: 14px; }
+.search:focus-within { outline: 3px solid var(--mint); outline-offset: 3px; }
+.search input:focus-visible { outline: none; }
+select:focus-visible { outline: 3px solid var(--mint); outline-offset: 4px; }
+.method { background: #101e35; border-radius: 4px; }
+.change.up { color: #b2eea1; }
+.change.down { color: #ffad9e; }
+.scoreNote { font-size: 12px; }
+.skeleton > div { background: linear-gradient(110deg, #101e35, #233b59, #101e35); background-size: 200%; }
+@media (max-width: 1000px) {
+  header { padding: 38px 26px; }
+  .brand { font-size: 20px; }
+  .seasonCard { padding: 16px; }
+}
+@media (max-width: 650px) {
+  .shell { padding: 0 16px; }
+  nav { height: 76px; }
+  .brand { font-size: 17px; gap: 9px; }
+  .navScore { font-size: 11px; }
+  .gameDayStrip { align-items: flex-start; padding: 12px 0; }
+  .gameDayStrip > span { max-width: 120px; font-size: 8px; line-height: 1.8; }
+  .themePicker { font-size: 0; gap: 0; }
+  .themePicker select { max-width: 150px; }
+  header { padding: 32px 22px; min-height: 310px; }
+  h1 { font-size: clamp(48px, 12vw, 72px); letter-spacing: -1px; max-width: 100%; }
+  header p { font-size: 13px; }
+  .eyebrow { font-size: 8px; letter-spacing: 1.2px; line-height: 1.6; }
+  .quickLinks a { padding: 14px 8px; gap: 6px; font-size: 10px; flex-wrap: wrap; }
+  .quickLinks span { font-size: 9px; letter-spacing: 0; }
+  .quickLinks svg { display: none; }
+  h2 { font-size: 29px; }
+  .context { font-size: 12px; }
+  .pollStatuses { gap: 8px; }
+  .pollStatus p { display: none; }
+  .pollStatus { display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 12px; }
+  .pollStatus b { margin: 0; text-align: right; max-width: 120px; line-height: 1.5; }
+  .pollStatus small { grid-column: 1 / -1; margin-top: 0; font-size: 11px; }
+  .publishedList { grid-auto-flow: row; grid-template-rows: none; grid-template-columns: 1fr; }
+  .rankingControls .filters { flex: 1; }
+  .rankingControls select, .search input { font-size: 16px; }
+  .autoSource { text-align: left; }
+  .sectionNav { gap: 16px; }
+  .sectionNav button { font-size: 12px; }
+  .tierHead small { margin-left: 0; }
+  .tierHead > div { flex-wrap: wrap; gap: 6px; }
+  .game { padding: 0 18px 16px; }
+  .scoreTools .filters { flex-basis: 100%; }
+  .top25 { min-height: 44px; font-size: 12px; }
+  .statusBar { gap: 8px; }
+  .statusMeta { font-size: 10px; line-height: 1.5; }
+  .comparison th:first-child { min-width: 175px; }
+  .comparison tbody th { position: sticky; left: 0; background: var(--bg); }
+}
+.context a, .teamDetail a, .method a { text-decoration: underline; text-underline-offset: 3px; }
+.mark { padding: 2px 4px; }

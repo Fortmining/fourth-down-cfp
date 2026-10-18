@@ -29,3 +29,18 @@ The outlook is a descriptive poll-position model, not a probability model: 1–4
 ## Deployment
 
 Preserve the existing GitHub → Vercel integration and its `fourth-down` root directory. Push a verified commit to the configured production branch. Verify Vercel's commit status, the production homepage, and `/api/live`. Roll back through Vercel deployment history or revert the change commit if needed. No environment variables, external database, or Vercel project changes are required.
+
+
+## v0.3 · Saturday Night Stadium
+
+Midnight navy, off-white, athletic type, yard-line hero, and bold scoreboards.
+The Colorway selector offers Stadium Gold (default), Turf Electric, and Prime Time;
+choices persist on this device when browser storage is available. No external fonts,
+textures, or image downloads are needed for the redesign. Team marks retain explicit
+dimensions and lazy loading. Reduced-motion preferences are respected.
+
+Mobile layouts keep controls touch-friendly, preserve poll rank order, and contain
+wide comparison tables and brackets in keyboard-accessible scroll regions.
+All v0.2 feed, source selection, comparison, outlook, bracket, and score filters remain.
+
+Validate with `npm test` and `npm run build`. Run `npm start` to inspect the production build.
