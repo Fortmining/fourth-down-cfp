@@ -1,31 +1,31 @@
-# Fourth Down — CFP Tracker (v0.1)
+# Fourth Down
 
-Responsive Next.js public-site starter. Live college football scores refresh every 60 seconds through a server-side API route. The tracker shows top-12 / bubble / outside-bubble **poll-based preview**, not actual CFP selection probabilities.
+Public College Football Playoff tracker. The Next.js application lives in `fourth-down/` (the existing Vercel root directory).
 
-## Run locally
+## Run and verify
 
-```bash
-npm install
+Requires Node.js 22.18+ (24 recommended).
+
+```sh
+cd fourth-down
+npm ci
+npm test
+npm run build
 npm run dev
 ```
 
-Open http://localhost:3000.
+## Data and editorial policy
 
-## Deploy publicly
+`/api/live` reads ESPN's current FBS scoreboard and rankings, with a 6-second provider timeout per request and 60-second cache. Scores and rankings fail independently; a total outage returns 503. The client refreshes every minute while visible, times out after 15 seconds, retains its last successful snapshot on request failure, and flags stale snapshots after three minutes. This is not a guaranteed real-time service.
 
-1. Push this folder to a GitHub repository.
-2. Import that repository at https://vercel.com/new and select Next.js.
-3. Deploy. Vercel supplies a public URL; configure a custom domain if desired.
+The published rankings view exposes AP Top 25, AFCA Coaches Poll and CFP committee rankings separately, with a selector and comparison table. Current-season CFP rankings take priority as the automatic default, followed by AP; Coaches never silently substitutes for AP. Explicit visitor selections persist during refreshes. The independent descriptive outlook has its own fixed input and is not changed by the ranking selector. Publication dates and fetch dates are distinct. The API requests the preceding ranking week as well as the latest feed because ESPN may return only polls published in the requested week. Each source retains its own latest available edition and flags older editions; prior-season polls are excluded. A missing edition after the expected release is marked unavailable, not asserted to be unpublished. The November 3, 2026 CFP first-release date follows https://collegefootballplayoff.com/news/2026/8/6/sc-aug-2627. Comparison uses the union of ranked teams, distinguishes NR from no edition, and computes spread only from actual ranks.
 
-## Architecture
+Movement compares the previous edition of the same poll; game ranks can reflect a different poll or game-time ranking. Names, records and conferences come from the provider.
 
-Browser (React UI; 60s polling) → Next.js `/api/live` → ESPN public scoreboard and rankings endpoints. Provider requests cache for ~60s. No API key required for this prototype, but the endpoints are undocumented and can change; verify usage rights before public/commercial distribution.
+The outlook is a descriptive poll-position model, not a probability model: 1–4 leading, 5–12 in the conversation, 13–18 bubble, 19–25 chasing. The bracket is explicitly an illustration of poll ranks 1–12. It does **not** predict conference champions or apply automatic bids. There are no odds, clinch claims or mathematical elimination claims. Unranked teams are not considered eliminated.
 
-## Limitations and next milestones
+2026 qualification copy follows https://collegefootballplayoff.com/sports/2024/5/29/12-team-format (verified October 18, 2026). Review this copy when rules change. ESPN public endpoints are undocumented and can change; confirm data and logo licensing before commercial use.
 
-- The 12 displayed teams are top-ranked poll teams, **not** a true projected 12-team CFP field.
-- Rankings are whichever poll the provider returns (CFP preferred, otherwise AP), with source shown. Polls do not update every play.
-- Scoreboard data may cover only the current week and may omit games depending on upstream feed.
-- No automated classification of eliminated/safe/clinched teams; this requires conference standings, full schedules, strength of schedule, probabilistic model, and special 2026 qualification rules.
-- The 2026 rules: automatic berths for ACC, Big Ten, Big 12, SEC champions, highest-ranked G6 team (regardless of championship), and Notre Dame if CFP top 12; remaining at-large; top four seeds by committee rank get byes. Source: https://collegefootballplayoff.com/sports/2024/5/29/12-team-format
-- For a production public site, move to a licensed data feed, persistent snapshots, a model that recalculates after game finals, alerts, and shareable image generation.
+## Deployment
+
+Preserve the existing GitHub → Vercel integration and its `fourth-down` root directory. Push a verified commit to the configured production branch. Verify Vercel's commit status, the production homepage, and `/api/live`. Roll back through Vercel deployment history or revert the change commit if needed. No environment variables, external database, or Vercel project changes are required.
