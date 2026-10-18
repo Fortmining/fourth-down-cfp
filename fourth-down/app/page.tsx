@@ -29,6 +29,7 @@ type Game = {
   date: string;
   status: string;
   detail: string;
+  kickoffTbd?: boolean;
   teams: Team[];
   broadcast: string;
 };
@@ -780,7 +781,7 @@ export default function Page() {
               </label>
             </div>
             <p className="scoreNote">
-              {data?.scoreboardDate ? `Scoreboard window: ${data.scoreboardDate}. ` : "Provider’s current scoreboard window. "}{games.length} matching games · dates and kickoff times
+              {data?.scoreboardDate ? `Scoreboard window: ${data.scoreboardDate}. ` : "Current scoreboard plus the next two ESPN schedule periods. "}{games.length} matching games · dates and kickoff times
               shown in your local time. Top 25 uses supplied game ranks or the
               outlook input poll.
             </p>
@@ -794,14 +795,16 @@ export default function Page() {
                     <b>
                       {g.status === "in" && <><span className="dot" /> LIVE · </>}
                       {g.status === "pre"
-                        ? new Date(g.date).toLocaleTimeString([], {
+                        ? g.kickoffTbd ? "Kickoff time TBD" : new Date(g.date).toLocaleTimeString([], {
                             hour: "numeric",
                             minute: "2-digit",
+                            timeZoneName: "short",
                           })
                         : g.detail}
                     </b>
                     <span>
                       {new Date(g.date).toLocaleDateString(undefined, {
+                        weekday: "short",
                         month: "short",
                         day: "numeric",
                       })}

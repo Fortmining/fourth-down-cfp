@@ -13,7 +13,7 @@ const source = ts.transpileModule(
     },
   },
 ).outputText;
-async function feed(scores, rankings, previous=rankings) {
+async function feed(scores, rankings, previous=rankings, future={}, now="2026-10-18T18:00Z") {
   const exports = {};
   vm.runInNewContext(source, {
     exports,
@@ -26,8 +26,14 @@ async function feed(scores, rankings, previous=rankings) {
             },
           },
     AbortSignal,
+    URL,
+    Date: class extends Date {
+      constructor(...args) { super(...(args.length ? args : [now])); }
+      static now() { return Date.parse(now); }
+    },
     fetch: async (url) => {
-      const v = url.includes("scoreboard") ? scores : url.includes("weeks=")?previous:rankings;
+      const week = new URL(url).searchParams.get("week");
+      const v = url.includes("scoreboard") ? (week ? future[week] ?? scores : scores) : url.includes("weeks=")?previous:rankings;
       if (v instanceof Error) throw v;
       return { ok: true, json: async () => v };
     },
@@ -99,4 +105,45 @@ test("malformed feed objects degrade like provider failures", async () => {
   assert.equal(r.body.games.length, 0);
   assert.ok(r.body.warnings.includes("Scores are temporarily unavailable."));
   assert.equal((await feed({}, {})).status, 503);
+});
+
+const event = (id, date, state="pre", timeValid=true) => ({
+ id, date, name: id, status: {type: {state, shortDetail: state}},
+ competitions: [{timeValid, competitors: []}],
+});
+const saturday = event("finished", "2026-10-17T20:00Z", "post");
+const next = event("next-week", "2026-10-20T23:00Z");
+const later = event("later-week", "2026-10-31T16:00Z", "pre", false);
+const weeklyScores = {season: {year: 2026}, week: {number: 7}, events: [saturday],
+ leagues: [{calendar: [{value: "2", entries: [
+  {value: "7", startDate: "2026-10-12T07:00Z"},
+  {value: "8", startDate: "2026-10-19T07:00Z"},
+  {value: "9", startDate: "2026-10-26T07:00Z"},
+ ]}]}]};
+test("Saturday-to-Sunday rollover retains finals and includes the next two schedule periods", async()=>{
+ for (const now of ["2026-10-17T23:00Z", "2026-10-18T18:00Z"]) {
+  const r=await feed(weeklyScores, {rankings:[poll]}, undefined, {
+   8: {events:[next, {...saturday,status:{type:{state:"pre"}},date:"2026-10-20T23:00Z"}]},
+   9: {events:[later]},
+  },now);
+  assert.equal(r.body.games.length,3);
+  assert.equal(r.body.games.find(g=>g.id==="finished").status,"post");
+  assert.equal(r.body.games.filter(g=>g.status==="pre").length,2);
+  assert.equal(r.body.games.find(g=>g.id==="later-week").kickoffTbd,true);
+  assert.equal(r.body.scheduleComplete,true);
+ }
+});
+test("future schedule outage retains completed games and gives an explicit warning",async()=>{
+ const r=await feed(weeklyScores,{rankings:[poll]},undefined,{8:new Error("secret"),9:{events:[]}});
+ assert.equal(r.status,200);assert.equal(r.body.games.length,1);
+ assert.equal(r.body.scheduleComplete,false);
+ assert.ok(r.body.warnings.some(w=>w.startsWith("Upcoming schedule")));
+ assert.equal(JSON.stringify(r.body).includes("secret"),false);
+});
+test("calendar follows postseason type instead of assuming another regular-season week",async()=>{
+ const scores={...weeklyScores,leagues:[{calendar:[{value:"3",entries:[
+  {value:"1",startDate:"2026-12-13T08:00Z"},{value:"999",startDate:"2026-12-18T08:00Z"},
+ ]}]}]};
+ const r=await feed(scores,{rankings:[poll]},undefined,{1:{events:[]}},"2026-12-12T18:00Z");
+ assert.equal(r.body.schedulePeriods.length,1);assert.equal(r.body.schedulePeriods[0].type,3);
 });

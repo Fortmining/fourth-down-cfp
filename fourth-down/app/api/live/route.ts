@@ -38,14 +38,26 @@ export async function GET() {
       ? rankings.value.latestWeek?.number ||
         Math.max(0, ...polls.map((p: any) => p.occurrence?.number || 0))
       : s?.week?.number || null;
-  // ESPN can return only polls released in the requested week. Retrieve the preceding
-  // edition as well, so a Sunday release never erases another source's latest poll.
-  const previous =
+  // The default scoreboard is a week snapshot, even after Saturday ends.
+  // Follow ESPN's own calendar across regular/postseason boundaries rather than
+  // assuming week + 1 or inventing future dates. Calendar CFP aggregate 999 is
+  // omitted because it duplicates the postseason bowl period.
+  const schedulePeriods = (s?.leagues?.[0]?.calendar || []).flatMap((period: any) =>
+    (period.entries || []).map((entry: any) => ({
+      type: Number(period.value), week: Number(entry.value), start: entry.startDate,
+    })),
+  ).filter((period: any) => Number.isInteger(period.type) &&
+    Number.isInteger(period.week) && period.week > 0 && period.week < 999 &&
+    Date.parse(period.start) > Date.now()
+  ).sort((a: any, b: any) => Date.parse(a.start) - Date.parse(b.start)).slice(0, 2);
+  const [previous, ...futureScores] = await Promise.all([
     season && rankingWeek > 1
-      ? await get(
-          `rankings?seasons=${season}&weeks=${rankingWeek - 1}&types=2`,
-        ).catch(() => null)
-      : null;
+      ? get(`rankings?seasons=${season}&weeks=${rankingWeek - 1}&types=2`).catch(() => null)
+      : Promise.resolve(null),
+    ...schedulePeriods.map((period: any) =>
+      get(`scoreboard?groups=80&limit=150&seasontype=${period.type}&week=${period.week}&year=${season}`)
+        .catch(() => null)),
+  ]);
   const pollSources = collectPolls(
     [...polls, ...(previous?.rankings || [])],
     season,
@@ -54,7 +66,16 @@ export async function GET() {
   );
   const defaultRankingSource = defaultPoll(pollSources);
   const selected = pollSources.find((p) => p.id === defaultRankingSource)!;
-  const games = (s?.events || []).map((e: any) => {
+  const byId = new Map<string, any>();
+  for (const snapshot of futureScores) {
+    for (const event of snapshot?.events || []) {
+      if (event.id && event.status?.type?.state === "pre" && Date.parse(event.date) > Date.now())
+        byId.set(String(event.id), event);
+    }
+  }
+  // The primary feed is authoritative for a duplicate that just went live/final.
+  for (const event of s?.events || []) if (event.id) byId.set(String(event.id), event);
+  const games = [...byId.values()].map((e: any) => {
     const c = e.competitions?.[0];
     return {
       id: e.id,
@@ -62,6 +83,7 @@ export async function GET() {
       date: e.date,
       status: e.status?.type?.state || "pre",
       detail: e.status?.type?.shortDetail || "Scheduled",
+      kickoffTbd: c?.timeValid === false || /TBD|time.*(?:TBA|to be)/i.test(e.status?.type?.detail || ""),
       broadcast:
         c?.broadcasts?.flatMap((b: any) => b.names || []).join(" · ") || "",
       teams: (c?.competitors || []).map((t: any) => ({
@@ -98,7 +120,11 @@ export async function GET() {
         teams: ranked,
       },
       games,
+      schedulePeriods,
+      scheduleComplete: !!s && (schedulePeriods.length > 0 ? futureScores.every(Boolean) : true),
       warnings: [
+        ...(futureScores.some((snapshot) => !snapshot)
+          ? ["Upcoming schedule is partially unavailable. Some future games may be missing; try refreshing."] : []),
         ...(rankings.status === "rejected" ? ["Ranking feed is temporarily unavailable; any preceding editions retain their original publication dates."] : []),
         ...(scores.status === "rejected"
           ? ["Scores are temporarily unavailable."]

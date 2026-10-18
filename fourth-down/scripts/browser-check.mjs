@@ -4,12 +4,18 @@ import assert from 'node:assert/strict';
 const url = process.env.TEST_URL || 'http://127.0.0.1:3001';
 const browser = await chromium.launch({headless:true});
 try {
- const context = await browser.newContext({viewport:{width:1440,height:1000}});
+ const context = await browser.newContext({viewport:{width:1440,height:1000},timezoneId:"America/New_York"});
  const page = await context.newPage();
  const errors=[]; page.on('pageerror', e=>errors.push(e.message));
  await page.goto(url);
  await page.locator('.pollStatus').first().waitFor();
  assert.equal(await page.locator('.shell').getAttribute('data-appearance'),'light');
+ await page.getByRole('button',{name:'Upcoming',exact:true}).click();
+ assert.ok(await page.locator('.scoreGrid .game').count()>0,'Next scheduled games must survive Sunday rollover');
+ assert.match(await page.locator('.scoreGrid .gameTop b').first().innerText(),/EDT|EST|TBD/);
+ await page.getByRole('button',{name:'Final',exact:true}).click();
+ assert.ok(await page.locator('.scoreGrid .game').count()>0,'Completed games remain available');
+ await page.getByRole('button',{name:'All games',exact:true}).click();
  const originalOutlook=await page.locator('.outlook').innerText().catch(()=> '');
  for(const appearance of ['light','dark']) {
   await page.getByRole('button',{name:appearance === 'light' ? '☀ Light':'☾ Dark',exact:true}).click();

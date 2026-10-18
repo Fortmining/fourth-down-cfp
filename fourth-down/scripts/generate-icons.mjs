@@ -9,6 +9,8 @@ for (const size of [16,32,48,152,167,180,192,512]) {
 }
 await sharp(source).resize(512,512).removeAlpha().png().toFile(new URL('icons/icon-maskable-512.png',target).pathname);
 await sharp(source).resize(180,180).removeAlpha().png().toFile(new URL('apple-touch-icon.png',target).pathname);
+await sharp(source).resize(180,180).removeAlpha().png().toFile(new URL('icons/apple-touch-icon-v04-180.png',target).pathname);
+await sharp(source).resize(180,180).removeAlpha().png().toFile(new URL('apple-touch-icon-precomposed.png',target).pathname);
 // ICO directory with 16/32/48px PNG frames (32-bit RGBA).
 const frames=await Promise.all([16,32,48].map(size=>sharp(source).resize(size,size).ensureAlpha().png().toBuffer()));
 const header=Buffer.alloc(6+16*frames.length);header.writeUInt16LE(1,2);header.writeUInt16LE(frames.length,4);

@@ -14,11 +14,10 @@ export const metadata: Metadata = {
       { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/icons/fourth-down.svg", type: "image/svg+xml", sizes: "any" },
     ],
-    apple: [
-      { url: "/icons/icon-152.png", sizes: "152x152", type: "image/png" },
-      { url: "/icons/icon-167.png", sizes: "167x167", type: "image/png" },
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{
+      url: "https://fourth-down-cfp.vercel.app/icons/apple-touch-icon-v04-180.png",
+      sizes: "180x180", type: "image/png",
+    }],
   },
   title: "Fourth Down | The College Football Playoff Picture",
   description:
