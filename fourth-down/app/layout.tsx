@@ -1,4 +1,5 @@
 import "./style.css";
+import { appleTouchIcon } from "./lib/apple-touch-icon";
 import type { Metadata, Viewport } from "next";
 export const viewport: Viewport = { themeColor: "#14243B" };
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
       { url: "/icons/fourth-down.svg", type: "image/svg+xml", sizes: "any" },
     ],
     apple: [{
-      url: "https://fourth-down-cfp.vercel.app/icons/apple-touch-icon-v04-180.png",
+      url: appleTouchIcon,
       sizes: "180x180", type: "image/png",
     }],
   },
