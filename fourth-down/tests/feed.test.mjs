@@ -72,7 +72,7 @@ test("normalizes full team names, records, movement and current-season poll", as
 test("scores survive a ranking outage", async () => {
   const r = await feed({ season: { year: 2026 }, events: [] }, new Error());
   assert.equal(r.status, 200);
-  assert.equal(r.body.warnings.length, 1);
+  assert.ok(r.body.warnings.some(w => w.startsWith("Ranking feed")));
   assert.equal(r.body.rankings.length, 0);
 });
 test("rankings survive a scoreboard outage", async () => {
@@ -91,4 +91,12 @@ test("total outage returns a clean 503 without provider internals", async () => 
 test("a newer Coaches release retains the prior AP edition without relabeling it",async()=>{
  const r=await feed({season:{year:2026},events:[]},{latestWeek:{number:8},rankings:[{...poll,occurrence:{number:8}}]},{rankings:[{...poll,name:"AP Top 25",date:"2026-10-11",occurrence:{number:7}}]});
  assert.equal(r.body.defaultRankingSource,"ap");assert.equal(r.body.rankingSource,"AP Top 25");assert.equal(r.body.polls.find(p=>p.id==="ap").status,"awaiting_update");assert.equal(r.body.polls.find(p=>p.id==="coaches").week,8);assert.equal(r.body.outlook.inputSource,"ap");
+});
+
+test("malformed feed objects degrade like provider failures", async () => {
+  const r = await feed({ unexpected: [] }, { rankings: [poll] });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.games.length, 0);
+  assert.ok(r.body.warnings.includes("Scores are temporarily unavailable."));
+  assert.equal((await feed({}, {})).status, 503);
 });

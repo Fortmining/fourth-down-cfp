@@ -9,7 +9,12 @@ async function get(path: string) {
     signal: AbortSignal.timeout(6000),
   });
   if (!r.ok) throw new Error("Provider unavailable");
-  return r.json();
+  const value = await r.json();
+  if (!value || typeof value !== "object" ||
+      (path.startsWith("scoreboard") ? !Array.isArray(value.events) : !Array.isArray(value.rankings))) {
+    throw new Error("Invalid provider response");
+  }
+  return value;
 }
 export async function GET() {
   const [scores, rankings] = await Promise.allSettled([
@@ -94,6 +99,7 @@ export async function GET() {
       },
       games,
       warnings: [
+        ...(rankings.status === "rejected" ? ["Ranking feed is temporarily unavailable; any preceding editions retain their original publication dates."] : []),
         ...(scores.status === "rejected"
           ? ["Scores are temporarily unavailable."]
           : []),

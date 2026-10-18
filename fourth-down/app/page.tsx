@@ -11,6 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Ranked, tiers, tierFor, movement, matchups } from "./lib/model";
+import { readAppearance, saveAppearance, type Appearance } from "./lib/appearance";
 import { Poll, SourceId, comparisonRows } from "./lib/rankings";
 type Team = {
   id: string;
@@ -44,7 +45,14 @@ type Feed = {
   games: Game[];
   warnings: string[];
   provider: string;
+  scoreboardDate: string | null;
 };
+function publicationDate(value: string, short = false) {
+  return new Date(value).toLocaleDateString(undefined, {
+    month: "short", day: "numeric", ...(short ? {} : { year: "numeric" }),
+    ...(/^\d{4}-\d{2}-\d{2}$/.test(value) ? { timeZone: "UTC" } : {}),
+  });
+}
 function Logo({ src }: { src?: string }) {
   return src ? (
     <img
@@ -104,6 +112,12 @@ export default function Page() {
     [query, setQuery] = useState(""),
     [tab, setTab] = useState("outlook"),
     [now, setNow] = useState(Date.now());
+  const [appearance, setAppearance] = useState<Appearance>("light");
+  useEffect(() => { setAppearance(readAppearance()); }, []);
+  function chooseAppearance(value: Appearance) {
+    setAppearance(value);
+    saveAppearance(value);
+  }
   const [theme, setTheme] = useState("stadium");
   useEffect(() => {
     try {
@@ -127,12 +141,13 @@ export default function Page() {
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
-    controller.current = new AbortController();
-    const timeout = setTimeout(() => controller.current?.abort(), 15000);
+    const requestController = new AbortController();
+    controller.current = requestController;
+    const timeout = setTimeout(() => requestController.abort(), 15000);
     try {
       const r = await fetch("/api/live", {
         cache: "no-store",
-        signal: controller.current.signal,
+        signal: requestController.signal,
       });
       if (!r.ok) throw Error();
       const next = await r.json();
@@ -143,14 +158,18 @@ export default function Page() {
         !next.updatedAt
       )
         throw Error();
+      if (controller.current !== requestController) return;
       setData(next);
       setError("");
     } catch {
+      if (controller.current !== requestController) return;
       setError("We couldn’t refresh the feed. Try again shortly.");
     } finally {
       clearTimeout(timeout);
-      inFlight.current = false;
-      setBusy(false);
+      if (controller.current === requestController) {
+        inFlight.current = false;
+        setBusy(false);
+      }
     }
   }, []);
   useEffect(() => {
@@ -162,6 +181,8 @@ export default function Page() {
     return () => {
       clearInterval(i);
       controller.current?.abort();
+      controller.current = null;
+      inFlight.current = false;
     };
   }, [refresh]);
   const games = useMemo(
@@ -241,7 +262,7 @@ export default function Page() {
       <a className="skip" href="#content">
         Skip to tracker
       </a>
-      <div className="shell" data-theme={theme}>
+      <div className="shell" data-theme={theme} data-appearance={appearance}>
         <nav aria-label="Main">
           <a href="#" className="brand">
             <span className="mark">
@@ -257,6 +278,11 @@ export default function Page() {
         </nav>
         <div className="gameDayStrip">
           <span>COLLEGE FOOTBALL / THE PLAYOFF PICTURE</span>
+          <div className="displaySettings">
+            <div className="appearancePicker" role="group" aria-label="Appearance">
+              <span>APPEARANCE</span>
+              {(["light", "dark"] as const).map(value => <button key={value} aria-pressed={appearance === value} onClick={() => chooseAppearance(value)}>{value === "light" ? "☀ Light" : "☾ Dark"}</button>)}
+            </div>
           <label className="themePicker">COLORWAY
             <select aria-label="Colorway" value={theme} onChange={e => chooseTheme(e.target.value)}>
               <option value="stadium">Stadium Gold</option>
@@ -264,6 +290,7 @@ export default function Page() {
               <option value="prime">Prime Time</option>
             </select>
           </label>
+          </div>
         </div>
         <main id="content">
           <header>
@@ -307,7 +334,7 @@ export default function Page() {
               </b>
               <span className="statusMeta">
                 {data
-                  ? `Fetched ${new Date(data.updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · refreshes every minute`
+                  ? `Fetched ${new Date(data.updatedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" })} · refreshes every minute`
                   : "Connecting to ESPN"}
               </span>
             </div>
@@ -408,7 +435,7 @@ export default function Page() {
                   <p>{p.message}</p>
                   <small>
                     {p.date
-                      ? `Published ${new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · ${p.season} season`
+                      ? `Published ${publicationDate(p.date)} · ${p.season} season`
                       : "No current-season publication date"}
                   </small>
                 </article>
@@ -478,10 +505,7 @@ export default function Page() {
                             {p.name}
                             <small>
                               {p.date
-                                ? new Date(p.date).toLocaleDateString(
-                                    undefined,
-                                    { month: "short", day: "numeric" },
-                                  )
+                                ? publicationDate(p.date, true)
                                 : "No edition"}
                             </small>
                           </th>
@@ -556,7 +580,7 @@ export default function Page() {
           <p className="context">
             {data?.rankingSource || "Current poll pending"}
             {data?.rankingDate
-              ? ` · Published ${new Date(data.rankingDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+              ? ` · Published ${publicationDate(data.rankingDate)}`
               : ""}
             .{" "}
             {data?.isCommitteeRanking
@@ -756,7 +780,7 @@ export default function Page() {
               </label>
             </div>
             <p className="scoreNote">
-              Provider’s current scoreboard window · dates and kickoff times
+              {data?.scoreboardDate ? `Scoreboard window: ${data.scoreboardDate}. ` : "Provider’s current scoreboard window. "}{games.length} matching games · dates and kickoff times
               shown in your local time. Top 25 uses supplied game ranks or the
               outlook input poll.
             </p>
@@ -828,7 +852,9 @@ export default function Page() {
               <div className="empty">
                 {!data && busy
                   ? "Loading the scoreboard…"
-                  : data?.warnings?.some((w) => w.startsWith("Scores"))
+                  : error && !data
+                    ? "The scoreboard could not be loaded. Try refreshing."
+                    : data?.warnings?.some((w) => w.startsWith("Scores"))
                     ? "Scores are temporarily unavailable. Try refreshing."
                     : "No games match these filters in the current scoreboard window."}
                 {(filter !== "all" || top25 || query) && (
@@ -895,7 +921,7 @@ export default function Page() {
             <span className="brandSub">STAY IN THE GAME.</span>
           </a>
           <p>
-            v0.3 · Independent, unofficial college football tracker.
+            v0.4 · Independent, unofficial college football tracker.
             <br />
             Not affiliated with the CFP, ESPN, or any team. Team marks belong to
             their owners.

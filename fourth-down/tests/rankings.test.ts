@@ -102,3 +102,12 @@ test("comparison includes union, handles unranked and unavailable separately, an
   assert.equal(p[1].teams.length > 0, true);
   assert.equal(p[2].teams.length, 0);
 });
+test("future and invalid publication dates cannot masquerade as published rankings", () => {
+  const p = collectPolls([
+    poll("AP Top 25", 7),
+    { ...poll("AP Top 25"), date: "2026-10-25T18:00Z" },
+    { ...poll("AFCA Coaches Poll"), date: "invalid" },
+  ], 2026, 8, false, now);
+  assert.equal(p[0].week, 7);
+  assert.equal(p[1].teams.length, 0);
+});

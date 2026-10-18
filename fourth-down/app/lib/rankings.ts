@@ -56,7 +56,8 @@ export function collectPolls(
       (p) =>
         identify(p) === source.id &&
         p.season?.year === season &&
-        p.ranks?.length,
+        p.ranks?.length &&
+        (!p.date || (Number.isFinite(Date.parse(p.date)) && Date.parse(p.date) <= now.getTime())),
     );
     const p = candidates.sort(
       (a, b) =>

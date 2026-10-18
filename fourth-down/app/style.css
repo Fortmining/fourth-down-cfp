@@ -1349,3 +1349,85 @@ select:focus-visible { outline: 3px solid var(--mint); outline-offset: 4px; }
 }
 .context a, .teamDetail a, .method a { text-decoration: underline; text-underline-offset: 3px; }
 .mark { padding: 2px 4px; }
+
+/* v0.4: appearance and colorway are independent. Accent fills and accent text
+   use separate tokens so gold stays legible on white cards. */
+:root { color-scheme: light; background: #F3F1E9; }
+body { background: #F3F1E9; }
+body:has(.shell[data-appearance="dark"]) { background: #080f20; }
+.shell {
+  --bg: #F3F1E9; --panel: #fff; --border: #c9cdd2; --muted: #526073;
+  --ink: #14243B; --mint: #896100; --gold: #896100; --accent: #E5A800;
+  --accent-ink: #14243B; --live: #a62b36; --soft: #e9edf1;
+  color: var(--ink); color-scheme: light;
+}
+.shell[data-theme="turf"] { --mint: #386100; --gold: #386100; --accent: #baff59; }
+.shell[data-theme="prime"] { --mint: #6640ac; --gold: #6640ac; --accent: #c2acff; }
+.shell[data-appearance="dark"] {
+  --bg: #080f20; --panel: #101e35; --border: #42516a; --muted: #b0bed0;
+  --ink: #f6f3e9; --mint: #ffc44a; --gold: #ffc44a; --accent: #ffc44a;
+  --live: #ffad9e; --soft: #182943; color-scheme: dark;
+}
+.shell[data-appearance="dark"][data-theme="turf"] { --mint: #baff59; --gold: #baff59; --accent: #baff59; }
+.shell[data-appearance="dark"][data-theme="prime"] { --mint: #c2acff; --gold: #c2acff; --accent: #c2acff; }
+nav { color: var(--ink); border-color: var(--accent); }
+.mark, .navScore span, .filters .active { background: var(--accent); color: var(--accent-ink); }
+.displaySettings { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+.appearancePicker { display: flex; align-items: center; gap: 4px; font-size: 10px; }
+.appearancePicker > span { margin-right: 8px; }
+.appearancePicker button { min-height: 44px; padding: 0 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--ink); font-weight: 700; }
+.appearancePicker button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.themePicker select, .rankingControls select { color: var(--ink); background: var(--panel); border-color: var(--border); }
+header { background: #14243B; border-color: #344760; border-left-color: var(--accent); color: #fff; border-radius: 10px 10px 0 0; }
+header .eyebrow, header h1 em, header .seasonCard { color: var(--accent); }
+header .dot { background: var(--accent); }
+header .seasonCard strong { color: #fff; }
+header .seasonCard { border-color: #526073; border-top-color: var(--accent); }
+.statusBar { background: var(--panel); border: 1px solid var(--border); color: var(--ink); padding: 10px 18px; border-radius: 0 0 10px 10px; }
+.statusBar button { color: var(--ink); }
+.quickLinks, .publishedList, .comparisonScroll { background: var(--panel); border-radius: 8px; }
+.quickLinks span, .rank { color: var(--ink); }
+.publishedList { padding: 8px 18px; border: 1px solid var(--border); }
+.badge { background: var(--soft); border-color: var(--border); color: var(--ink); }
+.filters, .search { background: var(--panel); border-color: var(--border); }
+.filters button, .search input { color: var(--ink); }
+.tier, .game, .match, .pollStatus { border-radius: 8px; background: var(--panel); }
+.team, .team:nth-last-child(2) { border-bottom-color: var(--border); }
+.tier.blue { --tone: #28639d; }
+.tier.rose { --tone: #a44037; }
+.shell[data-appearance="dark"] .tier.blue { --tone: #91bbef; }
+.shell[data-appearance="dark"] .tier.rose { --tone: #e7a496; }
+.change.up { color: #28642b; }
+.change.down { color: #a44037; }
+.shell[data-appearance="dark"] .change.up { color: #b2eea1; }
+.shell[data-appearance="dark"] .change.down { color: #ffad9e; }
+.gameTop { background: var(--soft); color: var(--muted); }
+.liveGame .gameTop, .liveBadge { background: color-mix(in srgb, var(--live) 9%, var(--panel)); }
+.liveBadge { border-color: var(--live); }
+.gameBottom a { color: var(--mint); }
+.gameTeam strong { font-variant-numeric: tabular-nums; }
+.gameTeam > div, .teamIdentity { min-width: 0; }
+.gameTeam b, .teamIdentity b { overflow-wrap: anywhere; }
+.scoreTools { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--border); }
+.scoreNote { margin: 12px 0 20px; line-height: 1.7; }
+.method { background: #14243B; color: #fff; --muted: #c7d2e1; --mint: var(--accent); }
+.alert, .bracketWarning { background: var(--panel); border-color: var(--mint); color: var(--ink); }
+.skeleton > div { background: linear-gradient(110deg, var(--soft), var(--panel), var(--soft)); background-size: 200%; }
+.skip { background: #E5A800; color: #14243B; }
+.teamDetail, .context, .method p { line-height: 1.8; }
+.match small, .match b, .bye { font-size: 11px; }
+footer p { font-size: 11px; }
+@media (max-width: 760px) {
+  .gameDayStrip { flex-direction: column; gap: 12px; }
+  .gameDayStrip > span { max-width: none; }
+  .displaySettings { width: 100%; justify-content: space-between; gap: 12px; }
+  .themePicker { font-size: 9px; gap: 8px; flex-wrap: wrap; }
+  .appearancePicker { flex-wrap: wrap; }
+  .appearancePicker > span { width: 100%; margin: 0 0 4px; }
+  .pollStatus p { display: block; grid-column: 1 / -1; }
+  .scoreTools { position: static; }
+  .publishedList { padding: 4px 10px; }
+  .gameBottom { flex-wrap: wrap; }
+}
+header .seasonCard small, header .seasonCard strong span { color: #c7d2e1; }
+.sectionNav button span { background: var(--soft); color: var(--ink); }
