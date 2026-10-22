@@ -1,4 +1,6 @@
 "use client";
+import MoreSettings from "./components/MoreSettings";
+import TrackerNavigation from "./components/TrackerNavigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -264,7 +266,7 @@ export default function Page() {
         Skip to tracker
       </a>
       <div className="shell" data-theme={theme} data-appearance={appearance}>
-        <nav aria-label="Main">
+        <div className="siteHeader">
           <a href="#" className="brand">
             <span className="mark">
               4<span>TH</span>
@@ -273,10 +275,9 @@ export default function Page() {
             <span className="brandDivider" />{" "}
             <span className="brandSub">THE PLAYOFF PICTURE</span>
           </a>
-          <a href="#scores" className="navScore">
-            <Radio size={15} /> Scoreboard <span>{live}</span>
-          </a>
-        </nav>
+          <TrackerNavigation/>
+          <a href="#install" className="getAppLink">Get the App</a>
+        </div>
         <div className="gameDayStrip">
           <span>COLLEGE FOOTBALL / THE PLAYOFF PICTURE</span>
           <div className="displaySettings">
@@ -354,11 +355,6 @@ export default function Page() {
               {stale ? "This snapshot is more than three minutes old." : ""}
             </div>
           )}
-          <div className="quickLinks" aria-label="Jump to section">
-            <a href="#rankings-heading">01 <span>Rankings</span> <ArrowRight size={16}/></a>
-            <a href="#outlook">02 <span>Playoff race</span> <ArrowRight size={16}/></a>
-            <a href="#scores">03 <span>Scoreboard</span> <ArrowRight size={16}/></a>
-          </div>
           <section
             className="publishedRankings"
             aria-labelledby="rankings-heading"
@@ -874,6 +870,7 @@ export default function Page() {
               </div>
             )}
           </section>
+          <MoreSettings teams={[...new Map([...(data?.games.flatMap(g=>g.teams)||[]), ...(data?.rankings.map(t=>({id:t.teamId,name:t.name}))||[])].map(t=>[t.id,{id:t.id,name:t.name}])).values()]} />
           <section id="method" className="method">
             <div>
               <div className="eyebrow">TRANSPARENCY FIRST</div>
@@ -924,12 +921,13 @@ export default function Page() {
             <span className="brandSub">STAY IN THE GAME.</span>
           </a>
           <p>
-            v0.4 · Independent, unofficial college football tracker.
+            v0.5 · Independent, unofficial college football tracker.
             <br />
             Not affiliated with the CFP, ESPN, or any team. Team marks belong to
             their owners.
           </p>
         </footer>
+        <TrackerNavigation mobile/>
       </div>
     </>
   );

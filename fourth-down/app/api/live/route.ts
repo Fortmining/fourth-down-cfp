@@ -82,6 +82,8 @@ export async function GET() {
       name: e.name,
       date: e.date,
       status: e.status?.type?.state || "pre",
+      providerStatus: e.status?.type?.name || null,
+      completed: e.status?.type?.completed === true,
       detail: e.status?.type?.shortDetail || "Scheduled",
       kickoffTbd: c?.timeValid === false || /TBD|time.*(?:TBA|to be)/i.test(e.status?.type?.detail || ""),
       broadcast:
