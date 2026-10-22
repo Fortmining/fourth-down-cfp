@@ -30,6 +30,7 @@ export default function AlertSettings({teams}:Props) {
  useEffect(()=>{
   const initial=normalizePreferences(read(PREFS,null));setPreferences(initial);
   setControl(read(CONTROL,null));
+  try{setDirty(localStorage.getItem('fourth-down-alert-settings-pending-v1')==='true');}catch{}
   try {localStorage.setItem(PREFS,JSON.stringify(initial));}catch{setStorageOk(false);}
   setSupported('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window);
   if('Notification' in window)setPermission(Notification.permission);
@@ -48,7 +49,7 @@ export default function AlertSettings({teams}:Props) {
  },[]);
  function change(next:AlertPreferences) {
   setPreferences(next);setDirty(true);setStatus('Saved on this device. Save alert settings to update delivery.');
-  try{localStorage.setItem(PREFS,JSON.stringify(next));}catch{setStorageOk(false);setStatus('Browser storage is unavailable. Enable storage to keep settings and unsubscribe controls.');}
+  try{localStorage.setItem(PREFS,JSON.stringify(next));localStorage.setItem('fourth-down-alert-settings-pending-v1','true');}catch{setStorageOk(false);setStatus('Browser storage is unavailable. Enable storage to keep settings and unsubscribe controls.');}
  }
  const choices=useMemo(()=>{
   const all=new Map([...preferences.favorites,...teams].map(t=>[t.id,t]));
@@ -77,7 +78,7 @@ export default function AlertSettings({teams}:Props) {
     await fetch('/api/alerts/subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',...next})});
     await subscription.unsubscribe();throw Error('Storage is blocked. Alerts were not enabled.');
    }
-   setControl(next);setBrowserSubscribed(true);setDirty(false);setStatus('Background alerts are on for your selected categories and types.');
+   localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(next);setBrowserSubscribed(true);setDirty(false);setStatus('Background alerts are on for your selected categories and types.');
   }catch(error){
    if(createdBrowserSubscription)await createdBrowserSubscription.unsubscribe().catch(()=>false);
    setStatus(error instanceof Error?error.message:'Could not enable alerts. Try again.');
@@ -99,7 +100,7 @@ export default function AlertSettings({teams}:Props) {
     if(!r.ok)throw Error('Server unsubscribe could not be confirmed. This device is muted; retry to remove the server subscription.');
    }
    if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration('/');const sub=await reg?.pushManager.getSubscription();if(sub)await sub.unsubscribe();}
-   localStorage.removeItem(CONTROL);setControl(null);setBrowserSubscribed(false);setDirty(false);setStatus('Unsubscribed from all alerts on this device. Your favorite teams are kept.');
+   localStorage.removeItem(CONTROL);localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(null);setBrowserSubscribed(false);setDirty(false);setStatus('Unsubscribed from all alerts on this device. Your favorite teams are kept.');
   }catch(error){setStatus(error instanceof Error?error.message:'Could not confirm unsubscribe. Please retry.');}
   finally{working.current=false;setBusy(false);}
  }
@@ -137,7 +138,7 @@ export default function AlertSettings({teams}:Props) {
    <p className="permissionStatus">Notification permission: <b>{ready?permissionLabel:'Checking…'}</b></p>
    <b>{!ready?'Checking this device…':active&&browserSubscribed===false?'Saved subscription needs renewal. Unsubscribe, then enable again.':active?dirty?'Settings changed · save to update delivery':'Subscribed on this device':'No active subscription on this device'}</b>
    {ready&&!supported&&<p>This browser cannot enable push here. On iPhone, open the installed Home Screen app first.</p>}
-   {ready&&config&&!config.available&&<p>Background delivery is being set up. Your choices are saved; alerts are not active yet.</p>}
+   {ready&&config&&!config.available&&<p>{active?'Background checks are temporarily unavailable. Your subscription is saved, but delivery cannot currently be confirmed.':'Background delivery is being set up. Your choices are saved; alerts are not active yet.'}</p>}
    {!storageOk&&<p role="alert">Browser storage is blocked. Persistent settings and alert controls require storage.</p>}
    {permission==='denied'&&<p>Notifications are blocked in browser or device settings. No permission prompts will be repeated automatically.</p>}
    <div className="alertActions"><button disabled={!ready||busy||!storageOk||!supported||!config?.available||(!active&&!hasAlerts(preferences))||permission==='denied'} onClick={save}>{busy?'Working…':active?'Save alert settings':'Enable Notifications'}</button>{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery()}>Send test notification</button>}{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery('background')}>Send background test</button>}<button disabled={!ready||busy} onClick={unsubscribe}>Unsubscribe from all alerts</button></div>

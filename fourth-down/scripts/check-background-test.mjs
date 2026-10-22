@@ -26,6 +26,7 @@ for(const [engine,device] of [[chromium,null],[webkit,'iPhone 13']]) {
   assert.equal(await page.evaluate(()=>window.__permissionRequests),0,'An existing subscription test must not prompt again');
   await page.getByRole('checkbox',{name:'New Coaches Poll',exact:true}).check();
   assert.equal(await button.isDisabled(),true,'Unsaved settings cannot be used for a background test');
+  await page.reload();await button.waitFor();assert.equal(await button.isDisabled(),true,'Unsaved settings remain pending after reload');
   console.log(engine.name()+': background test queues with the device capability, avoids permission prompts, and requires saved settings.');
   await context.close();
  }finally{await browser.close();}

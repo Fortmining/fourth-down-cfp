@@ -37,3 +37,9 @@ test('worker restart retains duplicate claims; background receipt follows notifi
  const restarted=worker(db);await restarted.push(payload);assert.equal(restarted.shown.length,0);assert.equal(restarted.receipts.length,0);
  const failure=worker(new IDBFactory(),true);await failure.prefs(p);await assert.rejects(failure.push({...payload,id:'test:failure'}));assert.equal(failure.receipts.length,0);
 });
+
+test('real game alert receipt is sent once after display and respects local category opt-out',async()=>{
+ const w=worker();const p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);
+ const payload={...message,receipt:'c'.repeat(64)};await Promise.all([w.push(payload),w.push(payload)]);assert.equal(w.shown.length,1);assert.equal(w.receipts.length,1);
+ p.myTeams.enabled=false;await w.prefs(p);await w.push({...payload,id:'game:2:final'});assert.equal(w.receipts.length,1);
+});

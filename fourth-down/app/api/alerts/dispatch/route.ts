@@ -37,12 +37,15 @@ export async function GET(request:Request) {
     for(const event of events){
      // Re-read immediately before delivery so settings/unsubscribe take effect.
      const current=await loadSubscription(record.id);if(!current)continue;
-     const types=event.types.filter(type=>event.observedAt>=current.typeSince[type]);
+     const types=event.types.filter(type=>event.observedAt>=current.typeSince[type]&&selectedEvent({...event,types:[type]},current.preferences));
      if(!types.length||!selectedEvent({...event,types},current.preferences))continue;
      const claim=`fd:v05:sent:${record.id}:${event.id}`;
-     if(!await redis('SET',claim,'claimed','NX','EX',60*60*24*400))continue;
+     if(!await redis('SET',claim,'claimed','NX','EX',60*60*24*400)){await redis('INCR','fd:v05:duplicates-suppressed');continue;}
      try {
-      await webpush.sendNotification(current.subscription,JSON.stringify({...event,types}),{TTL:300,urgency:'normal',timeout:5000});sent++;
+      const receipt=randomBytes(32).toString('hex');
+      await redis('SET',`fd:v05:receipt:${tokenHash(receipt)}`,JSON.stringify({id:current.id,kind:'event',eventId:event.id,types}),'EX',300);
+      await webpush.sendNotification(current.subscription,JSON.stringify({...event,types,receipt}),{TTL:300,urgency:'normal',timeout:5000});sent++;
+      for(const type of types)await redis('HSET','fd:v05:accepted-types',type,JSON.stringify({eventId:event.id,at:new Date().toISOString()}));
      }catch(error){
       failed++;
       const status=(error as {statusCode?:number}).statusCode;
@@ -56,6 +59,7 @@ export async function GET(request:Request) {
   }while(cursor!=='0');
   await redis('SET','fd:v05:baseline',JSON.stringify(feed),'EX',60*60*24*14);
   await redis('SET','fd:v05:heartbeat',String(Date.now()),'EX',420);
+  await redis('SET','fd:v05:last-check',JSON.stringify({at:new Date().toISOString(),sent,failed,backgroundTests,events:events.length}),'EX',86400);
   return json({sent,failed,backgroundTests,events:events.length,baseline:!previous},failed||backgroundTests.failed?502:200);
  }catch{return json({error:'Background check did not complete. No unverified alerts were issued.'},503);}
  finally{if(locked)try{await redis('EVAL',"if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end",1,lock,owner);}catch{}}

@@ -23,6 +23,7 @@ function harness() {
   if(op==='HGET')return hashes.get(key)?.get(rest[0])??null;
   if(op==='HSET'||op==='HSETNX'){if(!hashes.has(key))hashes.set(key,new Map());const h=hashes.get(key);if(op==='HSETNX'&&h.has(rest[0]))return 0;h.set(rest[0],rest[1]);return 1;}
   if(op==='HDEL')return Number(hashes.get(key)?.delete(rest[0])||0);
+  if(op==='HGETALL')return [...(hashes.get(key)||new Map()).entries()].flat();
   if(op==='HSCAN')return ['0',[...(hashes.get(key)||new Map()).entries()].flat()];
   throw Error(op);
  }
@@ -40,7 +41,8 @@ function harness() {
  const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});if(sendError)throw sendError;}}};
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
- return {news,setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,sent,setFeed(next){feed=next;},command};
+ const verification=load('app/api/alerts/verification/route.ts');
+ return {verification,news,setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,sent,setFeed(next){feed=next;},command};
 }
 const request=(data,origin='https://fourth-down-cfp.vercel.app')=>new Request('https://fourth-down-cfp.vercel.app/api/alerts/subscription',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(data)});
 const endpoint={endpoint:'https://fcm.googleapis.com/fcm/send/test',keys:{p256dh:'B'.repeat(87),auth:'A'.repeat(22)}};
@@ -151,4 +153,13 @@ test('a failed background test does not prevent real event processing or the nex
  const h=harness();h.setFeed(snapshot([match('in')],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;const cap=await subscribe(h,p);
  await h.testDelivery.POST(request({...cap,mode:'background'}));const jobs=h.hashes.get('fd:v05:background-tests');const job=JSON.parse(jobs.get(cap.id));job.dueAt=Date.now()-1;jobs.set(cap.id,JSON.stringify(job));
  h.setSendError(new Error('ambiguous timeout'));h.setFeed(snapshot([match('post')],[],10));const response=await run(h);assert.equal(response.status,502);assert.equal(h.sent.length,2);assert.equal(h.sent[0].payload.test,true);assert.equal(h.sent[1].payload.id,'game:routing-game:final');assert.equal(JSON.parse(h.values.get('fd:v05:baseline')).games[0].status,'post');
+});
+
+test('real event receipts verify only selected types; private verification exposes no endpoint or capability',async()=>{
+ const h=harness();h.setFeed(snapshot([match('in')],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await subscribe(h,p);
+ h.setFeed(snapshot([match('post')],[],10));await run(h);assert.deepEqual(h.sent[0].payload.types,['final']);
+ assert.equal((await h.verification.GET(new Request('https://fourth-down-cfp.vercel.app/api/alerts/verification'))).status,401);
+ const privateRequest=new Request('https://fourth-down-cfp.vercel.app/api/alerts/verification',{headers:{authorization:'Bearer test-secret'}});
+ assert.deepEqual((await(await h.verification.GET(privateRequest)).json()).verifiedEventTypes,{});
+ await h.receipt.POST(request({receipt:h.sent[0].payload.receipt}));const proof=await(await h.verification.GET(privateRequest)).json();assert.equal(proof.enabledDeviceCounts.final,1);assert.equal(proof.enabledDeviceCounts.kickoff,0);assert.equal(proof.verifiedEventTypes.final.eventId,'game:routing-game:final');assert.equal(proof.verifiedEventTypes.upset,undefined);assert.equal(JSON.stringify(proof).includes(endpoint.endpoint),false);
 });

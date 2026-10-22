@@ -50,7 +50,7 @@ export function deriveAlertEvents(previous:AlertFeed|null,current:AlertFeed,news
  const events:AlertEvent[]=[];const prior=new Map(previous.games.map(g=>[g.id,g]));
  for(const g of current.games) {
   const old=prior.get(g.id);if(!old || g.teams.length!==2)continue;
-  const teams=g.teams.map(t=>t.id);const url=`/?game=${encodeURIComponent(g.id)}#scores`;
+  const teams=g.teams.map(t=>t.id);const url=`/game/${encodeURIComponent(g.id)}`;
   if(old.status==='pre' && g.status==='in' && /^STATUS_(IN_PROGRESS|HALFTIME|END_PERIOD)$/.test(g.providerStatus||'') && Date.parse(g.date)<=now) {
    events.push({id:`game:${g.id}:kickoff`,types:['kickoff'],teamIds:teams,title:'Kickoff confirmed',body:g.name,url,observedAt:now});
   }

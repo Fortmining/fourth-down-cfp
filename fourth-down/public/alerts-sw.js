@@ -38,7 +38,7 @@ self.addEventListener('push',event=>{
   const fresh=await new Promise(resolve=>{const tx=db.transaction('seen','readwrite');const store=tx.objectStore('seen');const get=store.get(message.id);let claimed=false;get.onsuccess=()=>{if(!get.result){store.put(Date.now(),message.id);claimed=true;}};tx.oncomplete=()=>resolve(claimed);tx.onabort=()=>resolve(false);});
   db.close();if(!fresh)return;
   await self.registration.showNotification(message.title,{body:message.body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:message.id,data:{url:message.url},actions:[{action:'settings',title:'Alert settings'}]});
-  if(message.test===true&&/^[a-f0-9]{64}$/.test(message.receipt||''))try{
+  if(/^[a-f0-9]{64}$/.test(message.receipt||''))try{
    await fetch('/api/alerts/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt:message.receipt})});
   }catch{}
  })());

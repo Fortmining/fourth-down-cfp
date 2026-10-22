@@ -36,3 +36,5 @@ export function activationTimes(old:SavedSubscription|null,p:AlertPreferences,no
 }
 export async function loadSubscription(id:string):Promise<SavedSubscription|null> {const value=await redis('HGET',SUBS,id);return value?JSON.parse(value):null;}
 export function safePreferences(value:unknown) {return normalizePreferences(value);}
+
+export function cronAuthorized(request:Request) {const a=Buffer.from(request.headers.get('authorization')||'');const b=Buffer.from(`Bearer ${process.env.CRON_SECRET||''}`);return !!process.env.CRON_SECRET&&a.length===b.length&&timingSafeEqual(a,b);}

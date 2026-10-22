@@ -252,7 +252,7 @@ export default function Page() {
             seed.
           </p>
           <a
-            href={`https://www.espn.com/college-football/team/_/id/${encodeURIComponent(t.teamId)}`}
+            href={`/team/${encodeURIComponent(t.teamId)}`}
           >
             Team schedule & results ↗
           </a>
@@ -838,7 +838,7 @@ export default function Page() {
                   <div className="gameBottom">
                     {g.broadcast || "Broadcast not provided"}
                     <a
-                      href={`https://www.espn.com/college-football/game/_/gameId/${encodeURIComponent(g.id)}`}
+                      href={`/game/${encodeURIComponent(g.id)}`}
                       aria-label={`Details for ${g.name}`}
                     >
                       Game details <ArrowUpRight size={13} />
