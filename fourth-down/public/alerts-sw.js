@@ -8,10 +8,12 @@ function openAlertsDb() {
 }
 function selected(message,p) {
  if(!p)return false;
- if(message.test===true)return !!(p.myTeams?.enabled||p.breaking?.enabled);
+ if(message.test===true)return !!(p.myTeams?.enabled||p.breaking?.enabled||p.following?.enabled);
  const types=Array.isArray(message.types)?message.types:[];
+ const gameId=/^game:([^:]+):/.exec(message.id)?.[1];
+ const followed=p.following?.enabled&&(types.includes('kickoff')||types.includes('final'))&&p.following.items?.some(f=>f.createdAt<=message.observedAt&&f.expiresAt>Date.now()&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&message.teamIds?.includes(f.id)));
  const team=p.myTeams?.enabled&&Array.isArray(message.teamIds)&&message.teamIds.some(id=>p.favorites?.some(t=>t.id===id));
- return !!((team&&((p.myTeams.kickoff&&types.includes('kickoff'))||(p.myTeams.final&&types.includes('final'))))||
+ return !!(followed || (team&&((p.myTeams.kickoff&&types.includes('kickoff'))||(p.myTeams.final&&types.includes('final'))))||
  (p.breaking?.enabled&&((p.breaking.upsets&&types.includes('upset'))||(p.breaking.developments&&types.includes('development'))||['ap','coaches','cfp'].some(type=>p.breaking[type]&&types.includes(type)))));
 }
 self.addEventListener('install',()=>self.skipWaiting());

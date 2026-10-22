@@ -19,7 +19,10 @@ function harness() {
   if(op==='SET'){if(rest.includes('NX')&&values.has(key))return null;values.set(key,rest[0]);return 'OK';}
   if(op==='INCR'){const next=Number(values.get(key)||0)+1;values.set(key,next);return next;}
   if(op==='EXPIRE')return 1;
-  if(op==='EVAL'){values.delete(args[3]);return 1;}
+  if(op==='EVAL'){
+   if(args[1].includes("redis.call('hget'")){const h=hashes.get(args[3]);if(h?.get(args[4])!==args[5])return 0;h.set(args[4],args[6]);return 1;}
+   values.delete(args[3]);return 1;
+  }
   if(op==='HGET')return hashes.get(key)?.get(rest[0])??null;
   if(op==='HSET'||op==='HSETNX'){if(!hashes.has(key))hashes.set(key,new Map());const h=hashes.get(key);if(op==='HSETNX'&&h.has(rest[0]))return 0;h.set(rest[0],rest[1]);return 1;}
   if(op==='HDEL')return Number(hashes.get(key)?.delete(rest[0])||0);
@@ -162,4 +165,38 @@ test('real event receipts verify only selected types; private verification expos
  const privateRequest=new Request('https://fourth-down-cfp.vercel.app/api/alerts/verification',{headers:{authorization:'Bearer test-secret'}});
  assert.deepEqual((await(await h.verification.GET(privateRequest)).json()).verifiedEventTypes,{});
  await h.receipt.POST(request({receipt:h.sent[0].payload.receipt}));const proof=await(await h.verification.GET(privateRequest)).json();assert.equal(proof.enabledDeviceCounts.final,1);assert.equal(proof.enabledDeviceCounts.kickoff,0);assert.equal(proof.verifiedEventTypes.final.eventId,'game:routing-game:final');assert.equal(proof.verifiedEventTypes.upset,undefined);assert.equal(JSON.stringify(proof).includes(endpoint.endpoint),false);
+});
+
+// All following scenarios below use isolated fake feeds/storage/push transport.
+test('temporary game + one-game team + favorite + upset overlap delivers a single final before expiry',async()=>{
+ const h=harness(),now=Date.now();const game={...match('in'),id:'123'};const before=snapshot([game],[],-60000);h.setFeed(before);await run(h);
+ const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};p.breaking.enabled=true;p.breaking.upsets=true;
+ p.following={enabled:true,items:[{kind:'game',id:'123',name:'One at Two',duration:'game',gameId:'123',createdAt:now-1000,expiresAt:now+86400000},{kind:'team',id:'1',name:'One',duration:'game',gameId:'123',createdAt:now-1000,expiresAt:now+86400000}]};
+ const cap=await subscribe(h,p);h.setFeed(snapshot([{...match('post'),id:'123'}],[],10));assert.equal((await run(h)).status,200);
+ assert.equal(h.sent.length,1);assert.equal(h.sent[0].payload.id,'game:123:final');
+ const saved=await h.store.loadSubscription(cap.id);assert.equal(saved.preferences.following.items.length,0);assert.equal(saved.preferences.favorites.length,1);assert.equal(saved.preferences.breaking.upsets,true);
+ h.values.set('fd:v05:baseline',JSON.stringify(before));await run(h);assert.equal(h.sent.length,1);
+});
+test('temporary-only subscription routes kickoff and final, expires one game, never requests favorites',async()=>{
+ const h=harness(),now=Date.now();h.setFeed(snapshot([{...match(),id:'123'}],[],-60000));await run(h);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'team',id:'1',name:'One',duration:'game',gameId:'123',createdAt:now-1000,expiresAt:now+86400000}]};const cap=await subscribe(h,p);
+ assert.equal(alerts.hasAlerts(p),true);h.setFeed(snapshot([{...match('in'),id:'123'}],[],5));await run(h);assert.equal(h.sent.length,1);assert.deepEqual(h.sent[0].payload.types,['kickoff']);
+ h.setFeed(snapshot([{...match('post'),id:'123'}],[],20));await run(h);assert.equal(h.sent.length,2);assert.deepEqual(h.sent[1].payload.types,['final']);
+ assert.equal((await h.store.loadSubscription(cap.id)).preferences.following.items.length,0);
+});
+test('24-hour and 7-day team follows survive a final; expired or disabled follows never send',async()=>{
+ for(const duration of ['24h','7d']){
+  const h=harness(),now=Date.now();h.setFeed(snapshot([match('in')],[],-60000));await run(h);
+  for(const [suffix,enabled,expiresAt] of [['on',true,now+(duration==='24h'?86400000:7*86400000)-1000],['off',false,now+10000],['expired',true,now-1]]){
+   const p=alerts.defaultAlertPreferences();p.following={enabled,items:[{kind:'team',id:'1',name:'One',duration,createdAt:now-1000,expiresAt}]};await subscribe(h,p,suffix);
+  }
+  h.setFeed(snapshot([match('post')],[],10));await run(h);assert.equal(h.sent.length,1);assert.ok(h.sent[0].s.endpoint.endsWith('on'));
+  const saved=[...h.hashes.get(h.store.SUBS).values()].map(JSON.parse).find(x=>x.subscription.endpoint.endsWith('on'));assert.equal(saved.preferences.following.items.length,1);
+ }
+});
+test('following opt-in and mutation preserve favorite and poll activation times',()=>{
+ const h=harness(),p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};p.breaking.enabled=true;p.breaking.ap=true;
+ const old={preferences:structuredClone(p),typeSince:h.store.activationTimes(null,p,1000)};
+ p.following={enabled:true,items:[{kind:'team',id:'2',name:'Two',duration:'24h',createdAt:1500,expiresAt:86401500}]};
+ const times=h.store.activationTimes(old,p,2000);assert.equal(times.kickoff,1000);assert.equal(times.final,1000);assert.equal(times.ap,1000);
 });

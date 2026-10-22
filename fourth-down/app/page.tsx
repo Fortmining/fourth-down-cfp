@@ -1,4 +1,5 @@
 "use client";
+import Following,{FollowButton} from "./components/Following";
 import MoreSettings from "./components/MoreSettings";
 import TrackerNavigation from "./components/TrackerNavigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -835,7 +836,7 @@ export default function Page() {
                         </strong>
                       </div>
                     ))}
-                  <div className="gameBottom">
+                  <FollowButton kind="game" id={g.id} name={g.name} games={data?.games||[]}/><div className="gameBottom">
                     {g.broadcast || "Broadcast not provided"}
                     <a
                       href={`/game/${encodeURIComponent(g.id)}`}
@@ -870,7 +871,7 @@ export default function Page() {
               </div>
             )}
           </section>
-          <MoreSettings teams={[...new Map([...(data?.games.flatMap(g=>g.teams)||[]), ...(data?.rankings.map(t=>({id:t.teamId,name:t.name}))||[])].map(t=>[t.id,{id:t.id,name:t.name}])).values()]} />
+          <Following games={data?.games||[]}/><MoreSettings games={data?.games||[]} teams={[...new Map([...(data?.games.flatMap(g=>g.teams)||[]), ...(data?.rankings.map(t=>({id:t.teamId,name:t.name}))||[])].map(t=>[t.id,{id:t.id,name:t.name}])).values()]} />
           <section id="method" className="method">
             <div>
               <div className="eyebrow">TRANSPARENCY FIRST</div>
@@ -921,7 +922,7 @@ export default function Page() {
             <span className="brandSub">STAY IN THE GAME.</span>
           </a>
           <p>
-            v0.5 · Independent, unofficial college football tracker.
+            v0.6 · Independent, unofficial college football tracker.
             <br />
             Not affiliated with the CFP, ESPN, or any team. Team marks belong to
             their owners.

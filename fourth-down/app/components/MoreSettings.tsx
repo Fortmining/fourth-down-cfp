@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from 'react';
+import Following,{type WatchGame} from './Following';
 import AlertSettings from './AlertSettings';
 type InstallPrompt=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:string}>};
-export default function MoreSettings({teams}:{teams:{id:string;name:string}[]}) {
+export default function MoreSettings({teams,games}:{teams:{id:string;name:string}[];games:WatchGame[]}) {
  const [standalone,setStandalone]=useState(false);const [canInstall,setCanInstall]=useState(false);
  const [installStatus,setInstallStatus]=useState('Checking installation mode…');
  const prompt=useRef<InstallPrompt|null>(null);
@@ -17,8 +18,8 @@ export default function MoreSettings({teams}:{teams:{id:string;name:string}[]}) 
  async function install(){const event=prompt.current;if(!event)return;prompt.current=null;setCanInstall(false);try{await event.prompt();const choice=await event.userChoice;setInstallStatus(choice.outcome==='accepted'?'Installation requested. Follow your browser’s confirmation.':'Installation canceled. You can still use the website.');}catch{setInstallStatus('Use your browser’s menu and the instructions below to install.');}}
  return <section id="more" className="moreSettings" aria-labelledby="more-heading">
   <div className="intro"><div><div className="eyebrow">FOURTH DOWN · YOUR SETTINGS</div><h2 id="more-heading">More / Settings</h2></div><span className="badge">MADE FOR GAME DAY</span></div>
-  <div className="settingsShortcuts"><a href="#alerts">My Teams & notifications <span>Choose what matters →</span></a><a href="#install">Install Fourth Down <span>Keep it one tap away →</span></a></div>
-  <AlertSettings teams={teams}/>
+  <div className="settingsShortcuts"><a href="#following">Following <span>Manage temporary follows →</span></a><a href="#alerts">My Teams & notifications <span>Choose what matters →</span></a><a href="#install">Install Fourth Down <span>Keep it one tap away →</span></a></div>
+  <Following games={games} manage/><AlertSettings teams={teams}/>
   <section id="install" className="installGuide" aria-labelledby="install-heading">
    <div className="intro"><div><div className="eyebrow">TAKE THE PLAYOFF PICTURE WITH YOU</div><h2 id="install-heading">Get the App</h2></div><span className="badge">FREE · NO APP STORE REQUIRED</span></div>
    <p className="context">Add Fourth Down to your Home Screen or desktop. It is the same live tracker, with your settings saved in the browser or installed app you use. Scores and rankings need an internet connection.</p>
@@ -29,6 +30,6 @@ export default function MoreSettings({teams}:{teams:{id:string;name:string}[]}) 
     <article><h3>Desktop</h3><ol><li>Open Fourth Down in Chrome or Edge and look for the install icon in the address bar or browser menu.</li><li>On Mac Safari, choose File → Add to Dock where available.</li><li>Confirm the app name and open it from your launcher or Dock.</li></ol><p>If your browser has no install option, bookmark the site. No download is required to use the tracker.</p></article>
    </div>
   </section>
-  <aside className="futureChat" aria-labelledby="chat-plan-heading"><span className="badge">FUTURE RELEASE</span><h3 id="chat-plan-heading">Community Chat</h3><p>Planned for a later release, after sign-in, moderation, spam prevention, and message storage are designed. Public chat is not available in v0.5.</p></aside>
+  <aside className="futureChat" aria-labelledby="chat-plan-heading"><span className="badge">FUTURE RELEASE</span><h3 id="chat-plan-heading">Community Chat</h3><p>Planned for a later release, after sign-in, moderation, spam prevention, and message storage are designed. Public chat is not available in v0.6.</p></aside>
  </section>;
 }

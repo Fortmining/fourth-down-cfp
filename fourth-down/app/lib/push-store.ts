@@ -25,7 +25,7 @@ export function validPushSubscription(s:unknown):s is PushSubscription {
  }catch{return false;}
 }
 export function typeFlags(p:AlertPreferences):Record<AlertType,boolean> {
- return {kickoff:p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.kickoff,final:p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.final,
+ return {kickoff:!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.kickoff,final:!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.final,
  upset:p.breaking.enabled&&p.breaking.upsets,development:p.breaking.enabled&&p.breaking.developments,
  ap:p.breaking.enabled&&p.breaking.ap,coaches:p.breaking.enabled&&p.breaking.coaches,cfp:p.breaking.enabled&&p.breaking.cfp};
 }

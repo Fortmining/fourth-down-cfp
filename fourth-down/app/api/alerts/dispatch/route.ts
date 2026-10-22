@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { timingSafeEqual,randomBytes } from 'node:crypto';
 import webpush from 'web-push';
 import { GET as liveFeed } from '../../live/route';
-import { deriveAlertEvents,selectedEvent,hasAlerts,type AlertFeed,type ConfirmedDevelopment } from '../../../lib/alerts';
+import { deriveAlertEvents,selectedEvent,hasAlerts,remainingFollows,type AlertFeed,type ConfirmedDevelopment } from '../../../lib/alerts';
 import { loadSubscription,pushConfigured,redis,SUBS,tokenHash,type SavedSubscription } from '../../../lib/push-store';
 import developments from '../../../data/confirmed-developments.json';
 export const dynamic='force-dynamic';
@@ -52,6 +52,16 @@ export async function GET(request:Request) {
       if(status===404||status===410){await redis('HDEL',SUBS,record.id);break;}
       // Keep claim after an ambiguous timeout: favor no duplicates over retrying
       // a notification that a provider may already have accepted.
+     }
+    }
+    const latest=await loadSubscription(record.id);
+    if(latest?.preferences.following){
+     const items=remainingFollows(latest.preferences,feed.games);
+     if(items.length!==latest.preferences.following.items.length){
+      const updated={...latest,preferences:{...latest.preferences,following:{...latest.preferences.following,items}}};
+      // Compare-and-set: cleanup must never overwrite a simultaneous unfollow,
+      // preference update, or deleted subscription.
+      await redis('EVAL',"if redis.call('hget',KEYS[1],ARGV[1]) == ARGV[2] then return redis.call('hset',KEYS[1],ARGV[1],ARGV[3]) else return 0 end",1,SUBS,record.id,JSON.stringify(latest),JSON.stringify(updated));
      }
     }
    }

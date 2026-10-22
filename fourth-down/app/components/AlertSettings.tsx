@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { defaultAlertPreferences,hasAlerts,normalizePreferences,type AlertPreferences } from '../lib/alerts';
+import {CHANGED} from '../lib/following-client';
 const PREFS='fourth-down-alert-preferences-v1';
 const CONTROL='fourth-down-push-control-v1';
 type Control={id:string;token:string};
@@ -45,11 +46,12 @@ export default function AlertSettings({teams}:Props) {
    if('serviceWorker' in navigator)navigator.serviceWorker.getRegistration('/').then(reg=>reg?.pushManager.getSubscription()).then(sub=>setBrowserSubscribed(!!sub)).catch(()=>setBrowserSubscribed(false));
   }
   inspectPermission();window.addEventListener('focus',inspectPermission);
-  window.addEventListener('storage',changed);return()=>{window.removeEventListener('storage',changed);window.removeEventListener('focus',inspectPermission);};
+  const refresh=()=>setPreferences(normalizePreferences(read(PREFS,null)));window.addEventListener(CHANGED,refresh);
+  window.addEventListener('storage',changed);return()=>{window.removeEventListener(CHANGED,refresh);window.removeEventListener('storage',changed);window.removeEventListener('focus',inspectPermission);};
  },[]);
  function change(next:AlertPreferences) {
   setPreferences(next);setDirty(true);setStatus('Saved on this device. Save alert settings to update delivery.');
-  try{localStorage.setItem(PREFS,JSON.stringify(next));localStorage.setItem('fourth-down-alert-settings-pending-v1','true');}catch{setStorageOk(false);setStatus('Browser storage is unavailable. Enable storage to keep settings and unsubscribe controls.');}
+  try{localStorage.setItem(PREFS,JSON.stringify(next));window.dispatchEvent(new Event(CHANGED));localStorage.setItem('fourth-down-alert-settings-pending-v1','true');}catch{setStorageOk(false);setStatus('Browser storage is unavailable. Enable storage to keep settings and unsubscribe controls.');}
  }
  const choices=useMemo(()=>{
   const all=new Map([...preferences.favorites,...teams].map(t=>[t.id,t]));
@@ -78,7 +80,7 @@ export default function AlertSettings({teams}:Props) {
     await fetch('/api/alerts/subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',...next})});
     await subscription.unsubscribe();throw Error('Storage is blocked. Alerts were not enabled.');
    }
-   localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(next);setBrowserSubscribed(true);setDirty(false);setStatus('Background alerts are on for your selected categories and types.');
+   localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(next);setBrowserSubscribed(true);setDirty(false);localStorage.removeItem('fourth-down-following-pending');setStatus('Background alerts are on for your selected categories and types.');
   }catch(error){
    if(createdBrowserSubscription)await createdBrowserSubscription.unsubscribe().catch(()=>false);
    setStatus(error instanceof Error?error.message:'Could not enable alerts. Try again.');
@@ -92,7 +94,7 @@ export default function AlertSettings({teams}:Props) {
  async function unsubscribe() {
   if(working.current)return;working.current=true;setBusy(true);setStatus('');
   try{
-   const off={...preferences,myTeams:{...preferences.myTeams,enabled:false},breaking:{...preferences.breaking,enabled:false}};
+   const off={...preferences,following:{...preferences.following!,enabled:false},myTeams:{...preferences.myTeams,enabled:false},breaking:{...preferences.breaking,enabled:false}};
    change(off);
    if('serviceWorker' in navigator)await syncWorker(off);
    if(control){
@@ -108,6 +110,7 @@ export default function AlertSettings({teams}:Props) {
  return <section id="alerts" className="alertSettings" aria-labelledby="alert-settings-heading">
   <div className="intro"><div><div className="eyebrow">YOUR GAME DAY. YOUR CHOICE.</div><h2 id="alert-settings-heading">Alerts, on your terms.</h2></div><span className="badge">OFF UNTIL YOU OPT IN</span></div>
   <p className="context">Choose My Teams, Breaking CFP News, or both. Each has its own controls. Settings are saved on this device; notification permission is only requested when you enable alerts.</p>
+  <fieldset className="followingAlert" disabled={!ready||busy}><legend>Temporary Following</legend><label className="alertToggle"><input type="checkbox" checked={preferences.following?.enabled===true} onChange={e=>change({...preferences,following:{items:preferences.following?.items||[],enabled:e.target.checked}})}/><span><b>Following alerts</b><small>Confirmed kickoff and final scores for active follows. Independent of My Teams and rankings.</small></span></label><p>Following a game or team only adds it to your watchlist. Select this switch and save or enable notifications to receive alerts.</p></fieldset>
   <div className="alertCategories">
    <fieldset disabled={!ready||busy}><legend>My Teams</legend>
     <label className="alertToggle"><input type="checkbox" checked={preferences.myTeams.enabled} onChange={e=>category('myTeams','enabled',e.target.checked)}/><span><b>My Teams alerts</b><small>Only the teams you choose.</small></span></label>

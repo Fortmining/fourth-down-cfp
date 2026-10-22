@@ -43,3 +43,11 @@ test('real game alert receipt is sent once after display and respects local cate
  const payload={...message,receipt:'c'.repeat(64)};await Promise.all([w.push(payload),w.push(payload)]);assert.equal(w.shown.length,1);assert.equal(w.receipts.length,1);
  p.myTeams.enabled=false;await w.prefs(p);await w.push({...payload,id:'game:2:final'});assert.equal(w.receipts.length,1);
 });
+
+test('temporary worker eligibility, overlap dedupe, timed expiry and queued unfollow',async()=>{
+ const w=worker(),now=Date.now();const p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'1',name:'One at Two',duration:'game',gameId:'1',createdAt:now-1000,expiresAt:now+86400000}]};
+ const payload={...message,observedAt:now};await w.prefs(p);await Promise.all([w.push(payload),w.push(payload)]);assert.equal(w.shown.length,1);
+ p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};await w.prefs(p);await w.push(payload);assert.equal(w.shown.length,1);
+ p.myTeams.enabled=false;p.following.items=[];await w.prefs(p);await w.push({...payload,id:'game:1:kickoff',types:['kickoff']});assert.equal(w.shown.length,1);
+ p.following.items=[{kind:'team',id:'1',duration:'24h',createdAt:now-1000,expiresAt:now-1}];await w.prefs(p);await w.push({...payload,id:'game:2:final'});assert.equal(w.shown.length,1);
+});

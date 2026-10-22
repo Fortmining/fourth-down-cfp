@@ -1,0 +1,15 @@
+# Fourth Down v0.6
+
+Temporary Follow Game and Follow Team subscriptions are separate from permanent favorites. Team follows support one bound game, 24 hours, or 7 days; a one-game follow never rolls over to another matchup. One-game follows end after a provider-confirmed completed final, after the final alert is processed. A 180-day safety expiry removes abandoned one-game records if the provider never supplies a final. Timed team follows retain their original expiry across reloads and continue across games until that time.
+
+My Watchlist displays active followed matchups with scores, status, kickoff date/time in the device time zone, internal game/team links and unfollow controls. Completed games leave the active watchlist immediately after a confirmed final. More > Following manages the temporary subscriptions. Favorites and v0.5 category/type choices remain unchanged. Preferences persist in the existing browser/app storage; opted-in delivery preferences persist in the existing Redis subscription records. This is per device, matching v0.5, without accounts or cross-device synchronization.
+
+Following only saves a watchlist entry. Following alerts have their own explicit opt-in switch under notification settings; permission is requested only by the existing Enable/Save button. Once opted in, subsequent follow changes update the existing subscription without another permission request. Pending unsaved v0.5 settings still require explicit save. Unfollow mutes queued pushes locally before contacting the server. Failed updates remain saved with a retry control and retry on focus/online; no new subscription is created automatically.
+
+The existing four-minute production scheduler, event baselines, event IDs, receipt verification, ranking categories and deduplication keys are retained. Favorite, temporary game/team and breaking-upset matches all select one event per device, protected by the existing server claim and durable service-worker claim. Server cleanup compares the current subscription before updating so it cannot overwrite a simultaneous preference change or recreate a deleted subscription. Final events are processed before one-game cleanup, and client cleanup leaves the worker snapshot intact for an already queued final.
+
+## Verification
+
+Automated feed, server, worker, and client tests use isolated fixtures and mocked push transport. Browser follow tests use a captured provider feed with explicitly simulated live/final transitions. They do not send production game alerts or prove real-event delivery. Real kickoff/final and newly published AP/Coaches/CFP delivery must remain pending until an actual production event and device receipt are observed. Prior v0.5 device-test evidence remains documented separately in RELEASE-v0.5.md.
+
+Release gates: full test suite, type checking, lint, optimized production build, desktop/mobile browser flows, preference persistence and no unsolicited permission request. Deployment must use the existing fourth-down-cfp Vercel project, prj_uvQVwE3b4FHEiGFkzK3eAGYsv4ct, under team_87OorV5vGVhsFrh2d1Jl7ZaT; no new project or scheduler is needed.
