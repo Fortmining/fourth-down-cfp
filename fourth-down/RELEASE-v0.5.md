@@ -21,3 +21,12 @@ Kickoff alerts require an observed confirmed live status. Final scores require c
 Stable server and browser event IDs coalesce duplicate and overlapping category deliveries. Ambiguous provider failures retain their claim to avoid duplicates, so an alert may be lost instead of retried. Expired endpoints are removed. The small-audience dispatcher is bounded to 1,000 records; a delivery queue and capacity review are needed before scaling. Free-plan quotas and failures must be monitored.
 
 The service worker does not intercept or cache pages, scores or rankings. Existing light/dark/colorway behavior, rankings, outlook, bracket, next-week games and the inline yellow Apple icon remain intact.
+
+
+## Background verification follow-up
+
+The user confirmed the immediate test appeared on an iPhone with the correct Fourth Down icon, permission Allowed, and an active subscription. Production recorded its service-worker receipt at **2026-10-22 10:34:47 AM EDT**. The app was open, so this establishes foreground delivery only.
+
+`Send background test` explicitly queues one test per opted-in device. It becomes eligible after 60 seconds and expires after ten minutes. The protected scheduled dispatcher checks the queue before processing the real feed, reloads current opt-in settings, and sends a clearly labeled test through the same Web Push transport. Unsubscribe/all-off cancels eligibility. Atomic queue removal, server claims, and durable worker claims prevent repeated sends/displays; an ambiguous failure is not retried. A failed test does not interrupt real event processing. The receipt endpoint separately records `backgroundVerifiedAt`; this proves scheduled transport, while the tester must confirm the app was backgrounded or closed.
+
+Production readiness remains conditional on that background test and a real upcoming game/poll observation. Isolated regression fixtures exercise favorites, independent AP/Coaches/CFP routing, reviewed developments, expired endpoints, provider failures, queued unsubscribe, overlapping categories, repeat checks, worker restarts, and receipt replay rejection. These fixtures never become production news or scores. Editorial playoff-development entries remain empty until an actual reviewed report is supplied.

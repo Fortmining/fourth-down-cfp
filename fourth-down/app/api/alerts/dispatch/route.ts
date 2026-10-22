@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { timingSafeEqual,randomBytes } from 'node:crypto';
 import webpush from 'web-push';
 import { GET as liveFeed } from '../../live/route';
-import { deriveAlertEvents,selectedEvent,type AlertFeed,type ConfirmedDevelopment } from '../../../lib/alerts';
-import { loadSubscription,pushConfigured,redis,SUBS,type SavedSubscription } from '../../../lib/push-store';
+import { deriveAlertEvents,selectedEvent,hasAlerts,type AlertFeed,type ConfirmedDevelopment } from '../../../lib/alerts';
+import { loadSubscription,pushConfigured,redis,SUBS,tokenHash,type SavedSubscription } from '../../../lib/push-store';
 import developments from '../../../data/confirmed-developments.json';
 export const dynamic='force-dynamic';
 export const maxDuration=60;
@@ -19,6 +19,8 @@ export async function GET(request:Request) {
  const lock='fd:v05:dispatch-lock';let locked=false;
  try {
   locked=!!await redis('SET',lock,owner,'NX','EX',120);if(!locked)return json({skipped:'Already running'});
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT!,process.env.VAPID_PUBLIC_KEY!,process.env.VAPID_PRIVATE_KEY!);
+  const backgroundTests=await deliverBackgroundTests();
   const response=await liveFeed();if(!response.ok)throw Error('Feed unavailable');
   const feed=await response.json() as AlertFeed;
   const previous=await redis('GET','fd:v05:baseline');
@@ -54,7 +56,35 @@ export async function GET(request:Request) {
   }while(cursor!=='0');
   await redis('SET','fd:v05:baseline',JSON.stringify(feed),'EX',60*60*24*14);
   await redis('SET','fd:v05:heartbeat',String(Date.now()),'EX',420);
-  return json({sent,failed,events:events.length,baseline:!previous},failed?502:200);
+  return json({sent,failed,backgroundTests,events:events.length,baseline:!previous},failed||backgroundTests.failed?502:200);
  }catch{return json({error:'Background check did not complete. No unverified alerts were issued.'},503);}
  finally{if(locked)try{await redis('EVAL',"if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end",1,lock,owner);}catch{}}
+}
+
+// Explicitly requested device tests use the same scheduled invocation and push
+// transport, but never enter the real scores, rankings, or news event stream.
+async function deliverBackgroundTests() {
+ let cursor='0',scanned=0,sent=0,failed=0;
+ do {
+  const [next,items]=await redis('HSCAN','fd:v05:background-tests',cursor,'COUNT',100);cursor=next;
+  for(let i=0;i<items.length;i+=2){
+   if(++scanned>1000)throw Error('Too many pending tests');
+   const id=items[i];const job=JSON.parse(items[i+1]);const now=Date.now();
+   if(job.dueAt>now)continue;
+   if(!await redis('HDEL','fd:v05:background-tests',id))continue;
+   if(job.expiresAt<now)continue;
+   const sub=await loadSubscription(id);if(!sub||!hasAlerts(sub.preferences))continue;
+   if(!await redis('SET',`fd:v05:sent:${id}:${job.eventId}`,'claimed','NX','EX',86400))continue;
+   await redis('SET',`fd:v05:receipt:${tokenHash(job.receipt)}`,JSON.stringify({id,kind:'background'}),'EX',300);
+   try{
+    await webpush.sendNotification(sub.subscription,JSON.stringify({id:job.eventId,test:true,types:[],teamIds:[],title:'Fourth Down · Background test',body:'The scheduled check sent this test. This is not a game or breaking-news alert.',url:'/#alerts',receipt:job.receipt}),{TTL:300,urgency:'normal',timeout:5000});sent++;
+   }catch(error){
+    if([404,410].includes((error as {statusCode:number}).statusCode))await redis('HDEL',SUBS,id);
+    // A failed device test must not interrupt real game/news processing.
+    // Do not retry an ambiguous response and risk duplicate tests.
+    failed++;
+   }
+  }
+ }while(cursor!=='0');
+ return {sent,failed};
 }

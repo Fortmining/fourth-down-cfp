@@ -83,9 +83,9 @@ export default function AlertSettings({teams}:Props) {
    setStatus(error instanceof Error?error.message:'Could not enable alerts. Try again.');
   }finally{working.current=false;setBusy(false);}
  }
- async function testDelivery() {
+ async function testDelivery(mode?:'background') {
   if(!control||working.current)return;working.current=true;setBusy(true);
-  try{const r=await fetch('/api/alerts/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(control)});const result=await r.json();setStatus(result.message||result.error||'Test could not be confirmed.');}
+  try{const r=await fetch('/api/alerts/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...control,mode})});const result=await r.json();setStatus(result.message||result.error||'Test could not be confirmed.');}
   catch{setStatus('Test delivery could not be confirmed.');}finally{working.current=false;setBusy(false);}
  }
  async function unsubscribe() {
@@ -140,7 +140,7 @@ export default function AlertSettings({teams}:Props) {
    {ready&&config&&!config.available&&<p>Background delivery is being set up. Your choices are saved; alerts are not active yet.</p>}
    {!storageOk&&<p role="alert">Browser storage is blocked. Persistent settings and alert controls require storage.</p>}
    {permission==='denied'&&<p>Notifications are blocked in browser or device settings. No permission prompts will be repeated automatically.</p>}
-   <div className="alertActions"><button disabled={!ready||busy||!storageOk||!supported||!config?.available||(!active&&!hasAlerts(preferences))||permission==='denied'} onClick={save}>{busy?'Working…':active?'Save alert settings':'Enable Notifications'}</button>{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={testDelivery}>Send test notification</button>}<button disabled={!ready||busy} onClick={unsubscribe}>Unsubscribe from all alerts</button></div>
+   <div className="alertActions"><button disabled={!ready||busy||!storageOk||!supported||!config?.available||(!active&&!hasAlerts(preferences))||permission==='denied'} onClick={save}>{busy?'Working…':active?'Save alert settings':'Enable Notifications'}</button>{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery()}>Send test notification</button>}{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery('background')}>Send background test</button>}<button disabled={!ready||busy} onClick={unsubscribe}>Unsubscribe from all alerts</button></div>
    {active&&<p>To turn off one category or alert type, uncheck it and save alert settings. Unsubscribe from all stops both categories and keeps your favorites.</p>}
    {!hasAlerts(preferences)&&ready&&<p>Select a category and at least one alert type. My Teams also needs a favorite team.</p>}
    <details className="alertPolicy"><summary>Delivery & privacy</summary><p>Push may be delayed by your browser, device, or the feed. A single event matching both categories produces one notification. Clearing browser data removes these local controls; you can always revoke notifications in device settings.</p></details>

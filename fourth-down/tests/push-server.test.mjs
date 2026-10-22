@@ -8,6 +8,7 @@ import * as alerts from '../app/lib/alerts.ts';
 const require=createRequire(import.meta.url);
 const env={UPSTASH_REDIS_REST_URL:'https://test-redis.invalid',UPSTASH_REDIS_REST_TOKEN:'test-only',VAPID_PUBLIC_KEY:'test',VAPID_PRIVATE_KEY:'test',VAPID_SUBJECT:'https://fourth-down-cfp.vercel.app',CRON_SECRET:'test-secret'};
 function harness() {
+ let sendError=null;const news=[];
  const values=new Map(),hashes=new Map();const sent=[];
  let feed={season:2026,updatedAt:new Date().toISOString(),games:[],polls:[]};
  const json=(body,init)=>new Response(JSON.stringify(body),{status:init?.status||200,headers:init?.headers});
@@ -35,11 +36,11 @@ function harness() {
  const store=load('app/lib/push-store.ts');
  const subscription=load('app/api/alerts/subscription/route.ts');
  const config=load('app/api/alerts/config/route.ts');
- const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../live/route':{GET:async()=>json(feed)},'../../../data/confirmed-developments.json':[], 'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});}}});
- const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});}}};
+ const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../live/route':{GET:async()=>json(feed)},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});if(sendError)throw sendError;}}});
+ const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});if(sendError)throw sendError;}}};
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
- return {testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,sent,setFeed(next){feed=next;},command};
+ return {news,setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,sent,setFeed(next){feed=next;},command};
 }
 const request=(data,origin='https://fourth-down-cfp.vercel.app')=>new Request('https://fourth-down-cfp.vercel.app/api/alerts/subscription',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(data)});
 const endpoint={endpoint:'https://fcm.googleapis.com/fcm/send/test',keys:{p256dh:'B'.repeat(87),auth:'A'.repeat(22)}};
@@ -94,4 +95,60 @@ test('test delivery requires subscription capability; only a single-use worker r
  assert.ok((await(await h.config.GET()).json()).deliveryVerifiedAt);
  assert.equal((await h.receipt.POST(request(proof))).status,410);
  assert.equal((await h.testDelivery.POST(request(cap))).status,429);
+});
+
+async function subscribe(h,preferences,suffix='test') {
+ return (await h.subscription.POST(request({action:'create',subscription:{...endpoint,endpoint:endpoint.endpoint+suffix},preferences}))).json();
+}
+const snapshot=(games=[],polls=[],offset=-1000)=>({season:2026,updatedAt:new Date(Date.now()+offset).toISOString(),games,polls});
+const match=(status='pre')=>({id:'routing-game',name:'One at Two',date:new Date(Date.now()-60000).toISOString(),status,providerStatus:status==='post'?'STATUS_FINAL':status==='in'?'STATUS_IN_PROGRESS':'STATUS_SCHEDULED',completed:status==='post',teams:[{id:'1',name:'One',score:'31',winner:status==='post'},{id:'2',name:'Two',score:'28',rank:3}]});
+test('scheduled background test waits, delivers once, and records a distinct receipt only after browser acknowledgement',async()=>{
+ const h=harness();await run(h);const p=alerts.defaultAlertPreferences();p.breaking.enabled=true;p.breaking.ap=true;const cap=await subscribe(h,p);
+ assert.equal((await h.testDelivery.POST(request({...cap,mode:'background'}))).status,200);
+ assert.equal((await run(h)).status,200);assert.equal(h.sent.length,0,'not sent while user is closing the app');
+ const queued=h.hashes.get('fd:v05:background-tests');const job=JSON.parse(queued.get(cap.id));job.dueAt=Date.now()-1;queued.set(cap.id,JSON.stringify(job));
+ assert.equal((await run(h)).status,200);assert.equal(h.sent.length,1);assert.equal(h.sent[0].payload.test,true);assert.match(h.sent[0].payload.title,/Background test/);
+ await run(h);assert.equal(h.sent.length,1);
+ assert.equal((await(await h.config.GET()).json()).backgroundVerifiedAt,null);
+ assert.equal((await h.receipt.POST(request({receipt:h.sent[0].payload.receipt}))).status,200);
+ assert.ok((await(await h.config.GET()).json()).backgroundVerifiedAt);
+});
+test('scheduled tests expire and respect unsubscribe or all categories muted before dispatch',async()=>{
+ for(const condition of ['expired','unsubscribed','muted']){
+  const h=harness();await run(h);const p=alerts.defaultAlertPreferences();p.breaking.enabled=true;p.breaking.ap=true;const cap=await subscribe(h,p);
+  await h.testDelivery.POST(request({...cap,mode:'background'}));const queued=h.hashes.get('fd:v05:background-tests');const job=JSON.parse(queued.get(cap.id));job.dueAt=Date.now()-1;if(condition==='expired')job.expiresAt=Date.now()-1;queued.set(cap.id,JSON.stringify(job));
+  if(condition==='unsubscribed')await h.subscription.POST(request({action:'delete',...cap}));
+  if(condition==='muted')await h.subscription.POST(request({action:'update',...cap,subscription:{...endpoint,endpoint:endpoint.endpoint+'test'},preferences:alerts.defaultAlertPreferences()}));
+  await run(h);assert.equal(h.sent.length,0,condition);assert.equal(queued.size,0);
+ }
+});
+test('favorite kickoff routing excludes unrelated favorites and disabled types',async()=>{
+ const h=harness();const before=snapshot([match()],[],-60000);h.setFeed(before);await run(h);
+ for(const [id,team,kickoff] of [['a','1',true],['b','9',true],['c','1',false]]){const p=alerts.defaultAlertPreferences();p.favorites=[{id:team,name:team}];p.myTeams={enabled:true,kickoff,final:true};await subscribe(h,p,id);}
+ h.setFeed(snapshot([match('in')],[],10));await run(h);assert.equal(h.sent.length,1);assert.ok(h.sent[0].s.endpoint.endsWith('a'));assert.deepEqual(h.sent[0].payload.types,['kickoff']);
+ h.values.set('fd:v05:baseline',JSON.stringify(before));await run(h);assert.equal(h.sent.length,1);
+});
+test('AP, Coaches, CFP and reviewed developments route independently and repeated checks dedupe',async()=>{
+ const h=harness();const now=Date.now();const poll=(id,week)=>({id,name:id,status:'available',season:2026,week,date:new Date(now-(week===8?86400000:100)).toISOString(),teams:Array.from({length:25},(_,i)=>({rank:i+1,teamId:String(i+1),name:'Team '+i}))});
+ const before=snapshot([],['ap','coaches','cfp'].map(id=>poll(id,8)),-60000);h.setFeed(before);await run(h);
+ for(const type of ['ap','coaches','cfp','developments']){const p=alerts.defaultAlertPreferences();p.breaking.enabled=true;p.breaking[type]=true;const cap=await subscribe(h,p,type);const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));record.typeSince.development=now-5000;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
+ h.news.push({id:'test-reviewed-report',title:'TEST ONLY official report',summary:'Isolated fixture, never published.',sourceUrl:'https://collegefootballplayoff.com/news/test',publishedAt:new Date(now-1000).toISOString(),verifiedAt:new Date(now-500).toISOString(),confirmed:true});
+ h.setFeed(snapshot([],['ap','coaches','cfp'].map(id=>poll(id,9)),10));await run(h);assert.equal(h.sent.length,4);
+ for(const type of ['ap','coaches','cfp'])assert.equal(h.sent.filter(s=>s.payload.types.includes(type)).length,1);
+ assert.equal(h.sent.filter(s=>s.payload.types.includes('development')).length,1);
+ h.values.set('fd:v05:baseline',JSON.stringify(before));await run(h);assert.equal(h.sent.length,4);
+});
+test('provider expiration removes endpoints and ambiguous delivery failures never retry the same event',async()=>{
+ for(const statusCode of [410,undefined]){
+  const h=harness();const before=snapshot([match('in')],[],-60000);h.setFeed(before);await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;const cap=await subscribe(h,p);
+  h.setSendError(Object.assign(new Error('provider test failure'),{statusCode}));h.setFeed(snapshot([match('post')],[],10));assert.equal((await run(h)).status,502);assert.equal(h.sent.length,1);
+  assert.equal(!!await h.store.loadSubscription(cap.id),statusCode!==410);
+  h.values.set('fd:v05:baseline',JSON.stringify(before));await run(h);assert.equal(h.sent.length,1);
+ }
+});
+
+test('a failed background test does not prevent real event processing or the next baseline',async()=>{
+ const h=harness();h.setFeed(snapshot([match('in')],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;const cap=await subscribe(h,p);
+ await h.testDelivery.POST(request({...cap,mode:'background'}));const jobs=h.hashes.get('fd:v05:background-tests');const job=JSON.parse(jobs.get(cap.id));job.dueAt=Date.now()-1;jobs.set(cap.id,JSON.stringify(job));
+ h.setSendError(new Error('ambiguous timeout'));h.setFeed(snapshot([match('post')],[],10));const response=await run(h);assert.equal(response.status,502);assert.equal(h.sent.length,2);assert.equal(h.sent[0].payload.test,true);assert.equal(h.sent[1].payload.id,'game:routing-game:final');assert.equal(JSON.parse(h.values.get('fd:v05:baseline')).games[0].status,'post');
 });
