@@ -1,3 +1,4 @@
+import {remainingFollows,type AlertFeed} from '../../../lib/alerts';
 import { NextResponse } from 'next/server';
 import { randomBytes,createHash } from 'node:crypto';
 import { activationTimes,loadSubscription,pushConfigured,redis,sameToken,safePreferences,SUBS,tokenHash,validPushSubscription } from '../../../lib/push-store';
@@ -7,7 +8,7 @@ export async function POST(request:Request) {
  if(request.headers.get('origin')!==new URL(request.url).origin)return reply({error:'Origin rejected'},403);
  if(!pushConfigured())return reply({error:'Background alerts are not available yet.'},503);
  try {
-  const text=await request.text();if(text.length>12_000)return reply({error:'Request too large'},413);
+  const text=await request.text();if(text.length>32_000)return reply({error:'Request too large'},413);
   const data=JSON.parse(text);const {action,id,token}=data;
   if(!['create','update','delete'].includes(action))return reply({error:'Invalid action'},400);
   // Mutations use a random per-browser capability; no public subscription lookup.
@@ -22,6 +23,8 @@ export async function POST(request:Request) {
   if(!validPushSubscription(data.subscription))return reply({error:'Invalid push endpoint'},400);
   if(old&&old.subscription.endpoint!==data.subscription.endpoint)return reply({error:'Subscription mismatch'},400);
   const preferences=safePreferences(data.preferences);const now=Date.now();
+  const baseline=await redis('GET','fd:v05:baseline');
+  if(preferences.following)preferences.following.items=remainingFollows(preferences,baseline?(JSON.parse(baseline) as AlertFeed).games:[],now);
   const newId=createHash('sha256').update(data.subscription.endpoint).digest('hex');
   const newToken=action==='create'?randomBytes(32).toString('hex'):token;
   if(action==='create'){

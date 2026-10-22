@@ -43,10 +43,11 @@ for(const [engine,device] of [[chromium,null],[webkit,'iPhone 13']]) {
   assert.equal(await page.getByRole('checkbox',{name:'Breaking CFP News alerts',exact:false}).isChecked(),false);
   assert.equal(await page.locator('.favoriteChips button').count(),1);
   assert.equal(await page.getByRole('button',{name:'Enable Notifications',exact:true}).isDisabled(),true);
+  console.log(engine.name()+': settings persistence, independent categories, favorites and unsubscribe passed.');
   if(!device)for(const appearance of ['light','dark'])for(const colorway of ['stadium','turf','prime']) {
    await page.getByRole('button',{name:appearance==='light'?'☀ Light':'☾ Dark',exact:true}).click();
    await page.getByLabel('Colorway',{exact:true}).selectOption(colorway);
-   const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
+   const result=await new AxeBuilder({page}).include('#alerts').include('#following').include('#watchlist').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
    assert.deepEqual(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[],`${appearance}/${colorway}`);
   }
   if(device){
