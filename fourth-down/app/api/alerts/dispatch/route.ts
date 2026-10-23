@@ -5,6 +5,7 @@ import { GET as liveFeed } from '../../live/route';
 import { alertFeedGate,deriveAlertEvents,selectedEvent,hasAlerts,remainingFollows,type AlertFeed,type ConfirmedDevelopment } from '../../../lib/alerts';
 import { appendDeliveryAudit,appendKickoffAudit,appendSchedulerAudit,loadSubscription,pushConfigured,redis,SUBS,tokenHash,type SavedSubscription } from '../../../lib/push-store';
 import {kickoffFeedObservations,kickoffObservations,notificationEligibility} from '../../../lib/kickoff-diagnostics';
+import {deriveGameAlerts,gameAlertRate} from '../../../lib/game-alerts';
 import {recoverKickoffs} from '../../../lib/kickoff-recovery';
 import developments from '../../../data/confirmed-developments.json';
 export const dynamic='force-dynamic';
@@ -40,8 +41,14 @@ export async function GET(request:Request) {
    recovery=recoverKickoffs(prior,feed,stored?JSON.parse(stored):null,observedAt);
    await redis('SET','fd:v062:kickoff-state',JSON.stringify(recovery.memory),'EX',2*86400);
   }catch{auditHealthy=false;await schedulerAudit({kind:'kickoff-recovery-unavailable'});}
-  const events=[...deriveAlertEvents(prior,feed,developments as ConfirmedDevelopment[],observedAt).filter(e=>!e.types.includes('kickoff')),...(recovery?.events||[])];
-  stage='record-feed';await schedulerAudit({kind:'feed-observed',kickoffRecoveryGate:recovery?.gate??'storage-unavailable',kickoffRecovery:recovery?.decisions??{},...context,currentGameCount:feed.games.length,previousGameCount:prior?.games.length??0,games:kickoffFeedObservations(prior,feed,observedAt),eventIds:events.map(e=>e.id)});
+  stage='game-alerts';let gameAlerts:ReturnType<typeof deriveGameAlerts>|null=null;
+  try{const stored=await redis('GET','fd:v07:game-state');gameAlerts=deriveGameAlerts(prior,feed,stored?JSON.parse(stored):null,observedAt);await redis('SET','fd:v07:game-state',JSON.stringify(gameAlerts.state),'EX',2*86400);}catch{auditHealthy=false;await schedulerAudit({kind:'game-alert-state-unavailable'});}
+  const merged=new Map<string,import('../../../lib/alerts').AlertEvent>();
+  for(const e of [...deriveAlertEvents(prior,feed,developments as ConfirmedDevelopment[],observedAt).filter(e=>!e.types.includes('kickoff')),...(recovery?.events||[]),...(gameAlerts?.events||[])]){
+   const old=merged.get(e.id);merged.set(e.id,old?{...old,...e,types:[...new Set([...old.types,...e.types])]}:e);
+  }
+  const events=[...merged.values()].sort((a,b)=>Number(b.types.includes('final')||b.types.includes('confirmedUpset'))-Number(a.types.includes('final')||a.types.includes('confirmedUpset')));
+  stage='record-feed';await schedulerAudit({kind:'feed-observed',gameAlertGate:gameAlerts?.gate??'storage-unavailable',kickoffRecoveryGate:recovery?.gate??'storage-unavailable',kickoffRecovery:recovery?.decisions??{},...context,currentGameCount:feed.games.length,previousGameCount:prior?.games.length??0,games:kickoffFeedObservations(prior,feed,observedAt),eventIds:events.map(e=>e.id)});
   if(previous&&Date.now()-Date.parse(JSON.parse(previous).updatedAt)>300_000)await deliveryAudit('_scheduler',{kind:'baseline-gap',previousAt:JSON.parse(previous).updatedAt,currentAt:feed.updatedAt});
   webpush.setVapidDetails(process.env.VAPID_SUBJECT!,process.env.VAPID_PUBLIC_KEY!,process.env.VAPID_PRIVATE_KEY!);
   let sent=0,failed=0;
@@ -51,13 +58,21 @@ export async function GET(request:Request) {
   do {
    const [next,items]=await redis('HSCAN',SUBS,cursor,'COUNT',100);cursor=next;
    for(let i=0;i<items.length;i+=2){
-    const record=JSON.parse(items[i+1]) as SavedSubscription;scanned++;
+    const record=JSON.parse(items[i+1]) as SavedSubscription;scanned++;const deliveredGames=new Set<string>();
     for(const observation of kickoffObservations(prior,feed,record,observedAt)){if(!await appendKickoffAudit(record.id,observation.gameId,{kind:'kickoff-observed',runId,...context,...observation,recovery:recovery?.decisions[observation.gameId]??null}))auditHealthy=false;}
     for(const event of events){
      // Re-read immediately before delivery so settings/unsubscribe take effect.
      const current=await loadSubscription(record.id);if(!current)continue;
      const eligibility=notificationEligibility(event,current);const types=eligibility.types;
-     if(!types.length||!selectedEvent({...event,types},current.preferences)){await deliveryAudit(current.id,{kind:'event-filtered',eventId:event.id,runId,eventObservedAt:event.observedAt,eligibility,settingsSavedAt:current.updatedAt,following:current.preferences.following,typeSince:current.typeSince});continue;}
+     if(!types.length||!selectedEvent({...event,types},current.preferences)){await deliveryAudit(current.id,{kind:'event-filtered',eventId:event.id,runId,eventObservedAt:event.observedAt,eligibility,settingsSavedAt:current.updatedAt,gameAlerts:current.preferences.gameAlerts,gameAccess:current.gameAccess,kickoffAccess:current.kickoffAccess,following:current.preferences.following,typeSince:current.typeSince});continue;}
+     const optionalLive=types.some(t=>['halftime','close','upsetWatch','scoring'].includes(t));
+     const gameKey=/^game:(\d+):/.exec(event.id)?.[1];const recentKey=`fd:v07:last-live:${current.id}:${gameKey}`;
+     const budgetKey=`fd:v07:live-budget:${current.id}`;
+     if(types.includes('scoring')&&gameKey&&deliveredGames.has(gameKey)){await deliveryAudit(current.id,{kind:'coalesced-with-game-alert',runId,eventId:event.id});continue;}
+     if(optionalLive){
+      const last=Number(await redis('GET',recentKey)||0),rawBudget=await redis('GET',budgetKey);const budget=(rawBudget?JSON.parse(rawBudget):[]) as number[];
+      if((gameAlertRate({...event,types})>0&&Date.now()-last<gameAlertRate({...event,types}))||budget.filter(at=>at>Date.now()-900000).length>=6){await deliveryAudit(current.id,{kind:'rate-limited',runId,eventId:event.id,types});continue;}
+     }
      const ttl=event.expiresAt===undefined?300:Math.min(300,Math.floor((event.expiresAt-Date.now())/1000));if(ttl<=0)continue;
      const claim=`fd:v05:sent:${record.id}:${event.id}`;
      if(!await redis('SET',claim,'claimed','NX','EX',60*60*24*400)){await redis('INCR','fd:v05:duplicates-suppressed');await deliveryAudit(current.id,{kind:'duplicate-suppressed',runId,eventId:event.id});continue;}
@@ -65,8 +80,10 @@ export async function GET(request:Request) {
      try {
       const receipt=randomBytes(32).toString('hex');
       await redis('SET',`fd:v05:receipt:${tokenHash(receipt)}`,JSON.stringify({id:current.id,kind:'event',eventId:event.id,types}),'EX',300);
+      if(optionalLive){await redis('SET',recentKey,String(Date.now()),'EX',3600);const priorBudget=await redis('GET',budgetKey);const times=(priorBudget?JSON.parse(priorBudget):[]) as number[];await redis('SET',budgetKey,JSON.stringify([...times.filter(at=>at>Date.now()-900000),Date.now()]),'EX',1800);}
       deliveryStage='provider-send';
-      await webpush.sendNotification(current.subscription,JSON.stringify({...event,types,receipt}),{TTL:ttl,urgency:'normal',timeout:5000});sent++;deliveryStage='acceptance-storage';
+      const title=types.includes('confirmedUpset')?'Confirmed Upset · Final':types.includes('upsetWatch')?'Upset Watch':types.includes('close')?'Close game':types.includes('halftime')?'Halftime score':types.includes('scoring')?'Scoring update':types.includes('final')&&!types.includes('upset')?'Final score':event.title;
+      await webpush.sendNotification(current.subscription,JSON.stringify({...event,title,types,receipt}),{TTL:ttl,urgency:'normal',timeout:5000});sent++;if(gameKey)deliveredGames.add(gameKey);deliveryStage='acceptance-storage';
       await deliveryAudit(current.id,{kind:'provider-accepted',runId,settingsSavedAt:current.updatedAt,eligibility,eventId:event.id,types,eventObservedAt:event.observedAt,following:current.preferences.following});
       for(const type of types)await redis('HSET','fd:v05:accepted-types',type,JSON.stringify({eventId:event.id,at:new Date().toISOString()}));
      }catch(error){

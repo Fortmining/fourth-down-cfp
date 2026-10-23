@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { defaultAlertPreferences,hasAlerts,normalizePreferences,type AlertPreferences } from '../lib/alerts';
+import { defaultGameAlerts,defaultAlertPreferences,hasAlerts,normalizePreferences,type AlertPreferences } from '../lib/alerts';
 import {CHANGED,inspectThisDevice} from '../lib/following-client';
 const PREFS='fourth-down-alert-preferences-v1';
 const CONTROL='fourth-down-push-control-v1';
@@ -111,10 +111,13 @@ export default function AlertSettings({teams}:Props) {
   finally{working.current=false;setBusy(false);}
  }
  function category(group:'myTeams'|'breaking',key:string,value:boolean) {change({...preferences,[group]:{...preferences[group],[key]:value}});}
+ function gameType(group:'favorites'|'following',type:string,value:boolean){const choices=preferences.gameAlerts||defaultGameAlerts();change({...preferences,gameAlerts:{...choices,[group]:{...choices[group],[type]:value}}});}
+ const gameLabels={halftime:'Halftime scores',close:'Close game',upsetWatch:'Upset Watch',confirmedUpset:'Confirmed Upset',scoring:'Scoring updates'} as const;
+ const gameChoices=(group:'favorites'|'following')=><div className="alertTypeChoices">{(Object.keys(gameLabels) as (keyof typeof gameLabels)[]).filter(t=>group==='following'||!['close','scoring'].includes(t)).map(type=><label key={type}><input type="checkbox" aria-label={`${group==='following'?'Temporary follows':'Favorite teams'} · ${gameLabels[type]}`} checked={preferences.gameAlerts?.[group][type]===true} onChange={e=>gameType(group,type,e.target.checked)}/>{gameLabels[type]}</label>)}</div>;
  return <section id="alerts" className="alertSettings" aria-labelledby="alert-settings-heading">
-  <div className="intro"><div><div className="eyebrow">YOUR GAME DAY. YOUR CHOICE.</div><h2 id="alert-settings-heading">Alerts, on your terms.</h2></div><span className="badge">OFF UNTIL YOU OPT IN</span></div>
-  <p className="context">Choose My Teams, Breaking CFP News, or both. Each has its own controls. Settings are saved on this device; notification permission is only requested when you enable alerts.</p>
-  <fieldset className="followingAlert" disabled={!ready||busy}><legend>Temporary Following</legend><label className="alertToggle"><input type="checkbox" checked={preferences.following?.enabled===true} onChange={e=>change({...preferences,following:{items:preferences.following?.items||[],enabled:e.target.checked}})}/><span><b>Following alerts</b><small>Confirmed kickoff and final scores for active follows. Independent of My Teams and rankings.</small></span></label><p>Following a game or team only adds it to your watchlist. Select this switch and save or enable notifications to receive alerts.</p></fieldset>
+  <div className="intro"><div><div className="eyebrow">YOUR GAME DAY. YOUR CHOICE.</div><h2 id="alert-settings-heading">Notifications</h2></div><span className="badge">OFF UNTIL YOU OPT IN</span></div>
+  <p className="context">Choose alerts for permanent favorites, temporary follows, and ranking publications separately. Settings are saved on this device; notification permission is only requested when you enable alerts.</p>
+  <fieldset className="followingAlert" disabled={!ready||busy}><legend>Temporary Following</legend><label className="alertToggle"><input type="checkbox" checked={preferences.following?.enabled===true} onChange={e=>change({...preferences,following:{items:preferences.following?.items||[],enabled:e.target.checked}})}/><span><b>Following alerts</b><small>Choose alert types for active follows. Independent of permanent favorites and rankings.</small></span></label><p>Following a game or team only adds it to your watchlist. Select this switch and save or enable notifications to receive alerts.</p><div className="alertTypeChoices">{(['kickoff','final'] as const).map(type=><label key={type}><input type="checkbox" aria-label={`Temporary follows · ${type==='kickoff'?'Kickoff confirmed':'Final scores'}`} checked={preferences.gameAlerts?.following[type]!==false} onChange={e=>gameType('following',type,e.target.checked)}/>{type==='kickoff'?'Kickoff confirmed':'Final scores'}</label>)}</div>{gameChoices('following')}</fieldset>
   <div className="alertCategories">
    <fieldset disabled={!ready||busy}><legend>My Teams</legend>
     <label className="alertToggle"><input type="checkbox" checked={preferences.myTeams.enabled} onChange={e=>category('myTeams','enabled',e.target.checked)}/><span><b>My Teams alerts</b><small>Only the teams you choose.</small></span></label>
@@ -122,6 +125,7 @@ export default function AlertSettings({teams}:Props) {
      <label><input type="checkbox" checked={preferences.myTeams.kickoff} onChange={e=>category('myTeams','kickoff',e.target.checked)}/> Kickoff confirmed</label>
      <label><input type="checkbox" checked={preferences.myTeams.final} onChange={e=>category('myTeams','final',e.target.checked)}/> Final scores</label>
     </div>
+    {gameChoices('favorites')}
     <p className="alertHint">Kickoff alerts follow ESPN’s confirmed live status. Finals require a completed game and valid scores.</p>
     <label className="teamSearch">Find your teams<input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by team name"/></label>
     <p className="alertHint">{preferences.favorites.length} of 20 teams selected · Teams from available FBS schedules and rankings.</p>
@@ -141,6 +145,7 @@ export default function AlertSettings({teams}:Props) {
     <p className="alertHint">Playoff developments require an editor-verified report linked to an official or established source. Rankings alerts require a new published edition. No projections, rumors, historical catch-up alerts, or substitution between polls.</p></details>
    </fieldset>
   </div>
+  <details className="alertPolicy"><summary>Game alert rules & repeat limits</summary><p>Close game: margin of eight points or less in the final five minutes of Q4, or overtime. Upset Watch: in that same late window, an AP top-10 team leads by eight or less, is tied, or trails an unranked team or one at least ten places lower. Confirmed Upset requires a verified final and winner.</p><p>AP rankings are frozen for each game from the published pregame or first-quarter edition. Missing AP data means no new upset alerts; Coaches and CFP are not substituted. Halftime requires ESPN’s halftime state and scores. Scoring updates may combine multiple scores between checks and are limited to one per game every ten minutes.</p><p>Close game and Upset Watch share one alert per regulation/overtime phase and a five-minute game cooldown. At most six optional live alerts per device in a rolling 15-minute window. Kickoff, finals and ranking publications keep their own event identities. All new types stay off until selected and saved.</p></details>
   <div className="alertDelivery">
    <p className="permissionStatus">Notification permission: <b>{ready?permissionLabel:'Checking…'}</b></p>
    <b>{!ready?'Checking this device…':active&&browserSubscribed===false?'Saved subscription needs renewal. Unsubscribe, then enable again.':active?dirty?'Settings changed · save to update delivery':'Subscribed on this device':'No active subscription on this device'}</b>

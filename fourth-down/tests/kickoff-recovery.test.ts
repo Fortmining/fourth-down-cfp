@@ -17,7 +17,7 @@ test('unsupported intermediate ESPN state and premature live status do not consu
  }
 });
 test('rejects stale/future feeds, expired windows, unknown clocks, halftime, overtime and invalid or shifted timestamps',()=>{
- for(const [now,g,offset] of [[start+720000,game('in'),0],[start+240000,game('in',{period:2}),0],[start+240000,game('in',{period:5}),0],[start+240000,game('in',{clock:undefined}),0],[start+240000,game('in',{clock:900}),0],[start+240000,game('in',{date:'invalid'}),0],[start+240000,game('in',{date:new Date(start+240000).toISOString()}),0],[start+240000,game('in'),-90001],[start+240000,game('in'),30001]] as [number,AlertGame,number][]){const result=recoverKickoffs(null,feed(now+offset,[g]),initial(),now);assert.equal(result.events.length,0,JSON.stringify([now,g,offset]));}
+ for(const [now,g,offset] of [[start+KICKOFF_WINDOW_MS,game('in'),0],[start+240000,game('in',{period:2}),0],[start+240000,game('in',{period:5}),0],[start+240000,game('in',{clock:undefined}),0],[start+240000,game('in',{clock:900}),0],[start+240000,game('in',{date:'invalid'}),0],[start+240000,game('in',{date:new Date(start+240000).toISOString()}),0],[start+240000,game('in'),-90001],[start+240000,game('in'),30001]] as [number,AlertGame,number][]){const result=recoverKickoffs(null,feed(now+offset,[g]),initial(),now);assert.equal(result.events.length,0,JSON.stringify([now,g,offset]));}
  assert.equal(recoverKickoffs(null,feed(start+1000,[game('in',{clock:100})]),initial(),start+1000).decisions['123'].reason,'clock-ahead-of-wall-time');
 });
 test('does not invent a witness on cold start or reuse identity across teams, seasons or final-to-live regressions',()=>{
@@ -27,7 +27,7 @@ test('does not invent a witness on cold start or reuse identity across teams, se
  const ended=recoverKickoffs(null,feed(start+100000,[game('post',{providerStatus:'STATUS_FINAL',completed:true})]),initial(),start+100000);
  assert.equal(recoverKickoffs(null,feed(start+240000,[game('in')]),ended.memory,start+240000).events.length,0);
 });
-function subscription(at:number):SavedSubscription{const p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:start-3600000,expiresAt:start+86400000}]};return {id:'a',tokenHash:'test',subscription:{endpoint:'test',keys:{auth:'',p256dh:''}},preferences:p,updatedAt:at,typeSince:{kickoff:at,final:at,ap:at,coaches:at,cfp:at,upset:at,development:at},kickoffAccess:kickoffAccessTimes(null,p,at)};}
+function subscription(at:number):SavedSubscription{const p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:start-3600000,expiresAt:start+86400000}]};return {id:'a',tokenHash:'test',subscription:{endpoint:'test',keys:{auth:'',p256dh:''}},preferences:p,updatedAt:at,typeSince:{halftime:at,close:at,upsetWatch:at,confirmedUpset:at,scoring:at,kickoff:at,final:at,ap:at,coaches:at,cfp:at,upset:at,development:at},kickoffAccess:kickoffAccessTimes(null,p,at)};}
 test('authoritative server timing rejects late-created, backdated, late-enabled follows and new favorites',()=>{
  const e=recoverKickoffs(null,feed(start+480000,[game('in')]),initial(),start+480000).events[0];
  assert.equal(eligibleRecoveredKickoff(e,subscription(start-3600000),start+480000),true);
@@ -39,4 +39,8 @@ test('authoritative server timing rejects late-created, backdated, late-enabled 
 test('unrelated settings preserve per-route activation and removing/readding a follow resets its server timing',()=>{
  const s=subscription(start-3600000),p=structuredClone(s.preferences);p.breaking.ap=true;assert.deepEqual(kickoffAccessTimes(s,p,start+1000),s.kickoffAccess);
  const off={...s,preferences:{...s.preferences,following:{enabled:true,items:[]}}};assert.equal(kickoffAccessTimes(off,p,start+1000).follows['game:123'],start+1000);
+});
+
+test('first live feed arriving after the eight-minute check is recoverable at the twelve-minute check',()=>{
+ const scheduled=recoverKickoffs(null,feed(start+480000,[game()]),initial(),start+480000);const result=recoverKickoffs(null,feed(start+720000,[game('in',{clock:845})]),scheduled.memory,start+720000);assert.equal(result.events.length,1);assert.equal(result.events[0].expiresAt,start+900000);
 });
