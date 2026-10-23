@@ -3,7 +3,7 @@ import { timingSafeEqual,randomBytes } from 'node:crypto';
 import webpush from 'web-push';
 import { GET as liveFeed } from '../../live/route';
 import { deriveAlertEvents,selectedEvent,hasAlerts,remainingFollows,type AlertFeed,type ConfirmedDevelopment } from '../../../lib/alerts';
-import { loadSubscription,pushConfigured,redis,SUBS,tokenHash,type SavedSubscription } from '../../../lib/push-store';
+import { appendDeliveryAudit,loadSubscription,pushConfigured,redis,SUBS,tokenHash,type SavedSubscription } from '../../../lib/push-store';
 import developments from '../../../data/confirmed-developments.json';
 export const dynamic='force-dynamic';
 export const maxDuration=60;
@@ -25,6 +25,7 @@ export async function GET(request:Request) {
   const feed=await response.json() as AlertFeed;
   const previous=await redis('GET','fd:v05:baseline');
   const events=deriveAlertEvents(previous?JSON.parse(previous):null,feed,developments as ConfirmedDevelopment[]);
+  if(previous&&Date.now()-Date.parse(JSON.parse(previous).updatedAt)>300_000)await appendDeliveryAudit('_scheduler',{kind:'baseline-gap',previousAt:JSON.parse(previous).updatedAt,currentAt:feed.updatedAt});
   webpush.setVapidDetails(process.env.VAPID_SUBJECT!,process.env.VAPID_PUBLIC_KEY!,process.env.VAPID_PRIVATE_KEY!);
   let sent=0,failed=0;
   // Bounded scan; monitor multiple invocations for larger audiences. All keys
@@ -38,17 +39,19 @@ export async function GET(request:Request) {
      // Re-read immediately before delivery so settings/unsubscribe take effect.
      const current=await loadSubscription(record.id);if(!current)continue;
      const types=event.types.filter(type=>event.observedAt>=current.typeSince[type]&&selectedEvent({...event,types:[type]},current.preferences));
-     if(!types.length||!selectedEvent({...event,types},current.preferences))continue;
+     if(!types.length||!selectedEvent({...event,types},current.preferences)){await appendDeliveryAudit(current.id,{kind:'event-filtered',eventId:event.id,eventObservedAt:event.observedAt,following:current.preferences.following,typeSince:current.typeSince});continue;}
      const claim=`fd:v05:sent:${record.id}:${event.id}`;
-     if(!await redis('SET',claim,'claimed','NX','EX',60*60*24*400)){await redis('INCR','fd:v05:duplicates-suppressed');continue;}
+     if(!await redis('SET',claim,'claimed','NX','EX',60*60*24*400)){await redis('INCR','fd:v05:duplicates-suppressed');await appendDeliveryAudit(current.id,{kind:'duplicate-suppressed',eventId:event.id});continue;}
      try {
       const receipt=randomBytes(32).toString('hex');
       await redis('SET',`fd:v05:receipt:${tokenHash(receipt)}`,JSON.stringify({id:current.id,kind:'event',eventId:event.id,types}),'EX',300);
       await webpush.sendNotification(current.subscription,JSON.stringify({...event,types,receipt}),{TTL:300,urgency:'normal',timeout:5000});sent++;
+      await appendDeliveryAudit(current.id,{kind:'provider-accepted',eventId:event.id,types,eventObservedAt:event.observedAt,following:current.preferences.following});
       for(const type of types)await redis('HSET','fd:v05:accepted-types',type,JSON.stringify({eventId:event.id,at:new Date().toISOString()}));
      }catch(error){
       failed++;
       const status=(error as {statusCode?:number}).statusCode;
+      await appendDeliveryAudit(current.id,{kind:'provider-failed',eventId:event.id,status:status??null});
       if(status===404||status===410){await redis('HDEL',SUBS,record.id);break;}
       // Keep claim after an ambiguous timeout: favor no duplicates over retrying
       // a notification that a provider may already have accepted.
@@ -61,7 +64,10 @@ export async function GET(request:Request) {
       const updated={...latest,preferences:{...latest.preferences,following:{...latest.preferences.following,items}}};
       // Compare-and-set: cleanup must never overwrite a simultaneous unfollow,
       // preference update, or deleted subscription.
-      await redis('EVAL',"if redis.call('hget',KEYS[1],ARGV[1]) == ARGV[2] then return redis.call('hset',KEYS[1],ARGV[1],ARGV[3]) else return 0 end",1,SUBS,record.id,JSON.stringify(latest),JSON.stringify(updated));
+      const archived=await appendDeliveryAudit(record.id,{kind:'follow-cleanup-snapshot',previousFollowing:latest.preferences.following,following:updated.preferences.following});
+      if(!archived)continue; // Keep the server record when its history cannot be retained.
+      const changed=await redis('EVAL',"if redis.call('hget',KEYS[1],ARGV[1]) == ARGV[2] then return redis.call('hset',KEYS[1],ARGV[1],ARGV[3]) else return 0 end",1,SUBS,record.id,JSON.stringify(latest),JSON.stringify(updated));
+      if(changed)await appendDeliveryAudit(record.id,{kind:'follows-ended',reason:'confirmed-final-or-expired',previousFollowing:latest.preferences.following,following:updated.preferences.following});
      }
     }
    }

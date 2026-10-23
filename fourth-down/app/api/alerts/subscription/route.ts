@@ -1,7 +1,7 @@
 import {remainingFollows,type AlertFeed} from '../../../lib/alerts';
 import { NextResponse } from 'next/server';
 import { randomBytes,createHash } from 'node:crypto';
-import { activationTimes,loadSubscription,pushConfigured,redis,sameToken,safePreferences,SUBS,tokenHash,validPushSubscription } from '../../../lib/push-store';
+import { appendDeliveryAudit,activationTimes,loadSubscription,pushConfigured,redis,sameToken,safePreferences,SUBS,tokenHash,validPushSubscription } from '../../../lib/push-store';
 export const dynamic='force-dynamic';
 const reply=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export async function POST(request:Request) {
@@ -19,7 +19,7 @@ export async function POST(request:Request) {
    if(!old){return action==='delete'?reply({ok:true}):reply({error:'Subscription expired; enable alerts again.'},404);}
    if(!sameToken(token,old.tokenHash))return reply({error:'Not authorized'},403);
   }
-  if(action==='delete'){await redis('HDEL',SUBS,id);return reply({ok:true});}
+  if(action==='delete'){await appendDeliveryAudit(id,{kind:'unsubscribed',following:old?.preferences.following});await redis('HDEL',SUBS,id);return reply({ok:true});}
   if(!validPushSubscription(data.subscription))return reply({error:'Invalid push endpoint'},400);
   if(old&&old.subscription.endpoint!==data.subscription.endpoint)return reply({error:'Subscription mismatch'},400);
   const preferences=safePreferences(data.preferences);const now=Date.now();
@@ -41,6 +41,7 @@ export async function POST(request:Request) {
   if(action==='create'){
    const created=await redis('HSETNX',SUBS,newId,encoded);if(!created)return reply({error:'Subscription already exists'},409);
   }else await redis('HSET',SUBS,id,encoded);
+  await appendDeliveryAudit(newId,{kind:'settings-saved',serverSavedAt:now,following:preferences.following,previousFollowing:old?.preferences.following,favorites:preferences.favorites.map(t=>t.id),myTeams:preferences.myTeams,breaking:preferences.breaking});
   return reply({ok:true,id:newId,token:newToken,preferences});
  }catch{return reply({error:'Could not save alert settings. Nothing has been confirmed; try again.'},503);}
 }
