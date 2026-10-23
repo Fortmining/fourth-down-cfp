@@ -1,4 +1,4 @@
-# Kickoff incident — OPEN
+# Kickoff incident — recovery verified
 
 Tracking: https://github.com/Fortmining/fourth-down-cfp/issues/5
 
@@ -41,3 +41,13 @@ Recovery is allowed only from scheduled time through strictly less than 15 minut
 Eligibility uses the earlier of recorded schedule and first server-observed live state. A subscription route must have been saved and opted in by that cutoff. Per-team/per-follow server timestamps preserve existing choices across unrelated saves and prevent backdated client follows or newly enabled routes from receiving kickoff catch-up. Legacy records use their last server settings write conservatively. Both server and updated worker enforce expiry; provider TTL is limited to remaining recovery time. Existing server/worker event claims retain game:<id>:kickoff, so reruns, overlapping favorites/follows and repeated live snapshots do not duplicate kickoff.
 
 Final scores and polls continue using the existing transition policy. Source assembly freshness is not proof of ESPN's upstream publication freshness; a consistent but incorrect upstream feed cannot be independently disproved here. Long delays beyond 15 minutes, missing clock data and no pregame witness intentionally remain suppressed. Issue #5 stays OPEN until real-world kickoff display evidence is confirmed. Regression fixtures are not real delivery evidence.
+
+## Real production verification — October 23
+
+Issue #5 closed after the user confirmed finding the real Duke–Virginia kickoff alert. This meets the requested real-world verification condition; it does not reconstruct the historical App State–JMU cause.
+
+The Duke–Virginia follow was created at 5:16:18.068 PM EDT and saved on the server at 5:16:18.217 PM. ESPN remained scheduled during the 7:08 PM check, then the public feed at 7:08:48 PM showed a progressed first quarter. ESPN's kickoff play carries wall-clock 7:06:07 PM. The twelve-minute check needed the final 15-minute recovery window.
+
+Normal run `bf1875b21ce0` recovered `game:401858271:kickoff`: Apple accepted at 7:12:01.898 PM and the existing iPhone worker acknowledged display at 7:12:03.425 PM (iOS, worker 0.6.1, zero open app windows). One eligible push, zero failures, unrelated game filtered, subscription unchanged. The user confirmed finding the alert. The 7:16 PM run `5a2f524671ab` sent zero alerts, recorded window expiry, and retained exactly one display receipt. No test push or injected event was involved.
+
+109 regression tests and local/final preview/production builds passed. New halftime, close-game, Upset Watch, scoped Confirmed Upset and scoring alert types remain simulation-validated only, with no real display receipt yet.
