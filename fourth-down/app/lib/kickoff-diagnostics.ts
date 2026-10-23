@@ -1,9 +1,10 @@
 import {kickoffDecision,selectedEvent,normalizePreferences,type AlertFeed,type AlertEvent,type AlertGame} from './alerts';
+import {eligibleRecoveredKickoff} from './kickoff-recovery';
 import type {SavedSubscription} from './push-store';
 
 // Fixed codes and normalized preferences only; never include endpoints or capabilities.
 export function notificationEligibility(event:AlertEvent,saved:SavedSubscription) {
- const decisions=event.types.map(type=>({type,selected:selectedEvent({...event,types:[type]},saved.preferences),activeSince:saved.typeSince[type],activationPassed:event.observedAt>=saved.typeSince[type]}));
+ const decisions=event.types.map(type=>({type,selected:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):selectedEvent({...event,types:[type]},saved.preferences),activeSince:saved.typeSince[type],activationPassed:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):event.observedAt>=saved.typeSince[type]}));
  return {types:decisions.filter(d=>d.selected&&d.activationPassed).map(d=>d.type),decisions};
 }
 const state=(g:AlertGame|undefined)=>g?{status:g.status,providerStatus:g.providerStatus??null,scheduledAt:g.date,completed:g.completed===true,teamIds:g.teams.map(t=>t.id)}:null;

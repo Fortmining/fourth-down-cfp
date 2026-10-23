@@ -28,10 +28,10 @@ export function hasAlerts(p:AlertPreferences) {
  return !!(p.following?.enabled && p.following.items.some(f=>f.expiresAt>Date.now())) || (p.myTeams.enabled && p.favorites.length>0 && (p.myTeams.kickoff||p.myTeams.final)) ||
  (p.breaking.enabled && (p.breaking.upsets||p.breaking.developments||p.breaking.ap||p.breaking.coaches||p.breaking.cfp));
 }
-export type AlertGame={id:string;date:string;name:string;status:string;providerStatus?:string;completed?:boolean;teams:{id:string;name:string;score?:string;rank?:number|null;winner?:boolean}[]};
+export type AlertGame={id:string;date:string;name:string;status:string;providerStatus?:string;completed?:boolean;period?:number;clock?:number;teams:{id:string;name:string;score?:string;rank?:number|null;winner?:boolean}[]};
 export type AlertFeed={updatedAt:string;season:number|null;games:AlertGame[];polls:Poll[];warnings?:string[];scoreboardAvailable?:boolean;scoreboardDate?:string|null};
 export type ConfirmedDevelopment={id:string;title:string;summary:string;sourceUrl:string;publishedAt:string;verifiedAt:string;confirmed:boolean};
-export type AlertEvent={id:string;types:AlertType[];teamIds:string[];title:string;body:string;url:string;observedAt:number};
+export type AlertEvent={id:string;types:AlertType[];teamIds:string[];title:string;body:string;url:string;observedAt:number;eligibilityAt?:number;expiresAt?:number};
 const trustedNewsHosts=new Set(['collegefootballplayoff.com','apnews.com','afca.com','espn.com','ncaa.com']);
 export function verifiedDevelopment(n:ConfirmedDevelopment,now:number) {
  try { const u=new URL(n.sourceUrl); return n.confirmed===true && /^[a-z0-9-]{1,100}$/.test(n.id) &&
@@ -103,7 +103,7 @@ export function deriveAlertEvents(previous:AlertFeed|null,current:AlertFeed,news
 export function selectedEvent(e:AlertEvent,p:AlertPreferences):boolean {
  const gameId=/^game:([^:]+):/.exec(e.id)?.[1];
  const followed=p.following?.enabled && (e.types.includes('kickoff')||e.types.includes('final')) && p.following.items.some(f=>
-  f.createdAt<=e.observedAt && f.expiresAt>Math.max(e.observedAt,Date.now()) &&
+  f.createdAt<=(e.eligibilityAt??e.observedAt) && f.expiresAt>Math.max(e.observedAt,Date.now()) &&
   (f.duration==='game'?f.gameId===gameId:f.kind==='team'&&e.teamIds.includes(f.id)));
 
  const teamMatch=p.myTeams.enabled && e.teamIds.some(id=>p.favorites.some(t=>t.id===id));

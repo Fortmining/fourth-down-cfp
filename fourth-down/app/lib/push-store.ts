@@ -1,8 +1,9 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { PushSubscription } from 'web-push';
 import { normalizePreferences, type AlertPreferences, type AlertType } from './alerts';
+import type {KickoffAccess} from './kickoff-recovery';
 export const SUBS='fd:v05:subscriptions';
-export type SavedSubscription={id:string;tokenHash:string;subscription:PushSubscription;preferences:AlertPreferences;typeSince:Record<AlertType,number>;updatedAt:number};
+export type SavedSubscription={id:string;tokenHash:string;subscription:PushSubscription;preferences:AlertPreferences;typeSince:Record<AlertType,number>;updatedAt:number;kickoffAccess?:KickoffAccess};
 const storageUrl=()=>process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const storageToken=()=>process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 export function pushConfigured() {return !!storageUrl() && !!storageToken() && ['VAPID_PUBLIC_KEY','VAPID_PRIVATE_KEY','VAPID_SUBJECT','CRON_SECRET'].every(key=>!!process.env[key]);}
