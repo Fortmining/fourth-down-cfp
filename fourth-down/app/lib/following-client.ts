@@ -39,10 +39,10 @@ async function performSyncFollowing(){
    channel.port1.onmessage=e=>{clearTimeout(timeout);channel.port1.close();if(e.data?.ok)resolve();else reject(Error('Watchlist saved. Notification storage unavailable.'));};
    registration.active!.postMessage({type:'alert-preferences',preferences:p},[channel.port2]);
   });
-  if(localStorage.getItem('fourth-down-alert-settings-pending-v1')==='true'){await recordSync('settings-save-required',p,control);return 'Watchlist saved. Save alert settings in More to update delivery.';}
   stage='server-save-failed';
-  const r=await fetch('/api/alerts/subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'update',...control,subscription:subscription.toJSON(),preferences:p})});
+  const r=await fetch('/api/alerts/subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'following',...control,following:p.following})});
   httpStatus=r.status;if(!r.ok)throw Error('Watchlist saved. Retry to update alert delivery.');
+  const result=await r.json();if(result.preferences)storePreferences(normalizePreferences(result.preferences));
   localStorage.removeItem('fourth-down-following-pending');
   await recordSync('server-saved',p,control,httpStatus);
   return p.following?.enabled?'Watchlist and following alerts updated.':'Watchlist saved. Following alerts are off.';

@@ -1,4 +1,5 @@
-import type {AlertEvent,AlertFeed,AlertGame,AlertPreferences,ExtraGameType} from './alerts';
+import {followsType} from './alerts.ts';
+import type {AlertEvent,AlertFeed,AlertGame,AlertPreferences,ExtraGameType} from './alerts.ts';
 import type {SavedSubscription} from './push-store';
 type Ranking={source:'AP';edition:string;ranks:Record<string,number>};
 type GameMemory={teamIds:string[];lastSeenAt:number;phase:string;terminal?:boolean;halftimeWitness?:boolean;scores:number[];ranking:Ranking|null;events:Record<string,number>};
@@ -70,7 +71,7 @@ export function extraGameEligible(e:AlertEvent,s:SavedSubscription,type:ExtraGam
  const since=(group:string)=>s.gameAccess?.[`${group}:${type}`]??s.updatedAt;
  const favorite=since('favorites')<=cutoff&&p.myTeams.enabled&&p.gameAlerts!.favorites[type]&&p.favorites.some(t=>e.teamIds.includes(t.id)&&(access?.favorites[t.id]??s.updatedAt)<=cutoff);
  const gameId=/^game:(\d+):/.exec(e.id)?.[1];
- const follow=since('following')<=cutoff&&p.following?.enabled&&p.gameAlerts!.following[type]&&p.following.items.some(f=>f.createdAt<=cutoff&&(access?.follows[`${f.kind}:${f.id}`]??s.updatedAt)<=cutoff&&f.expiresAt>now&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&e.teamIds.includes(f.id)));
+ const follow=since('following')<=cutoff&&p.following?.enabled&&p.following.items.some(f=>followsType(p,f,type)&&(s.kickoffAccess?.followTypes?.[`${f.kind}:${f.id}:${type}`]??access?.follows[`${f.kind}:${f.id}`]??s.updatedAt)<=cutoff&&f.createdAt<=cutoff&&(access?.follows[`${f.kind}:${f.id}`]??s.updatedAt)<=cutoff&&f.expiresAt>now&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&e.teamIds.includes(f.id)));
  return !!(favorite||follow);
 }
 export function gameAlertRate(e:AlertEvent) {return e.types.includes('scoring')?600000:e.types.some(t=>t==='close'||t==='upsetWatch')?300000:0;}
@@ -78,8 +79,8 @@ export function gameAlertRate(e:AlertEvent) {return e.types.includes('scoring')?
 export function gameAccessTimes(old:SavedSubscription|null,p:AlertPreferences,now:number) {
  const result:Record<string,number>={};
  for(const group of ['favorites','following'] as const)for(const type of ['halftime','close','upsetWatch','confirmedUpset','scoring'] as const){
-  const on=!!p.gameAlerts?.[group][type]&&(group==='favorites'?p.myTeams.enabled:p.following?.enabled);
-  const before=!!old?.preferences.gameAlerts?.[group][type]&&(group==='favorites'?old.preferences.myTeams.enabled:old.preferences.following?.enabled);
+  const on=group==='favorites'?!!p.gameAlerts?.favorites[type]&&p.myTeams.enabled:!!p.following?.enabled&&p.following.items.some(f=>followsType(p,f,type));
+  const before=group==='favorites'?!!old?.preferences.gameAlerts?.favorites[type]&&old.preferences.myTeams.enabled:!!old?.preferences.following?.enabled&&old.preferences.following.items.some(f=>followsType(old.preferences,f,type));
   result[`${group}:${type}`]=on&&before?old?.gameAccess?.[`${group}:${type}`]??old!.updatedAt:now;
  }
  return result;

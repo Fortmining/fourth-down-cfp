@@ -30,14 +30,14 @@ test('watchlist persistence without push opt-in never creates a subscription or 
  const c=client();await c.saveFollowing([follow]);const saved=c.readPreferences();assert.equal(saved.following.items.length,1);assert.equal(saved.following.enabled,false);assert.deepEqual(JSON.parse(JSON.stringify(saved.favorites)),c.prefs.favorites);assert.deepEqual(saved.breaking,c.prefs.breaking);assert.equal(c.requests.length,0);assert.equal(c.workerPreferences.length,0);
 });
 test('existing push opt-in is updated, preserving v0.5 categories and using existing capability',async()=>{
- const c=client({control:true});await c.saveFollowing([follow]);assert.equal(c.requests.length,2);assert.equal(c.requests[1].data.attempt.stage,'server-saved');const req=c.requests[0];assert.equal(req.data.action,'update');assert.equal(req.data.token,'test-capability');assert.deepEqual(req.data.preferences.myTeams,c.prefs.myTeams);assert.deepEqual(req.data.preferences.breaking,c.prefs.breaking);assert.equal(req.data.preferences.following.enabled,false);assert.equal(c.workerPreferences.length,1);assert.equal(c.values.has('fourth-down-following-pending'),false);
+ const c=client({control:true});await c.saveFollowing([follow]);assert.equal(c.requests.length,2);assert.equal(c.requests[1].data.attempt.stage,'server-saved');const req=c.requests[0];assert.equal(req.data.action,'following');assert.equal(req.data.token,'test-capability');assert.equal(req.data.preferences,undefined);assert.equal(req.data.following.enabled,false);assert.equal(c.workerPreferences.length,1);assert.equal(c.values.has('fourth-down-following-pending'),false);
 });
 test('offline unfollow mutes queued local pushes, persists the change, and leaves a retry marker',async()=>{
  const c=client({control:true,offline:true});const p=c.readPreferences();p.following={enabled:true,items:[follow]};c.storePreferences(p);
  await assert.rejects(c.saveFollowing([]));assert.equal(c.readPreferences().following.items.length,0);assert.equal(c.workerPreferences[0].following.items.length,0);assert.equal(c.values.get('fourth-down-following-pending'),'true');
 });
-test('pending v0.5 settings require explicit save; following changes never silently submit them',async()=>{
- const c=client({control:true,dirty:true});const result=await c.saveFollowing([follow]);assert.match(result,/Save alert settings/);assert.equal(c.requests.length,1);assert.equal(c.requests[0].data.attempt.stage,'settings-save-required');assert.equal(c.workerPreferences.length,1);assert.equal(c.values.get('fourth-down-alert-settings-pending-v1'),'true');
+test('pending favorite/ranking drafts are never submitted by a following-only patch',async()=>{
+ const c=client({control:true,dirty:true});await c.saveFollowing([follow]);assert.equal(c.requests[0].data.action,'following');assert.equal(c.requests[0].data.preferences,undefined);assert.equal(c.values.get('fourth-down-alert-settings-pending-v1'),'true');assert.equal(c.workerPreferences.length,1);
 });
 
 test('device inspection recovers a completed follow from old worker storage without rewriting it or enabling push',async()=>{

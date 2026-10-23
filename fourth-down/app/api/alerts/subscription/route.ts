@@ -12,7 +12,7 @@ export async function POST(request:Request) {
  try {
   const text=await request.text();if(text.length>32_000)return reply({error:'Request too large'},413);
   const data=JSON.parse(text);const {action,id,token}=data;
-  if(!['create','update','delete'].includes(action))return reply({error:'Invalid action'},400);
+  if(!['create','update','delete','following'].includes(action))return reply({error:'Invalid action'},400);
   // Mutations use a random per-browser capability; no public subscription lookup.
   let old=null;
   if(action!=='create'){
@@ -22,6 +22,8 @@ export async function POST(request:Request) {
    if(!sameToken(token,old.tokenHash))return reply({error:'Not authorized'},403);
   }
   if(action==='delete'){await appendDeliveryAudit(id,{kind:'unsubscribed',following:old?.preferences.following});await redis('HDEL',SUBS,id);return reply({ok:true});}
+  if(action==='update'&&old&&!data.subscription)data.subscription=old.subscription;
+  if(action==='following'&&old){data.subscription=old.subscription;data.preferences={...old.preferences,following:data.following};}
   if(!validPushSubscription(data.subscription))return reply({error:'Invalid push endpoint'},400);
   if(old&&old.subscription.endpoint!==data.subscription.endpoint)return reply({error:'Subscription mismatch'},400);
   const preferences=safePreferences(data.preferences);const now=Date.now();
@@ -42,7 +44,7 @@ export async function POST(request:Request) {
   const encoded=JSON.stringify(record);
   if(action==='create'){
    const created=await redis('HSETNX',SUBS,newId,encoded);if(!created)return reply({error:'Subscription already exists'},409);
-  }else await redis('HSET',SUBS,id,encoded);
+  }else {const saved=await redis('EVAL',"if redis.call('hget',KEYS[1],ARGV[1]) == ARGV[2] then redis.call('hset',KEYS[1],ARGV[1],ARGV[3]); return 1 else return 0 end",1,SUBS,id,JSON.stringify(old),encoded);if(!saved)return reply({error:'Settings changed elsewhere. Retry to save your changes.'},409);}
   await appendDeliveryAudit(newId,{kind:'settings-saved',serverSavedAt:now,typeSince:record.typeSince,gameAlerts:preferences.gameAlerts,gameAccess:record.gameAccess,kickoffAccess:record.kickoffAccess,following:preferences.following,previousFollowing:old?.preferences.following,favorites:preferences.favorites.map(t=>t.id),myTeams:preferences.myTeams,breaking:preferences.breaking});
   return reply({ok:true,id:newId,token:newToken,preferences});
  }catch{return reply({error:'Could not save alert settings. Nothing has been confirmed; try again.'},503);}
