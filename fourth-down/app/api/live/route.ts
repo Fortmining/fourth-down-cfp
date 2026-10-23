@@ -139,6 +139,7 @@ export async function GET() {
       ],
       provider: "ESPN",
       scoreboardDate: s?.day?.date || null,
+      scoreboardAvailable: scores.status === "fulfilled",
     },
     {
       headers: {

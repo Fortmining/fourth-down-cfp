@@ -29,7 +29,7 @@ export function hasAlerts(p:AlertPreferences) {
  (p.breaking.enabled && (p.breaking.upsets||p.breaking.developments||p.breaking.ap||p.breaking.coaches||p.breaking.cfp));
 }
 export type AlertGame={id:string;date:string;name:string;status:string;providerStatus?:string;completed?:boolean;teams:{id:string;name:string;score?:string;rank?:number|null;winner?:boolean}[]};
-export type AlertFeed={updatedAt:string;season:number|null;games:AlertGame[];polls:Poll[]};
+export type AlertFeed={updatedAt:string;season:number|null;games:AlertGame[];polls:Poll[];warnings?:string[];scoreboardAvailable?:boolean;scoreboardDate?:string|null};
 export type ConfirmedDevelopment={id:string;title:string;summary:string;sourceUrl:string;publishedAt:string;verifiedAt:string;confirmed:boolean};
 export type AlertEvent={id:string;types:AlertType[];teamIds:string[];title:string;body:string;url:string;observedAt:number};
 const trustedNewsHosts=new Set(['collegefootballplayoff.com','apnews.com','afca.com','espn.com','ncaa.com']);
@@ -49,16 +49,39 @@ function validPoll(p:Poll,season:number|null,now:number) {
  return !!season && p.season===season && p.status==='available' && !!p.date && Date.parse(p.date)<=now && now-Date.parse(p.date)<8*24*60*60_000 &&
  p.teams.length>=25 && new Set(p.teams.map(t=>t.teamId)).size===p.teams.length && p.teams.every(t=>Number.isInteger(t.rank)&&t.rank>=1&&t.rank<=25);
 }
-// Conservative observed transitions only. The first run and gaps >5 minutes
-// establish a baseline, never a backlog of historical "breaking" notifications.
+// Return the same gates used by delivery so diagnostics explain suppressed runs.
+export function alertFeedGate(previous:AlertFeed|null,current:AlertFeed,now=Date.now()) {
+ if(!previous)return 'initial-baseline';
+ if(previous.season!==current.season)return 'season-changed';
+ const currentAt=Date.parse(current.updatedAt),previousAt=Date.parse(previous.updatedAt);
+ if(!Number.isFinite(currentAt)||!Number.isFinite(previousAt))return 'invalid-feed-time';
+ if(now-currentAt>180_000)return 'current-feed-stale';
+ if(currentAt>now+30_000)return 'current-feed-in-future';
+ if(now-previousAt>300_000)return 'baseline-gap-over-five-minutes';
+ if(currentAt<=previousAt)return 'feed-time-not-advanced';
+ return 'ready';
+}
+export function kickoffDecision(previous:AlertFeed|null,current:AlertFeed,gameId:string,now=Date.now()) {
+ const gate=alertFeedGate(previous,current,now);if(gate!=='ready')return gate;
+ const g=current.games.find(g=>g.id===gameId),old=previous!.games.find(g=>g.id===gameId);
+ if(!g)return 'game-missing-from-current-feed';
+ if(!old)return 'game-missing-from-baseline';
+ if(g.teams.length!==2)return 'invalid-team-count';
+ if(old.status!=='pre')return 'baseline-not-scheduled';
+ if(g.status!=='in')return 'current-not-live';
+ if(!/^STATUS_(IN_PROGRESS|HALFTIME|END_PERIOD)$/.test(g.providerStatus||''))return 'provider-status-not-confirmed-live';
+ if(!(Date.parse(g.date)<=now))return 'scheduled-time-in-future-or-invalid';
+ return 'kickoff-detected';
+}
+// Conservative observed transitions only. Gaps >5 minutes establish a baseline.
+// Intentionally retained pending real-event evidence; no historical catch-up.
 export function deriveAlertEvents(previous:AlertFeed|null,current:AlertFeed,news:ConfirmedDevelopment[]=[],now=Date.now()):AlertEvent[] {
- if(!previous || previous.season!==current.season || !Number.isFinite(Date.parse(current.updatedAt)) || !Number.isFinite(Date.parse(previous.updatedAt)) || now-Date.parse(current.updatedAt)>180_000 || Date.parse(current.updatedAt)>now+30_000 ||
- now-Date.parse(previous.updatedAt)>300_000 || Date.parse(current.updatedAt)<=Date.parse(previous.updatedAt))return [];
- const events:AlertEvent[]=[];const prior=new Map(previous.games.map(g=>[g.id,g]));
+ if(alertFeedGate(previous,current,now)!=='ready')return [];
+ const events:AlertEvent[]=[];const prior=new Map(previous!.games.map(g=>[g.id,g]));
  for(const g of current.games) {
   const old=prior.get(g.id);if(!old || g.teams.length!==2)continue;
   const teams=g.teams.map(t=>t.id);const url=`/game/${encodeURIComponent(g.id)}`;
-  if(old.status==='pre' && g.status==='in' && /^STATUS_(IN_PROGRESS|HALFTIME|END_PERIOD)$/.test(g.providerStatus||'') && Date.parse(g.date)<=now) {
+  if(kickoffDecision(previous,current,g.id,now)==='kickoff-detected') {
    events.push({id:`game:${g.id}:kickoff`,types:['kickoff'],teamIds:teams,title:'Kickoff confirmed',body:g.name,url,observedAt:now});
   }
   if(old.status!=='post' && confirmedFinal(g)) {
@@ -70,7 +93,7 @@ export function deriveAlertEvents(previous:AlertFeed|null,current:AlertFeed,news
   }
  }
  for(const p of current.polls) {
-  const old=previous.polls.find(q=>q.id===p.id);
+  const old=previous!.polls.find(q=>q.id===p.id);
   if(validPoll(p,current.season,now) && old && edition(old)!==edition(p) && (!old.date || Date.parse(p.date!)>Date.parse(old.date)))
    events.push({id:`poll:${edition(p)}`,types:[p.id as SourceId],teamIds:[],title:`New ${p.name} published`,body:`Published ${p.date!.slice(0,10)}${p.week?` · Week ${p.week}`:''}. View the actual published edition.`,url:'/#rankings-heading',observedAt:now});
  }

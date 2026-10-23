@@ -41,6 +41,11 @@ export function cronAuthorized(request:Request) {const a=Buffer.from(request.hea
 
 // Bounded, private audit history survives one-game cleanup. Never store push keys.
 export async function appendDeliveryAudit(id:string,entry:Record<string,unknown>){
- try{const key=`fd:v06:audit:${id}`;await redis('LPUSH',key,JSON.stringify({at:new Date().toISOString(),...entry}));await redis('LTRIM',key,0,199);await redis('EXPIRE',key,60*60*24*30);return true;}
- catch{console.warn('Notification audit write unavailable');return false;}
+ return appendPrivateAudit(`fd:v06:audit:${id}`,entry,200);
+}
+export const appendKickoffAudit=(id:string,gameId:string,entry:Record<string,unknown>)=>appendPrivateAudit(`fd:v06:kickoff:${id}:${gameId}`,entry,2000);
+export const appendSchedulerAudit=(entry:Record<string,unknown>)=>appendPrivateAudit('fd:v06:scheduler',entry,24000);
+async function appendPrivateAudit(key:string,entry:Record<string,unknown>,limit:number){
+ try{await redis('LPUSH',key,JSON.stringify({at:new Date().toISOString(),...entry}));await redis('LTRIM',key,0,limit-1);await redis('EXPIRE',key,60*60*24*30);return true;}
+ catch{console.warn('Notification audit write unavailable',JSON.stringify({kind:entry.kind,runId:entry.runId,gameId:entry.gameId,decision:entry.decision}));return false;}
 }
