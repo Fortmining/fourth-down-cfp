@@ -38,3 +38,9 @@ export async function loadSubscription(id:string):Promise<SavedSubscription|null
 export function safePreferences(value:unknown) {return normalizePreferences(value);}
 
 export function cronAuthorized(request:Request) {const a=Buffer.from(request.headers.get('authorization')||'');const b=Buffer.from(`Bearer ${process.env.CRON_SECRET||''}`);return !!process.env.CRON_SECRET&&a.length===b.length&&timingSafeEqual(a,b);}
+
+// Bounded, private audit history survives one-game cleanup. Never store push keys.
+export async function appendDeliveryAudit(id:string,entry:Record<string,unknown>){
+ try{const key=`fd:v06:audit:${id}`;await redis('LPUSH',key,JSON.stringify({at:new Date().toISOString(),...entry}));await redis('LTRIM',key,0,199);await redis('EXPIRE',key,60*60*24*30);return true;}
+ catch{console.warn('Notification audit write unavailable');return false;}
+}

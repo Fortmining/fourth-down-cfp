@@ -8,12 +8,15 @@ import * as alerts from '../app/lib/alerts.ts';
 const require=createRequire(import.meta.url);
 const env={UPSTASH_REDIS_REST_URL:'https://test-redis.invalid',UPSTASH_REDIS_REST_TOKEN:'test-only',VAPID_PUBLIC_KEY:'test',VAPID_PRIVATE_KEY:'test',VAPID_SUBJECT:'https://fourth-down-cfp.vercel.app',CRON_SECRET:'test-secret'};
 function harness() {
- let sendError=null;const news=[];
- const values=new Map(),hashes=new Map();const sent=[];
+ let sendError=null,auditError=false;const news=[];
+ const values=new Map(),hashes=new Map(),lists=new Map();const sent=[];
  let feed={season:2026,updatedAt:new Date().toISOString(),games:[],polls:[]};
  const json=(body,init)=>new Response(JSON.stringify(body),{status:init?.status||200,headers:init?.headers});
  function command(args){
   const [raw,key,...rest]=args,op=raw.toUpperCase();
+  if(op==='LPUSH'){if(auditError)throw Error('Isolated audit failure');const list=lists.get(key)||[];list.unshift(rest[0]);lists.set(key,list);return list.length;}
+  if(op==='LTRIM'){lists.set(key,(lists.get(key)||[]).slice(Number(rest[0]),Number(rest[1])+1));return 'OK';}
+  if(op==='LRANGE')return (lists.get(key)||[]).slice(Number(rest[0]),Number(rest[1])+1);
   if(op==='GET')return values.get(key)??null;
   if(op==='GETDEL'){const v=values.get(key)??null;values.delete(key);return v;}
   if(op==='SET'){if(rest.includes('NX')&&values.has(key))return null;values.set(key,rest[0]);return 'OK';}
@@ -45,7 +48,7 @@ function harness() {
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
  const verification=load('app/api/alerts/verification/route.ts');
- return {verification,news,setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,sent,setFeed(next){feed=next;},command};
+ return {verification,news,setAuditError(value){auditError=value;},setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,lists,sent,setFeed(next){feed=next;},command};
 }
 const request=(data,origin='https://fourth-down-cfp.vercel.app')=>new Request('https://fourth-down-cfp.vercel.app/api/alerts/subscription',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(data)});
 const endpoint={endpoint:'https://fcm.googleapis.com/fcm/send/test',keys:{p256dh:'B'.repeat(87),auth:'A'.repeat(22)}};
@@ -199,4 +202,18 @@ test('following opt-in and mutation preserve favorite and poll activation times'
  const old={preferences:structuredClone(p),typeSince:h.store.activationTimes(null,p,1000)};
  p.following={enabled:true,items:[{kind:'team',id:'2',name:'Two',duration:'24h',createdAt:1500,expiresAt:86401500}]};
  const times=h.store.activationTimes(old,p,2000);assert.equal(times.kickoff,1000);assert.equal(times.final,1000);assert.equal(times.ap,1000);
+});
+
+test('production audit retains original follow time, provider selection and completed-follow removal',async()=>{
+ const h=harness(),now=Date.now();h.setFeed(snapshot([{...match('in'),id:'123'}],[],-60000));await run(h);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',name:'One at Two',duration:'game',gameId:'123',createdAt:now-900000,expiresAt:now+86400000}]};const cap=await subscribe(h,p);
+ h.setFeed(snapshot([{...match('post'),id:'123'}],[],10));await run(h);
+ const audit=h.lists.get('fd:v06:audit:'+cap.id).map(JSON.parse);assert.ok(audit.find(x=>x.kind==='settings-saved'&&x.following.items[0].createdAt===now-900000));assert.ok(audit.find(x=>x.kind==='provider-accepted'&&x.eventId==='game:123:final'));const end=audit.find(x=>x.kind==='follows-ended');assert.equal(end.previousFollowing.items[0].createdAt,now-900000);assert.equal(end.following.items.length,0);
+ const proof={receipt:h.sent[0].payload.receipt,workerVersion:'0.6.1',platform:'ios',openClients:0};assert.equal((await h.receipt.POST(request(proof))).status,200);const display=h.lists.get('fd:v06:audit:'+cap.id).map(JSON.parse).find(x=>x.kind==='browser-displayed');assert.equal(display.platform,'ios');assert.equal(display.openClients,0);assert.equal(display.deviceAlias,cap.id.slice(0,12));
+});
+
+test('an audit outage does not mute a final and cannot erase its original follow timestamp',async()=>{
+ const h=harness(),now=Date.now();h.setFeed(snapshot([{...match('in'),id:'123'}],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',name:'One at Two',duration:'game',gameId:'123',createdAt:now-900000,expiresAt:now+86400000}]};const cap=await subscribe(h,p);
+ h.setAuditError(true);h.setFeed(snapshot([{...match('post'),id:'123'}],[],10));assert.equal((await run(h)).status,200);assert.equal(h.sent.length,1);assert.equal((await h.store.loadSubscription(cap.id)).preferences.following.items[0].createdAt,now-900000);
+ h.setAuditError(false);h.setFeed(snapshot([{...match('post'),id:'123'}],[],20));await run(h);assert.equal(h.sent.length,1);assert.equal((await h.store.loadSubscription(cap.id)).preferences.following.items.length,0);assert.ok(h.lists.get('fd:v06:audit:'+cap.id).map(JSON.parse).find(x=>x.kind==='follow-cleanup-snapshot'));
 });

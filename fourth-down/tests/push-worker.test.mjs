@@ -51,3 +51,7 @@ test('temporary worker eligibility, overlap dedupe, timed expiry and queued unfo
  p.myTeams.enabled=false;p.following.items=[];await w.prefs(p);await w.push({...payload,id:'game:1:kickoff',types:['kickoff']});assert.equal(w.shown.length,1);
  p.following.items=[{kind:'team',id:'1',duration:'24h',createdAt:now-1000,expiresAt:now-1}];await w.prefs(p);await w.push({...payload,id:'game:2:final'});assert.equal(w.shown.length,1);
 });
+
+test('worker reports its revision and zero open clients after processing a background real event',async()=>{
+ const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.6.1');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
+});
