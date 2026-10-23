@@ -5,6 +5,7 @@ import { GET as liveFeed } from '../../live/route';
 import { alertFeedGate,deriveAlertEvents,selectedEvent,hasAlerts,remainingFollows,type AlertFeed,type ConfirmedDevelopment } from '../../../lib/alerts';
 import { appendDeliveryAudit,appendKickoffAudit,appendSchedulerAudit,loadSubscription,pushConfigured,redis,SUBS,tokenHash,type SavedSubscription } from '../../../lib/push-store';
 import {kickoffFeedObservations,kickoffObservations,notificationEligibility} from '../../../lib/kickoff-diagnostics';
+import {recoverKickoffs} from '../../../lib/kickoff-recovery';
 import developments from '../../../data/confirmed-developments.json';
 export const dynamic='force-dynamic';
 export const maxDuration=60;
@@ -32,8 +33,15 @@ export async function GET(request:Request) {
   const prior=previous?JSON.parse(previous) as AlertFeed:null;const observedAt=Date.now();
   const precedingCheck=await redis('GET','fd:v05:last-check');
   const context={previousFeedAt:prior?.updatedAt??null,currentFeedAt:feed.updatedAt,baselineAgeMs:prior?observedAt-Date.parse(prior.updatedAt):null,currentFeedAgeMs:observedAt-Date.parse(feed.updatedAt),pollGapMs:precedingCheck?observedAt-Date.parse(JSON.parse(precedingCheck).at):null,feedGate:alertFeedGate(prior,feed,observedAt),warnings:feed.warnings??[],scoreboardAvailable:feed.scoreboardAvailable??null,scoreboardDate:feed.scoreboardDate??null};
-  const events=deriveAlertEvents(prior,feed,developments as ConfirmedDevelopment[],observedAt);
-  stage='record-feed';await schedulerAudit({kind:'feed-observed',...context,currentGameCount:feed.games.length,previousGameCount:prior?.games.length??0,games:kickoffFeedObservations(prior,feed,observedAt),eventIds:events.map(e=>e.id)});
+  stage='kickoff-recovery';
+  let recovery:ReturnType<typeof recoverKickoffs>|null=null;
+  try{
+   const stored=await redis('GET','fd:v062:kickoff-state');
+   recovery=recoverKickoffs(prior,feed,stored?JSON.parse(stored):null,observedAt);
+   await redis('SET','fd:v062:kickoff-state',JSON.stringify(recovery.memory),'EX',2*86400);
+  }catch{auditHealthy=false;await schedulerAudit({kind:'kickoff-recovery-unavailable'});}
+  const events=[...deriveAlertEvents(prior,feed,developments as ConfirmedDevelopment[],observedAt).filter(e=>!e.types.includes('kickoff')),...(recovery?.events||[])];
+  stage='record-feed';await schedulerAudit({kind:'feed-observed',kickoffRecoveryGate:recovery?.gate??'storage-unavailable',kickoffRecovery:recovery?.decisions??{},...context,currentGameCount:feed.games.length,previousGameCount:prior?.games.length??0,games:kickoffFeedObservations(prior,feed,observedAt),eventIds:events.map(e=>e.id)});
   if(previous&&Date.now()-Date.parse(JSON.parse(previous).updatedAt)>300_000)await deliveryAudit('_scheduler',{kind:'baseline-gap',previousAt:JSON.parse(previous).updatedAt,currentAt:feed.updatedAt});
   webpush.setVapidDetails(process.env.VAPID_SUBJECT!,process.env.VAPID_PUBLIC_KEY!,process.env.VAPID_PRIVATE_KEY!);
   let sent=0,failed=0;
@@ -44,12 +52,13 @@ export async function GET(request:Request) {
    const [next,items]=await redis('HSCAN',SUBS,cursor,'COUNT',100);cursor=next;
    for(let i=0;i<items.length;i+=2){
     const record=JSON.parse(items[i+1]) as SavedSubscription;scanned++;
-    for(const observation of kickoffObservations(prior,feed,record,observedAt)){if(!await appendKickoffAudit(record.id,observation.gameId,{kind:'kickoff-observed',runId,...context,...observation}))auditHealthy=false;}
+    for(const observation of kickoffObservations(prior,feed,record,observedAt)){if(!await appendKickoffAudit(record.id,observation.gameId,{kind:'kickoff-observed',runId,...context,...observation,recovery:recovery?.decisions[observation.gameId]??null}))auditHealthy=false;}
     for(const event of events){
      // Re-read immediately before delivery so settings/unsubscribe take effect.
      const current=await loadSubscription(record.id);if(!current)continue;
      const eligibility=notificationEligibility(event,current);const types=eligibility.types;
      if(!types.length||!selectedEvent({...event,types},current.preferences)){await deliveryAudit(current.id,{kind:'event-filtered',eventId:event.id,runId,eventObservedAt:event.observedAt,eligibility,settingsSavedAt:current.updatedAt,following:current.preferences.following,typeSince:current.typeSince});continue;}
+     const ttl=event.expiresAt===undefined?300:Math.min(300,Math.floor((event.expiresAt-Date.now())/1000));if(ttl<=0)continue;
      const claim=`fd:v05:sent:${record.id}:${event.id}`;
      if(!await redis('SET',claim,'claimed','NX','EX',60*60*24*400)){await redis('INCR','fd:v05:duplicates-suppressed');await deliveryAudit(current.id,{kind:'duplicate-suppressed',runId,eventId:event.id});continue;}
      let deliveryStage='receipt-storage';
@@ -57,7 +66,7 @@ export async function GET(request:Request) {
       const receipt=randomBytes(32).toString('hex');
       await redis('SET',`fd:v05:receipt:${tokenHash(receipt)}`,JSON.stringify({id:current.id,kind:'event',eventId:event.id,types}),'EX',300);
       deliveryStage='provider-send';
-      await webpush.sendNotification(current.subscription,JSON.stringify({...event,types,receipt}),{TTL:300,urgency:'normal',timeout:5000});sent++;deliveryStage='acceptance-storage';
+      await webpush.sendNotification(current.subscription,JSON.stringify({...event,types,receipt}),{TTL:ttl,urgency:'normal',timeout:5000});sent++;deliveryStage='acceptance-storage';
       await deliveryAudit(current.id,{kind:'provider-accepted',runId,settingsSavedAt:current.updatedAt,eligibility,eventId:event.id,types,eventObservedAt:event.observedAt,following:current.preferences.following});
       for(const type of types)await redis('HSET','fd:v05:accepted-types',type,JSON.stringify({eventId:event.id,at:new Date().toISOString()}));
      }catch(error){

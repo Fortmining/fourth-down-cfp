@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import {createRequire} from 'node:module';
 import * as alerts from '../app/lib/alerts.ts';
+import * as recovery from '../app/lib/kickoff-recovery.ts';
 const require=createRequire(import.meta.url);
 const env={UPSTASH_REDIS_REST_URL:'https://test-redis.invalid',UPSTASH_REDIS_REST_TOKEN:'test-only',VAPID_PUBLIC_KEY:'test',VAPID_PRIVATE_KEY:'test',VAPID_SUBJECT:'https://fourth-down-cfp.vercel.app',CRON_SECRET:'test-secret'};
 function harness() {
@@ -37,7 +38,7 @@ function harness() {
   const exports={};const source=ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
   vm.runInNewContext(source,{exports,process:{env:{...env}},Buffer,URL,Request,Response,AbortSignal,Date,console,
    fetch:async(_url,options)=>json({result:command(JSON.parse(options.body))}),
-   require:name=>mapping[name]??(name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
+   require:name=>mapping[name]??(name.includes('kickoff-recovery')?recovery:name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
   return exports;
  }
  const store=load('app/lib/push-store.ts');
@@ -106,11 +107,15 @@ test('test delivery requires subscription capability; only a single-use worker r
  assert.equal((await h.testDelivery.POST(request(cap))).status,429);
 });
 
-async function subscribe(h,preferences,suffix='test') {
- return (await h.subscription.POST(request({action:'create',subscription:{...endpoint,endpoint:endpoint.endpoint+suffix},preferences}))).json();
+async function subscribe(h,preferences,suffix='test',existing=true) {
+ const cap=await (await h.subscription.POST(request({action:'create',subscription:{...endpoint,endpoint:endpoint.endpoint+suffix},preferences}))).json();
+ // These routing fixtures model an already opted-in device. Late saves are tested separately.
+ if(existing){const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));const earlier=Date.now()-86400000;record.kickoffAccess.favorites=Object.fromEntries(preferences.favorites.map(t=>[t.id,earlier]));record.kickoffAccess.follows=Object.fromEntries((preferences.following?.items||[]).map(f=>[f.kind+':'+f.id,earlier]));record.kickoffAccess.favoriteEnabledAt=earlier;record.kickoffAccess.followingEnabledAt=earlier;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
+ return cap;
 }
 const snapshot=(games=[],polls=[],offset=-1000)=>({season:2026,updatedAt:new Date(Date.now()+offset).toISOString(),games,polls});
-const match=(status='pre')=>({id:'routing-game',name:'One at Two',date:new Date(Date.now()-60000).toISOString(),status,providerStatus:status==='post'?'STATUS_FINAL':status==='in'?'STATUS_IN_PROGRESS':'STATUS_SCHEDULED',completed:status==='post',teams:[{id:'1',name:'One',score:'31',winner:status==='post'},{id:'2',name:'Two',score:'28',rank:3}]});
+const routingKickoffDate=new Date(Date.now()-100).toISOString();
+const match=(status='pre')=>({id:'123',name:'One at Two',date:routingKickoffDate,period:status==='in'?1:0,clock:status==='in'?899.95:0,status,providerStatus:status==='post'?'STATUS_FINAL':status==='in'?'STATUS_IN_PROGRESS':'STATUS_SCHEDULED',completed:status==='post',teams:[{id:'1',name:'One',score:'31',winner:status==='post'},{id:'2',name:'Two',score:'28',rank:3}]});
 test('scheduled background test waits, delivers once, and records a distinct receipt only after browser acknowledgement',async()=>{
  const h=harness();await run(h);const p=alerts.defaultAlertPreferences();p.breaking.enabled=true;p.breaking.ap=true;const cap=await subscribe(h,p);
  assert.equal((await h.testDelivery.POST(request({...cap,mode:'background'}))).status,200);
@@ -159,7 +164,7 @@ test('provider expiration removes endpoints and ambiguous delivery failures neve
 test('a failed background test does not prevent real event processing or the next baseline',async()=>{
  const h=harness();h.setFeed(snapshot([match('in')],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;const cap=await subscribe(h,p);
  await h.testDelivery.POST(request({...cap,mode:'background'}));const jobs=h.hashes.get('fd:v05:background-tests');const job=JSON.parse(jobs.get(cap.id));job.dueAt=Date.now()-1;jobs.set(cap.id,JSON.stringify(job));
- h.setSendError(new Error('ambiguous timeout'));h.setFeed(snapshot([match('post')],[],10));const response=await run(h);assert.equal(response.status,502);assert.equal(h.sent.length,2);assert.equal(h.sent[0].payload.test,true);assert.equal(h.sent[1].payload.id,'game:routing-game:final');assert.equal(JSON.parse(h.values.get('fd:v05:baseline')).games[0].status,'post');
+ h.setSendError(new Error('ambiguous timeout'));h.setFeed(snapshot([match('post')],[],10));const response=await run(h);assert.equal(response.status,502);assert.equal(h.sent.length,2);assert.equal(h.sent[0].payload.test,true);assert.equal(h.sent[1].payload.id,'game:123:final');assert.equal(JSON.parse(h.values.get('fd:v05:baseline')).games[0].status,'post');
 });
 
 test('real event receipts verify only selected types; private verification exposes no endpoint or capability',async()=>{
@@ -168,7 +173,7 @@ test('real event receipts verify only selected types; private verification expos
  assert.equal((await h.verification.GET(new Request('https://fourth-down-cfp.vercel.app/api/alerts/verification'))).status,401);
  const privateRequest=new Request('https://fourth-down-cfp.vercel.app/api/alerts/verification',{headers:{authorization:'Bearer test-secret'}});
  assert.deepEqual((await(await h.verification.GET(privateRequest)).json()).verifiedEventTypes,{});
- await h.receipt.POST(request({receipt:h.sent[0].payload.receipt}));const proof=await(await h.verification.GET(privateRequest)).json();assert.equal(proof.enabledDeviceCounts.final,1);assert.equal(proof.enabledDeviceCounts.kickoff,0);assert.equal(proof.verifiedEventTypes.final.eventId,'game:routing-game:final');assert.equal(proof.verifiedEventTypes.upset,undefined);assert.equal(JSON.stringify(proof).includes(endpoint.endpoint),false);
+ await h.receipt.POST(request({receipt:h.sent[0].payload.receipt}));const proof=await(await h.verification.GET(privateRequest)).json();assert.equal(proof.enabledDeviceCounts.final,1);assert.equal(proof.enabledDeviceCounts.kickoff,0);assert.equal(proof.verifiedEventTypes.final.eventId,'game:123:final');assert.equal(proof.verifiedEventTypes.upset,undefined);assert.equal(JSON.stringify(proof).includes(endpoint.endpoint),false);
 });
 
 // All following scenarios below use isolated fake feeds/storage/push transport.
@@ -183,7 +188,7 @@ test('temporary game + one-game team + favorite + upset overlap delivers a singl
 });
 test('temporary-only subscription routes kickoff and final, expires one game, never requests favorites',async()=>{
  const h=harness(),now=Date.now();h.setFeed(snapshot([{...match(),id:'123'}],[],-60000));await run(h);
- const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'team',id:'1',name:'One',duration:'game',gameId:'123',createdAt:now-1000,expiresAt:now+86400000}]};const cap=await subscribe(h,p);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'team',id:'1',name:'One',duration:'game',gameId:'123',createdAt:now-3600000,expiresAt:now+86400000}]};const cap=await subscribe(h,p);
  assert.equal(alerts.hasAlerts(p),true);h.setFeed(snapshot([{...match('in'),id:'123'}],[],5));await run(h);assert.equal(h.sent.length,1);assert.deepEqual(h.sent[0].payload.types,['kickoff']);
  h.setFeed(snapshot([{...match('post'),id:'123'}],[],20));await run(h);assert.equal(h.sent.length,2);assert.deepEqual(h.sent[1].payload.types,['final']);
  assert.equal((await h.store.loadSubscription(cap.id)).preferences.following.items.length,0);
@@ -223,7 +228,7 @@ test('kickoff observations retain four-minute states and hours-old follow eligib
  const h=harness(),now=Date.now(),g={...match(),id:'401869845'};
  const before=snapshot([g],[],-240000);h.setFeed(before);await run(h);
  const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:g.id,gameId:g.id,name:g.name,duration:'game',createdAt:now-3*3600000,expiresAt:now+86400000}]};
- const cap=await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));await run(h);
+ const cap=await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:899.95}],[],10));await run(h);
  assert.equal(h.sent.length,1);assert.equal(h.sent[0].payload.id,`game:${g.id}:kickoff`);
  const trace=JSON.parse(h.lists.get(`fd:v06:kickoff:${cap.id}:${g.id}`)[0]);
  assert.equal(trace.decision,'kickoff-detected');assert.equal(trace.previous.status,'pre');assert.equal(trace.current.providerStatus,'STATUS_IN_PROGRESS');assert.equal(trace.matchingFollows[0].createdAt,now-3*3600000);assert.deepEqual(trace.eligibility.types,['kickoff']);assert.ok(trace.runId);
@@ -232,34 +237,40 @@ test('kickoff observations retain four-minute states and hours-old follow eligib
 });
 test('missed poll, omitted game and disabled following explain missing kickoff without issuing a catch-up',async()=>{
  for(const mode of ['missed-poll','missing-game','following-off','activation-after-observation']){
-  const h=harness(),now=Date.now(),g={...match(),id:'401869845'};h.setFeed(snapshot([g],[],-240000));await run(h);
+  const h=harness(),now=Date.now(),g={...match(),id:'401869845'};h.setFeed(snapshot([g],[],-1000));await run(h);
   const p=alerts.defaultAlertPreferences();p.following={enabled:mode!=='following-off',items:[{kind:'game',id:g.id,gameId:g.id,name:g.name,duration:'game',createdAt:now-3*3600000,expiresAt:now+86400000}]};const cap=await subscribe(h,p);
   if(mode==='missed-poll')h.values.set('fd:v05:baseline',JSON.stringify(snapshot([g],[],-480000)));
   if(mode==='missing-game')h.values.set('fd:v05:baseline',JSON.stringify(snapshot([],[],-240000)));
-  if(mode==='activation-after-observation'){const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));record.typeSince.kickoff=now+60000;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
-  h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));await run(h);assert.equal(h.sent.length,0,mode);
+  if(mode==='activation-after-observation'){const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));record.typeSince.kickoff=now+60000;record.kickoffAccess.followingEnabledAt=now+60000;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
+  h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:899.95}],[],10));await run(h);assert.equal(h.sent.length,['missed-poll','missing-game'].includes(mode)?1:0,mode);
   const trace=JSON.parse(h.lists.get(`fd:v06:kickoff:${cap.id}:${g.id}`)[0]);
   if(mode==='missed-poll')assert.equal(trace.decision,'baseline-gap-over-five-minutes');
   if(mode==='missing-game')assert.equal(trace.decision,'game-missing-from-baseline');
   if(mode==='following-off'){assert.equal(trace.followingEnabled,false);assert.deepEqual(trace.eligibility.types,[]);}
-  if(mode==='activation-after-observation')assert.equal(trace.eligibility.decisions[0].activationPassed,false);
-  assert.equal(h.values.has(`fd:v05:sent:${cap.id}:game:${g.id}:kickoff`),false);
+  if(mode==='activation-after-observation')assert.equal(h.lists.get(`fd:v06:audit:${cap.id}`).map(JSON.parse).find(e=>e.kind==='event-filtered').eligibility.decisions[0].activationPassed,false);
+  assert.equal(h.values.has(`fd:v05:sent:${cap.id}:game:${g.id}:kickoff`),['missed-poll','missing-game'].includes(mode));
  }
 });
 test('diagnostic histories are bounded and never persist endpoint, keys or token hashes',async()=>{
  const h=harness();h.lists.set('fd:v06:kickoff:device:123',Array(2005).fill('{}'));await h.store.appendKickoffAudit('device','123',{kind:'fixture'});assert.equal(h.lists.get('fd:v06:kickoff:device:123').length,2000);
  h.lists.set('fd:v06:scheduler',Array(24005).fill('{}'));await h.store.appendSchedulerAudit({kind:'fixture'});assert.equal(h.lists.get('fd:v06:scheduler').length,24000);
- const g={...match(),id:'123'};h.setFeed(snapshot([g],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};const cap=await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));await run(h);
+ const g={...match(),id:'123'};h.setFeed(snapshot([g],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};const cap=await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:899.95}],[],10));await run(h);
  const history=JSON.stringify([...h.lists]);for(const secret of [endpoint.endpoint,endpoint.keys.auth,endpoint.keys.p256dh,cap.token])assert.equal(history.includes(secret),false);
 });
 test('feed outage and audit outage record failure stage or expose diagnostic health without suppressing eligible push',async()=>{
  const h=harness();await run(h);const baseline=h.values.get('fd:v05:baseline');h.setFeedError(true);assert.equal((await run(h)).status,503);assert.equal(h.values.get('fd:v05:baseline'),baseline);
  const failure=h.lists.get('fd:v06:scheduler').map(JSON.parse).find(e=>e.kind==='run-failed');assert.equal(failure.stage,'fetch-feed');
  h.setFeedError(false);const g={...match(),id:'123'};h.setFeed(snapshot([g],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};await subscribe(h,p);
- h.setAuditError(true);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));assert.equal((await run(h)).status,200);assert.equal(h.sent.length,1);assert.equal(JSON.parse(h.values.get('fd:v05:last-check')).diagnosticsHealthy,false);
+ h.setAuditError(true);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:899.95}],[],10));assert.equal((await run(h)).status,200);assert.equal(h.sent.length,1);assert.equal(JSON.parse(h.values.get('fd:v05:last-check')).diagnosticsHealthy,false);
 });
 test('scheduler captures kickoff transition even when the device follow never synchronized',async()=>{
- const h=harness(),g={...match(),id:'401869845'};h.setFeed(snapshot([g],[],-240000));await run(h);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));await run(h);
+ const h=harness(),g={...match(),id:'401869845'};h.setFeed(snapshot([g],[],-240000));await run(h);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:899.95}],[],10));await run(h);
  assert.equal(h.sent.length,0);const history=h.lists.get('fd:v06:scheduler').map(JSON.parse);const trace=history.find(e=>e.kind==='feed-observed'&&e.games.some(g=>g.decision==='kickoff-detected'));
  assert.equal(trace.games[0].gameId,g.id);assert.equal(trace.games[0].previous.status,'pre');assert.equal(trace.games[0].current.status,'in');assert.equal(trace.feedGate,'ready');
+});
+test('recovered kickoff deduplicates across fresh polling snapshots and excludes a newly saved backdated follow',async()=>{
+ const h=harness(),now=Date.now(),g={...match(),id:'123',date:new Date(now-240000).toISOString()};h.setFeed(snapshot([g],[],-480000));await run(h);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await subscribe(h,p,'existing');await subscribe(h,p,'late',false);
+ const live={...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:840};h.setFeed(snapshot([live],[],10));await run(h);assert.equal(h.sent.length,1);assert.ok(h.sent[0].s.endpoint.endsWith('existing'));
+ h.setFeed(snapshot([live],[],100));await run(h);assert.equal(h.sent.length,1);assert.equal(Number(h.values.get('fd:v05:duplicates-suppressed')),1);
 });

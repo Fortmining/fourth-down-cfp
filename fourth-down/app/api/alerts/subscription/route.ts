@@ -2,6 +2,7 @@ import {remainingFollows,type AlertFeed} from '../../../lib/alerts';
 import { NextResponse } from 'next/server';
 import { randomBytes,createHash } from 'node:crypto';
 import { appendDeliveryAudit,activationTimes,loadSubscription,pushConfigured,redis,sameToken,safePreferences,SUBS,tokenHash,validPushSubscription } from '../../../lib/push-store';
+import {kickoffAccessTimes} from '../../../lib/kickoff-recovery';
 export const dynamic='force-dynamic';
 const reply=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export async function POST(request:Request) {
@@ -36,7 +37,7 @@ export async function POST(request:Request) {
    const count=await redis('INCR',rateKey);if(count===1)await redis('EXPIRE',rateKey,3600);
    if(count>10)return reply({error:'Please try again later.'},429);
   }
-  const record={id:newId,tokenHash:tokenHash(newToken),subscription:data.subscription,preferences,typeSince:activationTimes(old,preferences,now),updatedAt:now};
+  const record={id:newId,tokenHash:tokenHash(newToken),subscription:data.subscription,preferences,kickoffAccess:kickoffAccessTimes(old,preferences,now),typeSince:activationTimes(old,preferences,now),updatedAt:now};
   const encoded=JSON.stringify(record);
   if(action==='create'){
    const created=await redis('HSETNX',SUBS,newId,encoded);if(!created)return reply({error:'Subscription already exists'},409);
