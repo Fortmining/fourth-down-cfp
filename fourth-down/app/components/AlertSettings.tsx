@@ -23,6 +23,7 @@ export default function AlertSettings({teams}:Props) {
  const [config,setConfig]=useState<{available:boolean;publicKey:string|null}|null>(null);
  const [control,setControl]=useState<Control|null>(null);
  const [search,setSearch]=useState('');const [status,setStatus]=useState('');
+ const [inspectionStatus,setInspectionStatus]=useState('');
  const [busy,setBusy]=useState(false);const [ready,setReady]=useState(false);
  const [storageOk,setStorageOk]=useState(true);const [supported,setSupported]=useState(false);
  const [permission,setPermission]=useState<NotificationPermission>('default');
@@ -88,7 +89,7 @@ export default function AlertSettings({teams}:Props) {
    setStatus(error instanceof Error?error.message:'Could not enable alerts. Try again.');
   }finally{working.current=false;setBusy(false);}
  }
- async function inspectDevice(){if(working.current)return;working.current=true;setBusy(true);try{setStatus(await inspectThisDevice());}catch(e){setStatus(e instanceof Error?e.message:'Device inspection failed.');}finally{working.current=false;setBusy(false);}}
+ async function inspectDevice(){if(working.current)return;working.current=true;setBusy(true);setInspectionStatus('Reading this device and saving its report…');try{setInspectionStatus(await inspectThisDevice());}catch(e){setInspectionStatus(e instanceof Error?e.message:'Device inspection failed.');}finally{working.current=false;setBusy(false);}}
  async function testDelivery(mode?:'background') {
   if(!control||working.current)return;working.current=true;setBusy(true);
   try{const r=await fetch('/api/alerts/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...control,mode})});const result=await r.json();setStatus(result.message||result.error||'Test could not be confirmed.');}
@@ -150,7 +151,7 @@ export default function AlertSettings({teams}:Props) {
    <div className="alertActions"><button disabled={!ready||busy||!storageOk||!supported||!config?.available||(!active&&!hasAlerts(preferences))||permission==='denied'} onClick={save}>{busy?'Working…':active?'Save alert settings':'Enable Notifications'}</button>{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery()}>Send test notification</button>}{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery('background')}>Send background test</button>}<button disabled={!ready||busy} onClick={unsubscribe}>Unsubscribe from all alerts</button></div>
    {active&&<p>To turn off one category or alert type, uncheck it and save alert settings. Unsubscribe from all stops both categories and keeps your favorites.</p>}
    {!hasAlerts(preferences)&&ready&&<p>Select a category and at least one alert type. My Teams also needs a favorite team.</p>}
-   <div className="alertActions"><button disabled={!ready||busy} onClick={inspectDevice}>Inspect this device</button></div><p className="alertHint">Read saved follow timestamps and delivery diagnostics from this browser or installed app. This does not change settings, request permission, or send a test.</p><details className="alertPolicy"><summary>Delivery & privacy</summary><p>Push may be delayed by your browser, device, or the feed. A single event matching both categories produces one notification. Clearing browser data removes these local controls; you can always revoke notifications in device settings.</p></details>
+   <div className="alertActions"><button disabled={!ready||busy} onClick={inspectDevice} aria-describedby="device-inspection-status">Inspect this device</button></div><p id="device-inspection-status" role="status" aria-live="polite" aria-atomic="true">{inspectionStatus}</p><p className="alertHint">Read saved follow timestamps and delivery diagnostics from this browser or installed app. This does not change settings, request permission, or send a test.</p><details className="alertPolicy"><summary>Delivery & privacy</summary><p>Push may be delayed by your browser, device, or the feed. A single event matching both categories produces one notification. Clearing browser data removes these local controls; you can always revoke notifications in device settings.</p></details>
    <p role="status" aria-live="polite">{status}</p>
   </div>
  </section>;
