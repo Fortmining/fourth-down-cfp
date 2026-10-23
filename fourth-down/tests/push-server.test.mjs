@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import {createRequire} from 'node:module';
 import * as alerts from '../app/lib/alerts.ts';
+import * as gameAlerts from '../app/lib/game-alerts.ts';
 import * as recovery from '../app/lib/kickoff-recovery.ts';
 const require=createRequire(import.meta.url);
 const env={UPSTASH_REDIS_REST_URL:'https://test-redis.invalid',UPSTASH_REDIS_REST_TOKEN:'test-only',VAPID_PUBLIC_KEY:'test',VAPID_PRIVATE_KEY:'test',VAPID_SUBJECT:'https://fourth-down-cfp.vercel.app',CRON_SECRET:'test-secret'};
@@ -38,7 +39,7 @@ function harness() {
   const exports={};const source=ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
   vm.runInNewContext(source,{exports,process:{env:{...env}},Buffer,URL,Request,Response,AbortSignal,Date,console,
    fetch:async(_url,options)=>json({result:command(JSON.parse(options.body))}),
-   require:name=>mapping[name]??(name.includes('kickoff-recovery')?recovery:name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
+   require:name=>mapping[name]??(name.includes('game-alerts')?gameAlerts:name.includes('kickoff-recovery')?recovery:name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
   return exports;
  }
  const store=load('app/lib/push-store.ts');
@@ -273,4 +274,31 @@ test('recovered kickoff deduplicates across fresh polling snapshots and excludes
  const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await subscribe(h,p,'existing');await subscribe(h,p,'late',false);
  const live={...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:840};h.setFeed(snapshot([live],[],10));await run(h);assert.equal(h.sent.length,1);assert.ok(h.sent[0].s.endpoint.endsWith('existing'));
  h.setFeed(snapshot([live],[],100));await run(h);assert.equal(h.sent.length,1);assert.equal(Number(h.values.get('fd:v05:duplicates-suppressed')),1);
+});
+test('optional live alerts enforce scope opt-in, coalesce tactical types and cap rolling device volume without muting finals',async()=>{
+ const h=harness(),now=Date.now(),games=Array.from({length:7},(_,i)=>({...match(),id:String(100+i),date:new Date(now-7200000).toISOString(),status:'pre',providerStatus:'STATUS_SCHEDULED',period:0,clock:0}));h.setFeed(snapshot(games,[],-1000));await run(h);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'team',id:'1',name:'One',duration:'24h',createdAt:now-1000,expiresAt:now+86400000-1000}]};p.gameAlerts.following.close=true;const cap=await subscribe(h,p);
+ const live=games.map(g=>({...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:4,clock:300}));h.setFeed(snapshot(live,[],10));await run(h);assert.equal(h.sent.length,6);assert.ok(h.sent.every(s=>s.payload.types.includes('close')));
+ h.setFeed(snapshot(live,[],50));await run(h);assert.equal(h.sent.length,6);assert.ok(h.lists.get(`fd:v06:audit:${cap.id}`).map(JSON.parse).some(e=>e.kind==='rate-limited'));
+ const final={...live[0],status:'post',providerStatus:'STATUS_FINAL',completed:true,clock:0,teams:[{...live[0].teams[0],winner:true},live[0].teams[1]]};h.setFeed(snapshot([final,...live.slice(1)],[],100));await run(h);assert.equal(h.sent.length,7);assert.ok(h.sent.at(-1).payload.types.includes('final'));
+});
+test('scoring cooldown coalesces changes; expiry and new type activation prevent backlog',async()=>{
+ const h=harness(),now=Date.now(),g={...match('in'),date:new Date(now-7200000).toISOString(),period:4,clock:330,teams:[{id:'1',name:'One',score:'24'},{id:'2',name:'Two',score:'31'}]};h.setFeed(snapshot([g],[],-1000));await run(h);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};p.gameAlerts.following.scoring=true;const cap=await subscribe(h,p);
+ const score={...g,clock:290,teams:[{...g.teams[0],score:'38'},g.teams[1]]};h.setFeed(snapshot([score],[],10));await run(h);assert.equal(h.sent.length,1);assert.deepEqual(h.sent[0].payload.types,['scoring']);
+ h.setFeed(snapshot([{...score,clock:280,teams:[{...score.teams[0],score:'45'},score.teams[1]]}],[],50));await run(h);assert.equal(h.sent.length,1);assert.ok(h.lists.get(`fd:v06:audit:${cap.id}`).map(JSON.parse).some(e=>e.kind==='rate-limited'));
+ h.values.set(`fd:v07:last-live:${cap.id}:123`,String(Date.now()-600001));h.setFeed(snapshot([{...score,clock:270,teams:[{...score.teams[0],score:'52'},score.teams[1]]}],[],100));await run(h);assert.equal(h.sent.length,2);
+});
+test('AP tactical overlap and Confirmed Upset use single identities and receipts report only opted-in types',async()=>{
+ const h=harness(),now=Date.now(),g={...match(),date:new Date(now-7200000).toISOString()};const poll={id:'ap',name:'AP Top 25',status:'available',season:2026,week:9,date:new Date(now-86400000).toISOString(),teams:Array.from({length:25},(_,i)=>({teamId:String(i+2),rank:i+1,name:`Team ${i+1}`}))};h.setFeed(snapshot([g],[poll],-1000));await run(h);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};p.gameAlerts.following.final=false;p.gameAlerts.following.close=true;p.gameAlerts.following.upsetWatch=true;p.gameAlerts.following.confirmedUpset=true;await subscribe(h,p);
+ const live={...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:4,clock:300};h.setFeed(snapshot([live],[poll],10));await run(h);assert.equal(h.sent.length,1);assert.deepEqual(h.sent[0].payload.types,['close','upsetWatch']);
+ h.setFeed(snapshot([live],[poll],50));await run(h);assert.equal(h.sent.length,1);
+ const final={...live,status:'post',providerStatus:'STATUS_FINAL',completed:true,clock:0,teams:[{...live.teams[0],score:'34',winner:true},{...live.teams[1],score:'31',winner:false}]};h.setFeed(snapshot([final],[poll],100));await run(h);assert.equal(h.sent.length,2);assert.equal(h.sent[1].payload.id,'game:123:final');assert.deepEqual(h.sent[1].payload.types,['confirmedUpset']);
+ assert.equal((await h.receipt.POST(request({receipt:h.sent[1].payload.receipt,workerVersion:'0.7.0',platform:'ios',openClients:0}))).status,200);assert.ok(h.hashes.get('fd:v05:verified-types').has('confirmedUpset'));assert.equal(h.hashes.get('fd:v05:verified-types').has('final'),false);
+});
+test('kickoff and an initial score update cannot flood the same device in one check',async()=>{
+ const h=harness(),now=Date.now(),g={...match(),teams:[{id:'1',name:'One',score:'0'},{id:'2',name:'Two',score:'0'}]};h.setFeed(snapshot([g],[],-1000));await run(h);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};p.gameAlerts.following.scoring=true;await subscribe(h,p);
+ h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:899.95,teams:[{...g.teams[0],score:'7'},g.teams[1]]}],[],10));await run(h);assert.equal(h.sent.length,1);assert.deepEqual(h.sent[0].payload.types,['kickoff']);
 });

@@ -1,9 +1,9 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { PushSubscription } from 'web-push';
-import { normalizePreferences, type AlertPreferences, type AlertType } from './alerts';
+import { extraGameTypes,normalizePreferences, type AlertPreferences, type AlertType } from './alerts';
 import type {KickoffAccess} from './kickoff-recovery';
 export const SUBS='fd:v05:subscriptions';
-export type SavedSubscription={id:string;tokenHash:string;subscription:PushSubscription;preferences:AlertPreferences;typeSince:Record<AlertType,number>;updatedAt:number;kickoffAccess?:KickoffAccess};
+export type SavedSubscription={id:string;tokenHash:string;subscription:PushSubscription;preferences:AlertPreferences;typeSince:Record<AlertType,number>;updatedAt:number;kickoffAccess?:KickoffAccess;gameAccess?:Record<string,number>};
 const storageUrl=()=>process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const storageToken=()=>process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 export function pushConfigured() {return !!storageUrl() && !!storageToken() && ['VAPID_PUBLIC_KEY','VAPID_PRIVATE_KEY','VAPID_SUBJECT','CRON_SECRET'].every(key=>!!process.env[key]);}
@@ -26,7 +26,8 @@ export function validPushSubscription(s:unknown):s is PushSubscription {
  }catch{return false;}
 }
 export function typeFlags(p:AlertPreferences):Record<AlertType,boolean> {
- return {kickoff:!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.kickoff,final:!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.final,
+ const extra=Object.fromEntries(extraGameTypes.map(type=>[type,!!(p.myTeams.enabled&&p.favorites.length&&p.gameAlerts?.favorites[type])||!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now())&&p.gameAlerts?.following[type])])) as Record<typeof extraGameTypes[number],boolean>;
+ return {...extra,kickoff:!!(p.following?.enabled&&p.gameAlerts?.following.kickoff!==false&&p.following.items.some(f=>f.expiresAt>Date.now()))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.kickoff,final:!!(p.following?.enabled&&p.gameAlerts?.following.final!==false&&p.following.items.some(f=>f.expiresAt>Date.now()))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.final,
  upset:p.breaking.enabled&&p.breaking.upsets,development:p.breaking.enabled&&p.breaking.developments,
  ap:p.breaking.enabled&&p.breaking.ap,coaches:p.breaking.enabled&&p.breaking.coaches,cfp:p.breaking.enabled&&p.breaking.cfp};
 }

@@ -53,7 +53,7 @@ test('temporary worker eligibility, overlap dedupe, timed expiry and queued unfo
 });
 
 test('worker reports its revision and zero open clients after processing a background real event',async()=>{
- const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.6.2');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
+ const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.7.0');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
 });
 test('recovered kickoff enforces expiry and original eligibility time without consuming final dedupe',async()=>{
  const now=Date.now(),w=worker(),p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await w.prefs(p);
@@ -62,4 +62,10 @@ test('recovered kickoff enforces expiry and original eligibility time without co
  await w.push({...e,id:'game:124:kickoff',expiresAt:now-1});assert.equal(w.shown.length,1);
  p.following.items[0].createdAt=now;await w.prefs(p);await w.push({...e,id:'game:123:kickoff-new'});assert.equal(w.shown.length,1);
  await w.push({...e,id:'game:123:final',types:['final'],eligibilityAt:undefined});assert.equal(w.shown.length,2);
+});
+test('new optional game types stay muted until each scope is explicitly selected, and coalesced types display once',async()=>{
+ const now=Date.now(),w=worker(),p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await w.prefs(p);
+ for(const type of ['halftime','close','upsetWatch','confirmedUpset','scoring']){const e={id:`game:123:${type}`,types:[type],teamIds:['1','2'],title:type,body:'Verified scores',url:'/game/123',observedAt:now,expiresAt:now+300000};await w.push(e);assert.equal(w.shown.length,0);}
+ p.gameAlerts.following.close=true;p.gameAlerts.following.upsetWatch=true;await w.prefs(p);const late={id:'game:123:late:fourth',types:['close','upsetWatch'],teamIds:['1','2'],title:'Upset Watch',body:'Verified scores',url:'/game/123',observedAt:now,expiresAt:now+300000};await Promise.all([w.push(late),w.push(late)]);assert.equal(w.shown.length,1);
+ p.following.enabled=false;p.myTeams.enabled=true;p.favorites=[{id:'1',name:'One'}];p.gameAlerts.favorites.halftime=true;await w.prefs(p);await w.push({...late,id:'game:123:halftime',types:['halftime']});assert.equal(w.shown.length,2);
 });

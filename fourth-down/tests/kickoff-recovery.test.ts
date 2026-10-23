@@ -27,7 +27,7 @@ test('does not invent a witness on cold start or reuse identity across teams, se
  const ended=recoverKickoffs(null,feed(start+100000,[game('post',{providerStatus:'STATUS_FINAL',completed:true})]),initial(),start+100000);
  assert.equal(recoverKickoffs(null,feed(start+240000,[game('in')]),ended.memory,start+240000).events.length,0);
 });
-function subscription(at:number):SavedSubscription{const p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:start-3600000,expiresAt:start+86400000}]};return {id:'a',tokenHash:'test',subscription:{endpoint:'test',keys:{auth:'',p256dh:''}},preferences:p,updatedAt:at,typeSince:{kickoff:at,final:at,ap:at,coaches:at,cfp:at,upset:at,development:at},kickoffAccess:kickoffAccessTimes(null,p,at)};}
+function subscription(at:number):SavedSubscription{const p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:start-3600000,expiresAt:start+86400000}]};return {id:'a',tokenHash:'test',subscription:{endpoint:'test',keys:{auth:'',p256dh:''}},preferences:p,updatedAt:at,typeSince:{halftime:at,close:at,upsetWatch:at,confirmedUpset:at,scoring:at,kickoff:at,final:at,ap:at,coaches:at,cfp:at,upset:at,development:at},kickoffAccess:kickoffAccessTimes(null,p,at)};}
 test('authoritative server timing rejects late-created, backdated, late-enabled follows and new favorites',()=>{
  const e=recoverKickoffs(null,feed(start+480000,[game('in')]),initial(),start+480000).events[0];
  assert.equal(eligibleRecoveredKickoff(e,subscription(start-3600000),start+480000),true);

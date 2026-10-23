@@ -24,7 +24,7 @@ export async function GET(request:Request){
     ]);
     devices.push({deviceAlias:s.id.slice(0,12),pushService:new URL(s.subscription.endpoint).hostname,
      settingsSavedAt:iso(s.updatedAt),categoryActiveSince:Object.fromEntries(Object.entries(s.typeSince).map(([k,v])=>[k,iso(v)])),
-     preferences:s.preferences,kickoffHistory:(kickoffHistory||[]).map((entry:string)=>JSON.parse(entry)),deviceReport:report?JSON.parse(report):null,audit:(history||[]).map((entry:string)=>JSON.parse(entry)),claims:{kickoff:!!kickoff,final:!!final},lastBrowserDisplayReceiptAt:iso(delivery)});
+     preferences:s.preferences,kickoffAccess:s.kickoffAccess??null,gameAccess:s.gameAccess??null,kickoffHistory:(kickoffHistory||[]).map((entry:string)=>JSON.parse(entry)),deviceReport:report?JSON.parse(report):null,audit:(history||[]).map((entry:string)=>JSON.parse(entry)),claims:{kickoff:!!kickoff,final:!!final},lastBrowserDisplayReceiptAt:iso(delivery)});
    }
   }while(cursor!=='0');
   const baseline=await redis('GET','fd:v05:baseline');const feed=baseline?JSON.parse(baseline) as AlertFeed:null;

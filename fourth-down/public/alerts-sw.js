@@ -11,10 +11,13 @@ function selected(message,p) {
  if(message.test===true)return !!(p.myTeams?.enabled||p.breaking?.enabled||p.following?.enabled);
  const types=Array.isArray(message.types)?message.types:[];
  const gameId=/^game:([^:]+):/.exec(message.id)?.[1];
- const followed=p.following?.enabled&&(types.includes('kickoff')||types.includes('final'))&&p.following.items?.some(f=>f.createdAt<=(message.eligibilityAt??message.observedAt)&&f.expiresAt>Date.now()&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&message.teamIds?.includes(f.id)));
+ const extras=['halftime','close','upsetWatch','confirmedUpset','scoring'];
+ const followsType=types.some(t=>t==='kickoff'||t==='final'?p.gameAlerts?.following?.[t]!==false:extras.includes(t)&&p.gameAlerts?.following?.[t]===true);
+ const followed=p.following?.enabled&&followsType&&p.following.items?.some(f=>f.createdAt<=(message.eligibilityAt??message.observedAt)&&f.expiresAt>Date.now()&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&message.teamIds?.includes(f.id)));
  const team=p.myTeams?.enabled&&Array.isArray(message.teamIds)&&message.teamIds.some(id=>p.favorites?.some(t=>t.id===id));
- return !!(followed || (team&&((p.myTeams.kickoff&&types.includes('kickoff'))||(p.myTeams.final&&types.includes('final'))))||
- (p.breaking?.enabled&&((p.breaking.upsets&&types.includes('upset'))||(p.breaking.developments&&types.includes('development'))||['ap','coaches','cfp'].some(type=>p.breaking[type]&&types.includes(type)))));
+ const favorite=team&&((p.myTeams.kickoff&&types.includes('kickoff'))||(p.myTeams.final&&types.includes('final'))||extras.some(t=>types.includes(t)&&p.gameAlerts?.favorites?.[t]===true));
+ const breaking=p.breaking?.enabled&&((p.breaking.upsets&&types.includes('upset'))||(p.breaking.developments&&types.includes('development'))||['ap','coaches','cfp'].some(t=>p.breaking[t]&&types.includes(t)));
+ return !!(followed||favorite||breaking);
 }
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -42,7 +45,7 @@ self.addEventListener('push',event=>{
   db.close();if(!fresh)return;
   await self.registration.showNotification(message.title,{body:message.body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:message.id,data:{url:message.url},actions:[{action:'settings',title:'Alert settings'}]});
   if(/^[a-f0-9]{64}$/.test(message.receipt||''))try{
-   await fetch('/api/alerts/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt:message.receipt,workerVersion:'0.6.2',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});
+   await fetch('/api/alerts/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt:message.receipt,workerVersion:'0.7.0',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});
   }catch{}
  })());
 });

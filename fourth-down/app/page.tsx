@@ -922,7 +922,7 @@ export default function Page() {
             <span className="brandSub">STAY IN THE GAME.</span>
           </a>
           <p>
-            v0.6.2 · Independent, unofficial college football tracker.
+            v0.7.0 · Independent, unofficial college football tracker.
             <br />
             Not affiliated with the CFP, ESPN, or any team. Team marks belong to
             their owners.

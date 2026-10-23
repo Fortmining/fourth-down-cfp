@@ -18,7 +18,7 @@ export default function MoreSettings({teams,games}:{teams:{id:string;name:string
  async function install(){const event=prompt.current;if(!event)return;prompt.current=null;setCanInstall(false);try{await event.prompt();const choice=await event.userChoice;setInstallStatus(choice.outcome==='accepted'?'Installation requested. Follow your browser’s confirmation.':'Installation canceled. You can still use the website.');}catch{setInstallStatus('Use your browser’s menu and the instructions below to install.');}}
  return <section id="more" className="moreSettings" aria-labelledby="more-heading">
   <div className="intro"><div><div className="eyebrow">FOURTH DOWN · YOUR SETTINGS</div><h2 id="more-heading">More / Settings</h2></div><span className="badge">MADE FOR GAME DAY</span></div>
-  <div className="settingsShortcuts"><a href="#following">Following <span>Manage temporary follows →</span></a><a href="#alerts">My Teams & notifications <span>Choose what matters →</span></a><a href="#install">Install Fourth Down <span>Keep it one tap away →</span></a></div>
+  <div className="settingsShortcuts"><a href="#following">Following <span>Manage temporary follows →</span></a><a href="#alerts">Notifications <span>Choose what matters →</span></a><a href="#install">Install Fourth Down <span>Keep it one tap away →</span></a></div>
   <Following games={games} manage/><AlertSettings teams={teams}/>
   <section id="install" className="installGuide" aria-labelledby="install-heading">
    <div className="intro"><div><div className="eyebrow">TAKE THE PLAYOFF PICTURE WITH YOU</div><h2 id="install-heading">Get the App</h2></div><span className="badge">FREE · NO APP STORE REQUIRED</span></div>
