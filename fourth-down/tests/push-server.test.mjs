@@ -8,7 +8,7 @@ import * as alerts from '../app/lib/alerts.ts';
 const require=createRequire(import.meta.url);
 const env={UPSTASH_REDIS_REST_URL:'https://test-redis.invalid',UPSTASH_REDIS_REST_TOKEN:'test-only',VAPID_PUBLIC_KEY:'test',VAPID_PRIVATE_KEY:'test',VAPID_SUBJECT:'https://fourth-down-cfp.vercel.app',CRON_SECRET:'test-secret'};
 function harness() {
- let sendError=null,auditError=false;const news=[];
+ let sendError=null,auditError=false,feedError=false;const news=[];
  const values=new Map(),hashes=new Map(),lists=new Map();const sent=[];
  let feed={season:2026,updatedAt:new Date().toISOString(),games:[],polls:[]};
  const json=(body,init)=>new Response(JSON.stringify(body),{status:init?.status||200,headers:init?.headers});
@@ -43,12 +43,13 @@ function harness() {
  const store=load('app/lib/push-store.ts');
  const subscription=load('app/api/alerts/subscription/route.ts');
  const config=load('app/api/alerts/config/route.ts');
- const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../live/route':{GET:async()=>json(feed)},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});if(sendError)throw sendError;}}});
+ const kickoffDiagnostics=load('app/lib/kickoff-diagnostics.ts');
+ const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../live/route':{GET:async()=>feedError?json({error:'Fixture outage'},{status:503}):json(feed)},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});if(sendError)throw sendError;}}});
  const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});if(sendError)throw sendError;}}};
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
  const verification=load('app/api/alerts/verification/route.ts');
- return {verification,news,setAuditError(value){auditError=value;},setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,lists,sent,setFeed(next){feed=next;},command};
+ return {verification,news,setFeedError(value){feedError=value;},setAuditError(value){auditError=value;},setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,lists,sent,setFeed(next){feed=next;},command};
 }
 const request=(data,origin='https://fourth-down-cfp.vercel.app')=>new Request('https://fourth-down-cfp.vercel.app/api/alerts/subscription',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(data)});
 const endpoint={endpoint:'https://fcm.googleapis.com/fcm/send/test',keys:{p256dh:'B'.repeat(87),auth:'A'.repeat(22)}};
@@ -216,4 +217,49 @@ test('an audit outage does not mute a final and cannot erase its original follow
  const h=harness(),now=Date.now();h.setFeed(snapshot([{...match('in'),id:'123'}],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',name:'One at Two',duration:'game',gameId:'123',createdAt:now-900000,expiresAt:now+86400000}]};const cap=await subscribe(h,p);
  h.setAuditError(true);h.setFeed(snapshot([{...match('post'),id:'123'}],[],10));assert.equal((await run(h)).status,200);assert.equal(h.sent.length,1);assert.equal((await h.store.loadSubscription(cap.id)).preferences.following.items[0].createdAt,now-900000);
  h.setAuditError(false);h.setFeed(snapshot([{...match('post'),id:'123'}],[],20));await run(h);assert.equal(h.sent.length,1);assert.equal((await h.store.loadSubscription(cap.id)).preferences.following.items.length,0);assert.ok(h.lists.get('fd:v06:audit:'+cap.id).map(JSON.parse).find(x=>x.kind==='follow-cleanup-snapshot'));
+});
+
+test('kickoff observations retain four-minute states and hours-old follow eligibility, plus provider result',async()=>{
+ const h=harness(),now=Date.now(),g={...match(),id:'401869845'};
+ const before=snapshot([g],[],-240000);h.setFeed(before);await run(h);
+ const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:g.id,gameId:g.id,name:g.name,duration:'game',createdAt:now-3*3600000,expiresAt:now+86400000}]};
+ const cap=await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));await run(h);
+ assert.equal(h.sent.length,1);assert.equal(h.sent[0].payload.id,`game:${g.id}:kickoff`);
+ const trace=JSON.parse(h.lists.get(`fd:v06:kickoff:${cap.id}:${g.id}`)[0]);
+ assert.equal(trace.decision,'kickoff-detected');assert.equal(trace.previous.status,'pre');assert.equal(trace.current.providerStatus,'STATUS_IN_PROGRESS');assert.equal(trace.matchingFollows[0].createdAt,now-3*3600000);assert.deepEqual(trace.eligibility.types,['kickoff']);assert.ok(trace.runId);
+ const accepted=h.lists.get(`fd:v06:audit:${cap.id}`).map(JSON.parse).find(e=>e.kind==='provider-accepted');assert.equal(accepted.runId,trace.runId);
+ assert.equal(JSON.parse(h.values.get('fd:v05:last-check')).diagnosticsHealthy,true);
+});
+test('missed poll, omitted game and disabled following explain missing kickoff without issuing a catch-up',async()=>{
+ for(const mode of ['missed-poll','missing-game','following-off','activation-after-observation']){
+  const h=harness(),now=Date.now(),g={...match(),id:'401869845'};h.setFeed(snapshot([g],[],-240000));await run(h);
+  const p=alerts.defaultAlertPreferences();p.following={enabled:mode!=='following-off',items:[{kind:'game',id:g.id,gameId:g.id,name:g.name,duration:'game',createdAt:now-3*3600000,expiresAt:now+86400000}]};const cap=await subscribe(h,p);
+  if(mode==='missed-poll')h.values.set('fd:v05:baseline',JSON.stringify(snapshot([g],[],-480000)));
+  if(mode==='missing-game')h.values.set('fd:v05:baseline',JSON.stringify(snapshot([],[],-240000)));
+  if(mode==='activation-after-observation'){const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));record.typeSince.kickoff=now+60000;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
+  h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));await run(h);assert.equal(h.sent.length,0,mode);
+  const trace=JSON.parse(h.lists.get(`fd:v06:kickoff:${cap.id}:${g.id}`)[0]);
+  if(mode==='missed-poll')assert.equal(trace.decision,'baseline-gap-over-five-minutes');
+  if(mode==='missing-game')assert.equal(trace.decision,'game-missing-from-baseline');
+  if(mode==='following-off'){assert.equal(trace.followingEnabled,false);assert.deepEqual(trace.eligibility.types,[]);}
+  if(mode==='activation-after-observation')assert.equal(trace.eligibility.decisions[0].activationPassed,false);
+  assert.equal(h.values.has(`fd:v05:sent:${cap.id}:game:${g.id}:kickoff`),false);
+ }
+});
+test('diagnostic histories are bounded and never persist endpoint, keys or token hashes',async()=>{
+ const h=harness();h.lists.set('fd:v06:kickoff:device:123',Array(2005).fill('{}'));await h.store.appendKickoffAudit('device','123',{kind:'fixture'});assert.equal(h.lists.get('fd:v06:kickoff:device:123').length,2000);
+ h.lists.set('fd:v06:scheduler',Array(24005).fill('{}'));await h.store.appendSchedulerAudit({kind:'fixture'});assert.equal(h.lists.get('fd:v06:scheduler').length,24000);
+ const g={...match(),id:'123'};h.setFeed(snapshot([g],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};const cap=await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));await run(h);
+ const history=JSON.stringify([...h.lists]);for(const secret of [endpoint.endpoint,endpoint.keys.auth,endpoint.keys.p256dh,cap.token])assert.equal(history.includes(secret),false);
+});
+test('feed outage and audit outage record failure stage or expose diagnostic health without suppressing eligible push',async()=>{
+ const h=harness();await run(h);const baseline=h.values.get('fd:v05:baseline');h.setFeedError(true);assert.equal((await run(h)).status,503);assert.equal(h.values.get('fd:v05:baseline'),baseline);
+ const failure=h.lists.get('fd:v06:scheduler').map(JSON.parse).find(e=>e.kind==='run-failed');assert.equal(failure.stage,'fetch-feed');
+ h.setFeedError(false);const g={...match(),id:'123'};h.setFeed(snapshot([g],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};await subscribe(h,p);
+ h.setAuditError(true);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));assert.equal((await run(h)).status,200);assert.equal(h.sent.length,1);assert.equal(JSON.parse(h.values.get('fd:v05:last-check')).diagnosticsHealthy,false);
+});
+test('scheduler captures kickoff transition even when the device follow never synchronized',async()=>{
+ const h=harness(),g={...match(),id:'401869845'};h.setFeed(snapshot([g],[],-240000));await run(h);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS'}],[],10));await run(h);
+ assert.equal(h.sent.length,0);const history=h.lists.get('fd:v06:scheduler').map(JSON.parse);const trace=history.find(e=>e.kind==='feed-observed'&&e.games.some(g=>g.decision==='kickoff-detected'));
+ assert.equal(trace.games[0].gameId,g.id);assert.equal(trace.games[0].previous.status,'pre');assert.equal(trace.games[0].current.status,'in');assert.equal(trace.feedGate,'ready');
 });
