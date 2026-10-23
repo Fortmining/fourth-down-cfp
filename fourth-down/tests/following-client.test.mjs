@@ -24,7 +24,8 @@ function client({control=false,dirty=false,offline=false,indexedDB=new IDBFactor
  });
  return {...exports,values,requests,workerPreferences,prefs};
 }
-const follow={kind:'team',id:'1',name:'One',duration:'24h',createdAt:Date.now(),expiresAt:Date.now()+86400000};
+const followCreatedAt=Date.now();
+const follow={kind:'team',id:'1',name:'One',duration:'24h',createdAt:followCreatedAt,expiresAt:followCreatedAt+86400000};
 test('watchlist persistence without push opt-in never creates a subscription or prompts',async()=>{
  const c=client();await c.saveFollowing([follow]);const saved=c.readPreferences();assert.equal(saved.following.items.length,1);assert.equal(saved.following.enabled,false);assert.deepEqual(JSON.parse(JSON.stringify(saved.favorites)),c.prefs.favorites);assert.deepEqual(saved.breaking,c.prefs.breaking);assert.equal(c.requests.length,0);assert.equal(c.workerPreferences.length,0);
 });
