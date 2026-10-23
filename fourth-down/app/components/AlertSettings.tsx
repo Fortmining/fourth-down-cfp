@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { defaultGameAlerts,defaultAlertPreferences,hasAlerts,normalizePreferences,type AlertPreferences } from '../lib/alerts';
+import {DRAFT,persistNotifications,writeWorker} from '../lib/notification-client';
+import UnsavedGuard from './UnsavedGuard';
 import {CHANGED,inspectThisDevice} from '../lib/following-client';
 const PREFS='fourth-down-alert-preferences-v1';
 const CONTROL='fourth-down-push-control-v1';
@@ -8,16 +10,6 @@ type Control={id:string;token:string};
 type Team={id:string;name:string};
 type Props={teams:Team[]};
 function read<T>(key:string,fallback:T):T {try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}}
-function keyBytes(key:string) {const raw=atob(key.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0));}
-async function syncWorker(p:AlertPreferences) {
- const registration=await navigator.serviceWorker.getRegistration('/');
- if(!registration?.active)return;
- await new Promise<void>((resolve,reject)=>{
-  const channel=new MessageChannel();const timeout=setTimeout(()=>{channel.port1.close();reject(Error('Could not save local delivery controls. Try again.'));},5000);
-  channel.port1.onmessage=event=>{clearTimeout(timeout);channel.port1.close();if(event.data?.ok)resolve();else reject(Error('Notification storage is unavailable.'));};
-  registration.active!.postMessage({type:'alert-preferences',preferences:p},[channel.port2]);
- });
-}
 export default function AlertSettings({teams}:Props) {
  const [preferences,setPreferences]=useState(defaultAlertPreferences);
  const [config,setConfig]=useState<{available:boolean;publicKey:string|null}|null>(null);
@@ -28,19 +20,20 @@ export default function AlertSettings({teams}:Props) {
  const [storageOk,setStorageOk]=useState(true);const [supported,setSupported]=useState(false);
  const [permission,setPermission]=useState<NotificationPermission>('default');
  const [browserSubscribed,setBrowserSubscribed]=useState<boolean|null>(null);
- const [dirty,setDirty]=useState(false);const working=useRef(false);
+ const [dirty,setDirty]=useState(false);const working=useRef(false);const followingEdited=useRef(false);
  useEffect(()=>{
-  const initial=normalizePreferences(read(PREFS,null));setPreferences(initial);
+  const initial=normalizePreferences(read(DRAFT,read(PREFS,null)));setPreferences(initial);followingEdited.current=localStorage.getItem('fourth-down-follow-master-draft')==='true';
   setControl(read(CONTROL,null));
+  if(localStorage.getItem('fourth-down-worker-pending')==='true')setStatus('Server settings are saved. Save Changes again to refresh this device’s delivery controls.');
   if(read<Control|null>(CONTROL,null)&&'serviceWorker' in navigator)void navigator.serviceWorker.getRegistration('/').then(reg=>reg?.update()).catch(()=>{});
-  try{setDirty(localStorage.getItem('fourth-down-alert-settings-pending-v1')==='true');}catch{}
-  try {localStorage.setItem(PREFS,JSON.stringify(initial));}catch{setStorageOk(false);}
+  try{setDirty(localStorage.getItem(DRAFT)!==null||localStorage.getItem('fourth-down-alert-settings-pending-v1')==='true');}catch{}
+  try {if(!localStorage.getItem(PREFS))localStorage.setItem(PREFS,JSON.stringify(initial));}catch{setStorageOk(false);}
   setSupported('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window);
   if('Notification' in window)setPermission(Notification.permission);
   fetch('/api/alerts/config',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()).then(setConfig).catch(()=>setConfig({available:false,publicKey:null}));
   setReady(true);
   function changed(e:StorageEvent) {
-   if(e.key===PREFS){setPreferences(normalizePreferences(read(PREFS,null)));setDirty(true);}
+   if(e.key===PREFS&&!localStorage.getItem(DRAFT)){setPreferences(normalizePreferences(read(PREFS,null)));}
    if(e.key===CONTROL)setControl(read(CONTROL,null));
   if(read<Control|null>(CONTROL,null)&&'serviceWorker' in navigator)void navigator.serviceWorker.getRegistration('/').then(reg=>reg?.update()).catch(()=>{});
   }
@@ -49,12 +42,12 @@ export default function AlertSettings({teams}:Props) {
    if('serviceWorker' in navigator)navigator.serviceWorker.getRegistration('/').then(reg=>reg?.pushManager.getSubscription()).then(sub=>setBrowserSubscribed(!!sub)).catch(()=>setBrowserSubscribed(false));
   }
   inspectPermission();window.addEventListener('focus',inspectPermission);
-  const refresh=()=>setPreferences(normalizePreferences(read(PREFS,null)));window.addEventListener(CHANGED,refresh);
+  const refresh=()=>{setControl(read(CONTROL,null));if(!localStorage.getItem(DRAFT))setPreferences(normalizePreferences(read(PREFS,null)));};window.addEventListener(CHANGED,refresh);
   window.addEventListener('storage',changed);return()=>{window.removeEventListener(CHANGED,refresh);window.removeEventListener('storage',changed);window.removeEventListener('focus',inspectPermission);};
  },[]);
  function change(next:AlertPreferences) {
-  setPreferences(next);setDirty(true);setStatus('Saved on this device. Save alert settings to update delivery.');
-  try{localStorage.setItem(PREFS,JSON.stringify(next));window.dispatchEvent(new Event(CHANGED));localStorage.setItem('fourth-down-alert-settings-pending-v1','true');}catch{setStorageOk(false);setStatus('Browser storage is unavailable. Enable storage to keep settings and unsubscribe controls.');}
+  setPreferences(next);setDirty(true);setStatus('Unsaved changes. Save Changes to confirm delivery settings.');
+  try{localStorage.setItem(DRAFT,JSON.stringify(next));localStorage.setItem('fourth-down-alert-settings-pending-v1','true');}catch{setStorageOk(false);setStatus('Browser storage is unavailable. Enable storage to keep settings and unsubscribe controls.');}
  }
  const choices=useMemo(()=>{
   const all=new Map([...preferences.favorites,...teams].map(t=>[t.id,t]));
@@ -62,32 +55,16 @@ export default function AlertSettings({teams}:Props) {
  },[teams,preferences.favorites,search]);
  const active=!!control;
  const permissionLabel=!supported?'Not available in this browser':permission==='granted'?'Allowed':permission==='denied'?'Blocked':'Not requested';
- async function save() {
-  if(control&&!hasAlerts(preferences)){await unsubscribe();return;}
-  if(working.current||!storageOk||!supported||!config?.available||!config.publicKey||!hasAlerts(preferences))return;
-  working.current=true;setBusy(true);setStatus('');
-  let createdBrowserSubscription:PushSubscription|null=null;
+ function discard(){localStorage.removeItem(DRAFT);localStorage.removeItem('fourth-down-follow-master-draft');followingEdited.current=false;localStorage.removeItem('fourth-down-alert-settings-pending-v1');setPreferences(normalizePreferences(read(PREFS,null)));setDirty(false);setStatus('Changes discarded.');}
+ async function save():Promise<boolean> {
+  if(working.current||!storageOk)return false;
+  working.current=true;setBusy(true);setStatus('Saving…');
   try{
-   // Permission is requested only from this explicit button gesture.
-   const grant=await Notification.requestPermission();setPermission(grant);
-   if(grant!=='granted'){setStatus('Notifications are not allowed. You can change permission in browser or device settings.');return;}
-   const registration=await navigator.serviceWorker.register('/alerts-sw.js',{scope:'/'});
-   await navigator.serviceWorker.ready;
-   let subscription=await registration.pushManager.getSubscription();
-   if(!subscription){subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:keyBytes(config.publicKey)});createdBrowserSubscription=subscription;}
-   await syncWorker(preferences);
-   const response=await fetch('/api/alerts/subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:control?'update':'create',...control,subscription:subscription.toJSON(),preferences})});
-   const result=await response.json();if(!response.ok)throw Error(result.error||'Could not save alerts.');
-   const next={id:result.id,token:result.token};
-   try{localStorage.setItem(CONTROL,JSON.stringify(next));}catch{
-    await fetch('/api/alerts/subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',...next})});
-    await subscription.unsubscribe();throw Error('Storage is blocked. Alerts were not enabled.');
-   }
-   localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(next);setBrowserSubscribed(true);setDirty(false);localStorage.removeItem('fourth-down-following-pending');setStatus('Background alerts are on for your selected categories and types.');
-  }catch(error){
-   if(createdBrowserSubscription)await createdBrowserSubscription.unsubscribe().catch(()=>false);
-   setStatus(error instanceof Error?error.message:'Could not enable alerts. Try again.');
-  }finally{working.current=false;setBusy(false);}
+   // A follow saved while this page is being edited remains authoritative.
+   const latest=normalizePreferences(read(PREFS,null));const p={...preferences,following:{enabled:followingEdited.current?preferences.following?.enabled===true:latest.following?.enabled===true,items:latest.following?.items||[]}};
+   const message=await persistNotifications(p);setPreferences(normalizePreferences(read(PREFS,null)));setControl(read(CONTROL,null));setBrowserSubscribed(true);setDirty(false);followingEdited.current=false;localStorage.removeItem('fourth-down-follow-master-draft');setStatus(message);return true;
+  }catch(error){setStatus(error instanceof Error?error.message:'Could not save. Your changes are still here; retry.');return false;}
+  finally{working.current=false;setBusy(false);}
  }
  async function inspectDevice(){if(working.current)return;working.current=true;setBusy(true);setInspectionStatus('Reading this device and saving its report…');try{setInspectionStatus(await inspectThisDevice());}catch(e){setInspectionStatus(e instanceof Error?e.message:'Device inspection failed.');}finally{working.current=false;setBusy(false);}}
  async function testDelivery(mode?:'background') {
@@ -100,13 +77,13 @@ export default function AlertSettings({teams}:Props) {
   try{
    const off={...preferences,following:{...preferences.following!,enabled:false},myTeams:{...preferences.myTeams,enabled:false},breaking:{...preferences.breaking,enabled:false}};
    change(off);
-   if('serviceWorker' in navigator)await syncWorker(off);
+   if('serviceWorker' in navigator)await writeWorker(off);
    if(control){
     const r=await fetch('/api/alerts/subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',...control})});
     if(!r.ok)throw Error('Server unsubscribe could not be confirmed. This device is muted; retry to remove the server subscription.');
    }
    if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration('/');const sub=await reg?.pushManager.getSubscription();if(sub)await sub.unsubscribe();}
-   localStorage.removeItem(CONTROL);localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(null);setBrowserSubscribed(false);setDirty(false);setStatus('Unsubscribed from all alerts on this device. Your favorite teams are kept.');
+   localStorage.setItem(PREFS,JSON.stringify(off));localStorage.removeItem(DRAFT);window.dispatchEvent(new Event(CHANGED));localStorage.removeItem(CONTROL);localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(null);setBrowserSubscribed(false);setDirty(false);setStatus('Unsubscribed from all alerts on this device. Your favorite teams are kept.');
   }catch(error){setStatus(error instanceof Error?error.message:'Could not confirm unsubscribe. Please retry.');}
   finally{working.current=false;setBusy(false);}
  }
@@ -115,9 +92,11 @@ export default function AlertSettings({teams}:Props) {
  const gameLabels={halftime:'Halftime scores',close:'Close game',upsetWatch:'Upset Watch',confirmedUpset:'Confirmed Upset',scoring:'Scoring updates'} as const;
  const gameChoices=(group:'favorites'|'following')=><div className="alertTypeChoices">{(Object.keys(gameLabels) as (keyof typeof gameLabels)[]).filter(t=>group==='following'||!['close','scoring'].includes(t)).map(type=><label key={type}><input type="checkbox" aria-label={`${group==='following'?'Temporary follows':'Favorite teams'} · ${gameLabels[type]}`} checked={preferences.gameAlerts?.[group][type]===true} onChange={e=>gameType(group,type,e.target.checked)}/>{gameLabels[type]}</label>)}</div>;
  return <section id="alerts" className="alertSettings" aria-labelledby="alert-settings-heading">
+  <UnsavedGuard dirty={dirty} save={save} discard={discard} busy={busy}/>
+  <div className="notificationSave"><button disabled={!ready||busy||!storageOk} onClick={save}>{busy?'Saving…':'Save Changes'}</button><p role="status" aria-live="polite" aria-atomic="true">{status|| (dirty?'Unsaved changes':'Your saved notification settings')}</p></div>
   <div className="intro"><div><div className="eyebrow">YOUR GAME DAY. YOUR CHOICE.</div><h2 id="alert-settings-heading">Notifications</h2></div><span className="badge">OFF UNTIL YOU OPT IN</span></div>
-  <p className="context">Choose alerts for permanent favorites, temporary follows, and ranking publications separately. Settings are saved on this device; notification permission is only requested when you enable alerts.</p>
-  <fieldset className="followingAlert" disabled={!ready||busy}><legend>Temporary Following</legend><label className="alertToggle"><input type="checkbox" checked={preferences.following?.enabled===true} onChange={e=>change({...preferences,following:{items:preferences.following?.items||[],enabled:e.target.checked}})}/><span><b>Following alerts</b><small>Choose alert types for active follows. Independent of permanent favorites and rankings.</small></span></label><p>Following a game or team only adds it to your watchlist. Select this switch and save or enable notifications to receive alerts.</p><div className="alertTypeChoices">{(['kickoff','final'] as const).map(type=><label key={type}><input type="checkbox" aria-label={`Temporary follows · ${type==='kickoff'?'Kickoff confirmed':'Final scores'}`} checked={preferences.gameAlerts?.following[type]!==false} onChange={e=>gameType('following',type,e.target.checked)}/>{type==='kickoff'?'Kickoff confirmed':'Final scores'}</label>)}</div>{gameChoices('following')}</fieldset>
+  <p className="context">Choose alerts for permanent favorites, temporary follows, and ranking publications separately. Changes stay in a draft until Save Changes confirms the server saved them. Permission is requested only when you explicitly save selected alerts.</p>
+  <fieldset className="followingAlert" disabled={!ready||busy}><legend>Temporary Following</legend><label className="alertToggle"><input type="checkbox" checked={preferences.following?.enabled===true} onChange={e=>{followingEdited.current=true;localStorage.setItem('fourth-down-follow-master-draft','true');change({...preferences,following:{items:preferences.following?.items||[],enabled:e.target.checked}});}}/><span><b>Following alerts</b><small>Choose defaults for follows without individual choices. Manage each follow in Following. Independent of permanent favorites and rankings.</small></span></label><p>Individual choices are available when you follow a game or team. This switch pauses or enables all temporary follow alerts; it does not change favorites.</p><div className="alertTypeChoices">{(['kickoff','final'] as const).map(type=><label key={type}><input type="checkbox" aria-label={`Temporary follows · ${type==='kickoff'?'Kickoff confirmed':'Final scores'}`} checked={preferences.gameAlerts?.following[type]!==false} onChange={e=>gameType('following',type,e.target.checked)}/>{type==='kickoff'?'Kickoff confirmed':'Final scores'}</label>)}</div>{gameChoices('following')}</fieldset>
   <div className="alertCategories">
    <fieldset disabled={!ready||busy}><legend>My Teams</legend>
     <label className="alertToggle"><input type="checkbox" checked={preferences.myTeams.enabled} onChange={e=>category('myTeams','enabled',e.target.checked)}/><span><b>My Teams alerts</b><small>Only the teams you choose.</small></span></label>
@@ -153,11 +132,11 @@ export default function AlertSettings({teams}:Props) {
    {ready&&config&&!config.available&&<p>{active?'Background checks are temporarily unavailable. Your subscription is saved, but delivery cannot currently be confirmed.':'Background delivery is being set up. Your choices are saved; alerts are not active yet.'}</p>}
    {!storageOk&&<p role="alert">Browser storage is blocked. Persistent settings and alert controls require storage.</p>}
    {permission==='denied'&&<p>Notifications are blocked in browser or device settings. No permission prompts will be repeated automatically.</p>}
-   <div className="alertActions"><button disabled={!ready||busy||!storageOk||!supported||!config?.available||(!active&&!hasAlerts(preferences))||permission==='denied'} onClick={save}>{busy?'Working…':active?'Save alert settings':'Enable Notifications'}</button>{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery()}>Send test notification</button>}{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery('background')}>Send background test</button>}<button disabled={!ready||busy} onClick={unsubscribe}>Unsubscribe from all alerts</button></div>
+   <div className="alertActions">{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery()}>Send test notification</button>}{active&&<button disabled={busy||dirty||permission!=='granted'} onClick={()=>testDelivery('background')}>Send background test</button>}<button disabled={!ready||busy} onClick={unsubscribe}>Unsubscribe from all alerts</button></div>
    {active&&<p>To turn off one category or alert type, uncheck it and save alert settings. Unsubscribe from all stops both categories and keeps your favorites.</p>}
    {!hasAlerts(preferences)&&ready&&<p>Select a category and at least one alert type. My Teams also needs a favorite team.</p>}
    <div className="alertActions"><button disabled={!ready||busy} onClick={inspectDevice} aria-describedby="device-inspection-status">Inspect this device</button></div><p id="device-inspection-status" role="status" aria-live="polite" aria-atomic="true">{inspectionStatus}</p><p className="alertHint">Read saved follow timestamps and delivery diagnostics from this browser or installed app. This does not change settings, request permission, or send a test.</p><details className="alertPolicy"><summary>Delivery & privacy</summary><p>Push may be delayed by your browser, device, or the feed. A single event matching both categories produces one notification. Clearing browser data removes these local controls; you can always revoke notifications in device settings.</p></details>
-   <p role="status" aria-live="polite">{status}</p>
+
   </div>
  </section>;
 }

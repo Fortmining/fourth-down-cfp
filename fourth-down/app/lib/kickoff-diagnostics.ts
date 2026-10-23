@@ -5,7 +5,12 @@ import type {SavedSubscription} from './push-store';
 
 // Fixed codes and normalized preferences only; never include endpoints or capabilities.
 export function notificationEligibility(event:AlertEvent,saved:SavedSubscription) {
- const decisions=event.types.map(type=>({type,selected:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):extraGameTypes.includes(type as ExtraGameType)?extraGameEligible(event,saved,type as ExtraGameType):selectedEvent({...event,types:[type]},saved.preferences),activeSince:saved.typeSince[type],activationPassed:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):event.observedAt>=saved.typeSince[type]}));
+ const selected=(type:AlertEvent['types'][number])=>{
+  const p=saved.preferences;
+  const items=(p.following?.items||[]).filter(f=>(saved.kickoffAccess?.followTypes?.[`${f.kind}:${f.id}:${type}`]??saved.kickoffAccess?.follows[`${f.kind}:${f.id}`]??saved.updatedAt)<=event.observedAt);
+  return selectedEvent({...event,types:[type]},{...p,following:p.following?{...p.following,items}:undefined});
+ };
+ const decisions=event.types.map(type=>({type,selected:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):extraGameTypes.includes(type as ExtraGameType)?extraGameEligible(event,saved,type as ExtraGameType):selected(type),activeSince:saved.typeSince[type],activationPassed:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):event.observedAt>=saved.typeSince[type]}));
  return {types:decisions.filter(d=>d.selected&&d.activationPassed).map(d=>d.type),decisions};
 }
 const state=(g:AlertGame|undefined)=>g?{status:g.status,providerStatus:g.providerStatus??null,scheduledAt:g.date,completed:g.completed===true,teamIds:g.teams.map(t=>t.id)}:null;

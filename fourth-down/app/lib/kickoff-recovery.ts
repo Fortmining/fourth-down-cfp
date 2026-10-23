@@ -1,7 +1,8 @@
-import type {AlertEvent,AlertFeed,AlertGame,AlertPreferences} from './alerts';
+import {followsType,followAlertTypes} from './alerts.ts';
+import type {AlertEvent,AlertFeed,AlertGame,AlertPreferences} from './alerts.ts';
 import type {SavedSubscription} from './push-store';
 export const KICKOFF_WINDOW_MS=15*60_000;
-export type KickoffAccess={favorites:Record<string,number>;follows:Record<string,number>;favoriteEnabledAt:number;followingEnabledAt:number};
+export type KickoffAccess={followTypes?:Record<string,number>;favorites:Record<string,number>;follows:Record<string,number>;favoriteEnabledAt:number;followingEnabledAt:number};
 type Witness={scheduledAt:number;teamIds:string[];lastSeenAt:number;firstLiveAt?:number;terminal?:boolean};
 export type KickoffMemory={season:number|null;lastFeedAt:number;games:Record<string,Witness>};
 const numeric=(id:string)=>/^\d{1,12}$/.test(id);
@@ -56,18 +57,22 @@ export function recoverKickoffs(previous:AlertFeed|null,current:AlertFeed,input:
 const key=(f:NonNullable<AlertPreferences['following']>['items'][number])=>`${f.kind}:${f.id}`;
 export function kickoffAccessTimes(old:SavedSubscription|null,p:AlertPreferences,now:number):KickoffAccess {
  const legacy=old?old.kickoffAccess??{favorites:Object.fromEntries(old.preferences.favorites.map(t=>[t.id,old.updatedAt])),follows:Object.fromEntries((old.preferences.following?.items||[]).map(f=>[key(f),old.updatedAt])),favoriteEnabledAt:old.updatedAt,followingEnabledAt:old.updatedAt}:null;
- const favoriteOn=p.myTeams.enabled&&p.myTeams.kickoff,followingOn=p.following?.enabled===true&&p.gameAlerts?.following.kickoff!==false;
- return {favorites:Object.fromEntries(p.favorites.map(t=>[t.id,legacy?.favorites[t.id]??now])),follows:Object.fromEntries((p.following?.items||[]).map(f=>{
+ const favoriteOn=p.myTeams.enabled&&p.myTeams.kickoff,followingOn=p.following?.enabled===true;
+ return {followTypes:Object.fromEntries((p.following?.items||[]).flatMap(f=>followAlertTypes.map(type=>{
+ const same=old?.preferences.following?.items.find(x=>key(x)===key(f)&&x.createdAt===f.createdAt&&x.expiresAt===f.expiresAt&&x.gameId===f.gameId&&x.duration===f.duration);
+ const stamp=key(f)+':'+type;
+ return [stamp,same&&old&&followsType(old.preferences,same,type)===followsType(p,f,type)?legacy?.followTypes?.[stamp]??legacy?.follows[key(f)]??now:now];
+ }))),favorites:Object.fromEntries(p.favorites.map(t=>[t.id,legacy?.favorites[t.id]??now])),follows:Object.fromEntries((p.following?.items||[]).map(f=>{
   const same=old?.preferences.following?.items.find(x=>key(x)===key(f)&&x.createdAt===f.createdAt&&x.expiresAt===f.expiresAt&&x.gameId===f.gameId&&x.duration===f.duration);
   return [key(f),same?legacy?.follows[key(f)]??now:now];
  })),favoriteEnabledAt:!favoriteOn?legacy?.favoriteEnabledAt??now:old?.preferences.myTeams.enabled&&old.preferences.myTeams.kickoff?legacy!.favoriteEnabledAt:now,
- followingEnabledAt:!followingOn?legacy?.followingEnabledAt??now:old?.preferences.following?.enabled&&old.preferences.gameAlerts?.following.kickoff!==false?legacy!.followingEnabledAt:now};
+ followingEnabledAt:!followingOn?legacy?.followingEnabledAt??now:old?.preferences.following?.enabled?legacy!.followingEnabledAt:now};
 }
 export function eligibleRecoveredKickoff(e:AlertEvent,s:SavedSubscription,now=Date.now()) {
  const cutoff=e.eligibilityAt;
  if(!Number.isFinite(cutoff)||!Number.isFinite(e.expiresAt)||now>=e.expiresAt!||cutoff!>e.observedAt)return false;
  const p=s.preferences,a=s.kickoffAccess??kickoffAccessTimes(s,p,s.updatedAt),gameId=/^game:(\d+):kickoff$/.exec(e.id)?.[1];
  const favorite=p.myTeams.enabled&&p.myTeams.kickoff&&a.favoriteEnabledAt<=cutoff!&&p.favorites.some(t=>e.teamIds.includes(t.id)&&a.favorites[t.id]<=cutoff!);
- const followed=p.following?.enabled&&p.gameAlerts?.following.kickoff!==false&&a.followingEnabledAt<=cutoff!&&p.following.items.some(f=>a.follows[key(f)]<=cutoff!&&f.createdAt<=cutoff!&&f.expiresAt>now&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&e.teamIds.includes(f.id)));
+ const followed=p.following?.enabled&&a.followingEnabledAt<=cutoff!&&p.following.items.some(f=>followsType(p,f,'kickoff')&&(a.followTypes?.[key(f)+':kickoff']??a.follows[key(f)])<=cutoff!&&f.createdAt<=cutoff!&&f.expiresAt>now&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&e.teamIds.includes(f.id)));
  return !!(favorite||followed);
 }

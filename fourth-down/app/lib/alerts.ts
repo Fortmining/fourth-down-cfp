@@ -1,6 +1,9 @@
 import type { Poll, SourceId } from './rankings';
 export type AlertType = 'halftime' | 'close' | 'upsetWatch' | 'confirmedUpset' | 'scoring' | 'kickoff' | 'final' | 'upset' | 'development' | 'ap' | 'coaches' | 'cfp';
-export type TemporaryFollow={kind:'game'|'team';id:string;name:string;duration:'game'|'24h'|'7d';gameId?:string;createdAt:number;expiresAt:number};
+export const followAlertTypes=['kickoff','halftime','close','scoring','final','upsetWatch','confirmedUpset'] as const;
+export type FollowAlertType=typeof followAlertTypes[number];
+export type FollowChoices=Record<FollowAlertType,boolean>;
+export type TemporaryFollow={alerts?:FollowChoices;kind:'game'|'team';id:string;name:string;duration:'game'|'24h'|'7d';gameId?:string;createdAt:number;expiresAt:number};
 export const extraGameTypes=['halftime','close','upsetWatch','confirmedUpset','scoring'] as const;
 export type ExtraGameType=typeof extraGameTypes[number];
 export type GameAlertChoices={favorites:Record<ExtraGameType,boolean>;following:Record<ExtraGameType,boolean>&{kickoff:boolean;final:boolean}};
@@ -28,11 +31,13 @@ export function normalizePreferences(input: unknown): AlertPreferences {
  d.following={enabled:bool(p.following?.enabled),items:(Array.isArray(p.following?.items)?p.following.items:[]).filter(f=>{
   if(!f || !['game','team'].includes(f.kind) || !/^\d{1,12}$/.test(f.id) || typeof f.name!=='string' || !f.name.length || f.name.length>180 || !['game','24h','7d'].includes(f.duration) || !Number.isFinite(f.createdAt) || !Number.isFinite(f.expiresAt) || f.createdAt>f.expiresAt || f.expiresAt-f.createdAt>(f.duration==='game'?180: f.duration==='24h'?1:7)*86400000 || (f.duration==='game'&&!/^\d{1,12}$/.test(f.gameId||'')) || (f.kind==='game'&&(f.duration!=='game'||f.gameId!==f.id)))return false;
   const key=f.kind+':'+f.id;if(seen.has(key))return false;seen.add(key);return true;
- }).slice(0,40).map(f=>({kind:f.kind,id:f.id,name:f.name,duration:f.duration,gameId:f.gameId,createdAt:f.createdAt,expiresAt:f.expiresAt}))};
+ }).slice(0,40).map(f=>({kind:f.kind,id:f.id,name:f.name,duration:f.duration,gameId:f.gameId,createdAt:f.createdAt,expiresAt:f.expiresAt,...(f.alerts?{alerts:Object.fromEntries(followAlertTypes.map(t=>[t,f.alerts?.[t]===true])) as FollowChoices}:{})}))};
  return d;
 }
+export function followChoices(p:AlertPreferences,f?:TemporaryFollow):FollowChoices {return Object.fromEntries(followAlertTypes.map(t=>[t,f?.alerts ? f.alerts[t]===true : (t==='kickoff'||t==='final'?p.gameAlerts?.following[t]!==false:p.gameAlerts?.following[t]===true)])) as FollowChoices;}
+export function followsType(p:AlertPreferences,f:TemporaryFollow,t:string){return followAlertTypes.includes(t as FollowAlertType)&&followChoices(p,f)[t as FollowAlertType];}
 export function hasAlerts(p:AlertPreferences) {
- return !!(p.following?.enabled && p.following.items.some(f=>f.expiresAt>Date.now()) && (p.gameAlerts?.following.kickoff!==false||p.gameAlerts?.following.final!==false||extraGameTypes.some(t=>p.gameAlerts?.following[t]))) || (p.myTeams.enabled && p.favorites.length>0 && (p.myTeams.kickoff||p.myTeams.final||extraGameTypes.some(t=>p.gameAlerts?.favorites[t]))) ||
+ return !!(p.following?.enabled && p.following.items.some(f=>f.expiresAt>Date.now()&&followAlertTypes.some(t=>followsType(p,f,t)))) || (p.myTeams.enabled && p.favorites.length>0 && (p.myTeams.kickoff||p.myTeams.final||extraGameTypes.some(t=>p.gameAlerts?.favorites[t]))) ||
  (p.breaking.enabled && (p.breaking.upsets||p.breaking.developments||p.breaking.ap||p.breaking.coaches||p.breaking.cfp));
 }
 export type AlertGame={id:string;date:string;name:string;status:string;providerStatus?:string;completed?:boolean;period?:number;clock?:number;teams:{id:string;name:string;score?:string;rank?:number|null;winner?:boolean}[]};
@@ -109,7 +114,7 @@ export function deriveAlertEvents(previous:AlertFeed|null,current:AlertFeed,news
 }
 export function selectedEvent(e:AlertEvent,p:AlertPreferences):boolean {
  const gameId=/^game:([^:]+):/.exec(e.id)?.[1];
- const followed=p.following?.enabled && e.types.some(t=>t==='kickoff'||t==='final'?p.gameAlerts?.following?.[t]!==false:extraGameTypes.includes(t as ExtraGameType)&&p.gameAlerts?.following?.[t as ExtraGameType]===true) && p.following.items.some(f=>
+ const followed=p.following?.enabled && p.following.items.some(f=>e.types.some(t=>followsType(p,f,t)) &&
   f.createdAt<=(e.eligibilityAt??e.observedAt) && f.expiresAt>Math.max(e.observedAt,Date.now()) &&
   (f.duration==='game'?f.gameId===gameId:f.kind==='team'&&e.teamIds.includes(f.id)));
 

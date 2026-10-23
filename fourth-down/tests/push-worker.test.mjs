@@ -53,7 +53,7 @@ test('temporary worker eligibility, overlap dedupe, timed expiry and queued unfo
 });
 
 test('worker reports its revision and zero open clients after processing a background real event',async()=>{
- const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.7.0');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
+ const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.7.1');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
 });
 test('recovered kickoff enforces expiry and original eligibility time without consuming final dedupe',async()=>{
  const now=Date.now(),w=worker(),p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await w.prefs(p);
@@ -68,4 +68,11 @@ test('new optional game types stay muted until each scope is explicitly selected
  for(const type of ['halftime','close','upsetWatch','confirmedUpset','scoring']){const e={id:`game:123:${type}`,types:[type],teamIds:['1','2'],title:type,body:'Verified scores',url:'/game/123',observedAt:now,expiresAt:now+300000};await w.push(e);assert.equal(w.shown.length,0);}
  p.gameAlerts.following.close=true;p.gameAlerts.following.upsetWatch=true;await w.prefs(p);const late={id:'game:123:late:fourth',types:['close','upsetWatch'],teamIds:['1','2'],title:'Upset Watch',body:'Verified scores',url:'/game/123',observedAt:now,expiresAt:now+300000};await Promise.all([w.push(late),w.push(late)]);assert.equal(w.shown.length,1);
  p.following.enabled=false;p.myTeams.enabled=true;p.favorites=[{id:'1',name:'One'}];p.gameAlerts.favorites.halftime=true;await w.prefs(p);await w.push({...late,id:'game:123:halftime',types:['halftime']});assert.equal(w.shown.length,2);
+});
+
+test('per-follow options survive worker restart, override legacy defaults and keep favorite overlap deduplicated',async()=>{
+ const db=new IDBFactory(),w=worker(db),now=Date.now(),p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'1',name:'Game',duration:'game',gameId:'1',createdAt:now-10000,expiresAt:now+86400000,alerts:{kickoff:false,halftime:true,close:false,scoring:false,final:false,upsetWatch:false,confirmedUpset:false}}]};
+ await w.prefs(p);await w.push({...message,observedAt:now});assert.equal(w.shown.length,0);await w.push({...message,id:'game:1:halftime',types:['halftime'],observedAt:now});assert.equal(w.shown.length,1);
+ const restarted=worker(db);await restarted.push({...message,id:'game:1:halftime',types:['halftime'],observedAt:now});assert.equal(restarted.shown.length,0);
+ p.favorites=[{id:'1',name:'Favorite'}];p.myTeams={enabled:true,kickoff:true,final:true};await restarted.prefs(p);await restarted.push({...message,observedAt:now});await restarted.push({...message,observedAt:now});assert.equal(restarted.shown.length,1);
 });

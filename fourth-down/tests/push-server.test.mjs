@@ -111,7 +111,7 @@ test('test delivery requires subscription capability; only a single-use worker r
 async function subscribe(h,preferences,suffix='test',existing=true) {
  const cap=await (await h.subscription.POST(request({action:'create',subscription:{...endpoint,endpoint:endpoint.endpoint+suffix},preferences}))).json();
  // These routing fixtures model an already opted-in device. Late saves are tested separately.
- if(existing){const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));const earlier=Date.now()-86400000;record.kickoffAccess.favorites=Object.fromEntries(preferences.favorites.map(t=>[t.id,earlier]));record.kickoffAccess.follows=Object.fromEntries((preferences.following?.items||[]).map(f=>[f.kind+':'+f.id,earlier]));record.kickoffAccess.favoriteEnabledAt=earlier;record.kickoffAccess.followingEnabledAt=earlier;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
+ if(existing){const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));const earlier=Date.now()-86400000;record.kickoffAccess.favorites=Object.fromEntries(preferences.favorites.map(t=>[t.id,earlier]));record.kickoffAccess.follows=Object.fromEntries((preferences.following?.items||[]).map(f=>[f.kind+':'+f.id,earlier]));record.kickoffAccess.followTypes=Object.fromEntries(Object.keys(record.kickoffAccess.followTypes||{}).map(k=>[k,earlier]));record.kickoffAccess.favoriteEnabledAt=earlier;record.kickoffAccess.followingEnabledAt=earlier;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
  return cap;
 }
 const snapshot=(games=[],polls=[],offset=-1000)=>({season:2026,updatedAt:new Date(Date.now()+offset).toISOString(),games,polls});
@@ -301,4 +301,18 @@ test('kickoff and an initial score update cannot flood the same device in one ch
  const h=harness(),now=Date.now(),g={...match(),teams:[{id:'1',name:'One',score:'0'},{id:'2',name:'Two',score:'0'}]};h.setFeed(snapshot([g],[],-1000));await run(h);
  const p=alerts.defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};p.gameAlerts.following.scoring=true;await subscribe(h,p);
  h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:899.95,teams:[{...g.teams[0],score:'7'},g.teams[1]]}],[],10));await run(h);assert.equal(h.sent.length,1);assert.deepEqual(h.sent[0].payload.types,['kickoff']);
+});
+
+test('following-only atomic patch preserves permanent favorites, rankings, endpoint and activation times',async()=>{
+ const h=harness();await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'9',name:'Permanent'}];p.myTeams={enabled:true,kickoff:true,final:true};p.breaking={...p.breaking,enabled:true,ap:true};const cap=await subscribe(h,p);const before=JSON.parse(JSON.stringify(await h.store.loadSubscription(cap.id)));
+ const following={enabled:true,items:[{kind:'game',id:'123',name:'Test',duration:'game',gameId:'123',createdAt:Date.now()-1000,expiresAt:Date.now()+86400000-1000,alerts:{kickoff:false,final:true,halftime:true,close:false,scoring:false,upsetWatch:false,confirmedUpset:false}}]};
+ const result=await h.subscription.POST(request({action:'following',...cap,following,preferences:{favorites:[],breaking:{enabled:false}}}));assert.equal(result.status,200);const saved=JSON.parse(JSON.stringify(await h.store.loadSubscription(cap.id)));assert.deepEqual(JSON.parse(JSON.stringify(saved.preferences.following)),following);assert.deepEqual(saved.preferences.favorites,p.favorites);assert.deepEqual(saved.preferences.myTeams,p.myTeams);assert.deepEqual(saved.preferences.breaking,p.breaking);assert.deepEqual(saved.subscription,before.subscription);assert.equal(saved.typeSince.ap,before.typeSince.ap);
+});
+test('following patch rejects invalid capability and cannot silently report a rejected save as confirmed',async()=>{
+ const h=harness();await run(h);const cap=await subscribe(h,alerts.defaultAlertPreferences());const before=await h.store.loadSubscription(cap.id);const result=await h.subscription.POST(request({action:'following',...cap,token:'a'.repeat(64),following:{enabled:true,items:[]}}));assert.equal(result.status,403);assert.deepEqual(await h.store.loadSubscription(cap.id),before);
+});
+test('concurrent settings changes reject the following patch instead of overwriting another save',async()=>{
+ const h=harness();await run(h);const cap=await subscribe(h,alerts.defaultAlertPreferences());const original=h.store.redis;
+ h.store.redis=async(...args)=>{if(args[0]==='EVAL'){const record=await h.store.loadSubscription(cap.id);record.preferences.breaking.ap=true;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}return original(...args);};
+ const result=await h.subscription.POST(request({action:'following',...cap,following:{enabled:true,items:[]}}));assert.equal(result.status,409);const saved=await h.store.loadSubscription(cap.id);assert.equal(saved.preferences.breaking.ap,true);assert.equal(saved.preferences.following.enabled,false);
 });
