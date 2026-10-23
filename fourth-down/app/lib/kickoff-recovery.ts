@@ -1,6 +1,6 @@
 import type {AlertEvent,AlertFeed,AlertGame,AlertPreferences} from './alerts';
 import type {SavedSubscription} from './push-store';
-export const KICKOFF_WINDOW_MS=12*60_000;
+export const KICKOFF_WINDOW_MS=15*60_000;
 export type KickoffAccess={favorites:Record<string,number>;follows:Record<string,number>;favoriteEnabledAt:number;followingEnabledAt:number};
 type Witness={scheduledAt:number;teamIds:string[];lastSeenAt:number;firstLiveAt?:number;terminal?:boolean};
 export type KickoffMemory={season:number|null;lastFeedAt:number;games:Record<string,Witness>};

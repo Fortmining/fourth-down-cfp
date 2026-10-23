@@ -1,6 +1,6 @@
 # Fourth Down v0.7 — optional game notifications
 
-Issue #5 stays OPEN until real kickoff display evidence is confirmed. v0.6.2 bounded kickoff recovery was implemented and deployed first (PR #7, production commit 2555b3c7f27e6831cba4d5ce9ab8e0bbc3101188). It recovers from a durable pregame witness within 12 minutes of scheduled kickoff, with identity, progressed first-quarter clock, freshness, server opt-in timing, expiry and existing event claims. Its 94 regressions and naturally scheduled healthy checks are not real kickoff evidence. See KICKOFF-INVESTIGATION.md for conservative exclusions.
+Issue #5 stays OPEN until real kickoff display evidence is confirmed. v0.6.2 bounded kickoff recovery was implemented and deployed first (PR #7, production commit 2555b3c7f27e6831cba4d5ce9ab8e0bbc3101188). It recovers from a durable pregame witness within 15 minutes of scheduled kickoff, with identity, progressed first-quarter clock, freshness, server opt-in timing, expiry and existing event claims. Its 94 regressions and naturally scheduled healthy checks are not real kickoff evidence. See KICKOFF-INVESTIGATION.md for conservative exclusions.
 
 ## Controls and migration
 
