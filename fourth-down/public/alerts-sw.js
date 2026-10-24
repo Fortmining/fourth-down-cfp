@@ -48,7 +48,7 @@ self.addEventListener('push',event=>{
   db.close();if(!fresh)return;
   await self.registration.showNotification(message.title,{body:message.body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:message.id,data:{url:message.url},actions:[{action:'settings',title:'Alert settings'}]});
   if(/^[a-f0-9]{64}$/.test(message.receipt||''))try{
-   await fetch('/api/alerts/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt:message.receipt,workerVersion:'0.8.0',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});
+   await fetch('/api/alerts/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt:message.receipt,workerVersion:'0.8.1',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});
   }catch{}
  })());
 });

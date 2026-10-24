@@ -53,7 +53,7 @@ test('temporary worker eligibility, overlap dedupe, timed expiry and queued unfo
 });
 
 test('worker reports its revision and zero open clients after processing a background real event',async()=>{
- const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.8.0');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
+ const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.8.1');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
 });
 test('recovered kickoff enforces expiry and original eligibility time without consuming final dedupe',async()=>{
  const now=Date.now(),w=worker(),p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await w.prefs(p);
