@@ -34,22 +34,33 @@ self.addEventListener('message',event=>{
   }catch{event.ports[0]?.postMessage({ok:false});}
  })());
 });
+// Telemetry never gates showing an eligible notification. The received request runs
+// alongside local checks; terminal outcomes are reported after display/suppression.
+async function reportOutcome(message,outcome,receivedAt,scope) {
+ if(!/^[a-f0-9]{64}$/.test(message.receipt||''))return;
+ try{await fetch(outcome==='displayed'?'/api/alerts/receipt':'/api/alerts/receipt-status',{method:'POST',headers:{'Content-Type':'application/json'},...(typeof AbortSignal!=='undefined'&&AbortSignal.timeout?{signal:AbortSignal.timeout(2500)}:{}),body:JSON.stringify({receipt:message.receipt,outcome,receivedAt,scope,workerVersion:'0.8.3',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});}catch{}
+}
 self.addEventListener('push',event=>{
  if(!event.data)return;
  event.waitUntil((async()=>{
   let message;try{message=event.data.json();}catch{return;}
   if(!message.id||!message.title||!message.body)return;
-  if(message.expiresAt!==undefined&&(!Number.isFinite(message.expiresAt)||Date.now()>=message.expiresAt))return;
-  const db=await openAlertsDb();
-  const preferences=await new Promise((resolve,reject)=>{const tx=db.transaction('settings','readonly');const get=tx.objectStore('settings').get('preferences');get.onsuccess=()=>resolve(get.result);get.onerror=reject;});
-  if(!selected(message,preferences)){db.close();return;}
+  const receivedAt=Date.now(),received=reportOutcome(message,'received',receivedAt);
+  const report=async(outcome,scope)=>{await received;await reportOutcome(message,outcome,receivedAt,scope);};
+  if(message.expiresAt!==undefined&&(!Number.isFinite(message.expiresAt)||Date.now()>=message.expiresAt)){await report('expired');return;}
+  let db,preferences;
+  try{db=await openAlertsDb();preferences=await new Promise((resolve,reject)=>{const tx=db.transaction('settings','readonly');const get=tx.objectStore('settings').get('preferences');get.onsuccess=()=>resolve(get.result);get.onerror=reject;});}
+  catch{db?.close();await report('storage-failed');return;}
+  const scope={settingsPresent:!!preferences,finalEnabled:preferences?.myTeams?.final===true,favoriteMatch:message.teamIds?.some(id=>preferences?.favorites?.some(t=>t.id===id))===true,favoriteEnabled:preferences?.myTeams?.enabled===true,kickoffEnabled:preferences?.myTeams?.kickoff===true,categoryEnabled:message.types?.some(t=>preferences?.gameAlerts?.favorites?.[t]===true)===true,followingEnabled:preferences?.following?.enabled===true};
+  if(!selected(message,preferences)){db.close();await report('not-selected',scope);return;}
   // Atomic IDB claims survive worker restarts and duplicate provider pushes.
-  const fresh=await new Promise(resolve=>{const tx=db.transaction('seen','readwrite');const store=tx.objectStore('seen');const get=store.get(message.id);let claimed=false;get.onsuccess=()=>{if(!get.result){store.put(Date.now(),message.id);claimed=true;}};tx.oncomplete=()=>resolve(claimed);tx.onabort=()=>resolve(false);});
-  db.close();if(!fresh)return;
-  await self.registration.showNotification(message.title,{body:message.body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:message.id,data:{url:message.url},actions:[{action:'settings',title:'Alert settings'}]});
-  if(/^[a-f0-9]{64}$/.test(message.receipt||''))try{
-   await fetch('/api/alerts/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt:message.receipt,workerVersion:'0.8.2',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});
-  }catch{}
+  let fresh;
+  try{fresh=await new Promise(resolve=>{const tx=db.transaction('seen','readwrite');const store=tx.objectStore('seen');const get=store.get(message.id);let claimed=false;get.onsuccess=()=>{if(!get.result){store.put(Date.now(),message.id);claimed=true;}};tx.oncomplete=()=>resolve(claimed);tx.onabort=()=>resolve(null);});}
+  catch{db.close();await report('storage-failed',scope);return;}
+  db.close();if(fresh===null){await report('storage-failed',scope);return;}if(!fresh){await report('duplicate',scope);return;}
+  try{await self.registration.showNotification(message.title,{body:message.body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:message.id,data:{url:message.url},actions:[{action:'settings',title:'Alert settings'}]});}
+  catch{await report('display-failed',scope);return;}
+  await report('displayed',scope);
  })());
 });
 self.addEventListener('notificationclick',event=>{

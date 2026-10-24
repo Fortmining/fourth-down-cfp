@@ -43,7 +43,12 @@ export function cronAuthorized(request:Request) {const a=Buffer.from(request.hea
 
 // Bounded, private audit history survives one-game cleanup. Never store push keys.
 export async function appendDeliveryAudit(id:string,entry:Record<string,unknown>){
- return appendPrivateAudit(`fd:v06:audit:${id}`,entry,200);
+ const general=await appendPrivateAudit(`fd:v06:audit:${id}`,entry,200);
+ const gameId=typeof entry.eventId==='string'?/^game:(\d{1,12}):/.exec(entry.eventId)?.[1]:undefined;
+ const relevant=entry.kind!=='event-filtered'||(Array.isArray(entry.favoriteTeamIds)&&entry.favoriteTeamIds.length>0);
+ const compact=Object.fromEntries(['kind','eventId','runId','types','ttl','urgency','expiresAt','favoriteTeamIds','myTeams','favoriteChoices','eligibility','settingsSavedAt','eventObservedAt','outcome','receivedAt','scope','deviceAlias','workerVersion','platform','openClients','test','stage','status'].filter(key=>entry[key]!==undefined).map(key=>[key,entry[key]]));
+ const game=gameId&&relevant?await appendPrivateAudit(`fd:v083:game-delivery:${id}:${gameId}`,compact,300):true;
+ return general&&game;
 }
 export const appendKickoffAudit=(id:string,gameId:string,entry:Record<string,unknown>)=>appendPrivateAudit(`fd:v06:kickoff:${id}:${gameId}`,entry,2000);
 export const appendSchedulerAudit=(entry:Record<string,unknown>)=>appendPrivateAudit('fd:v06:scheduler',entry,24000);

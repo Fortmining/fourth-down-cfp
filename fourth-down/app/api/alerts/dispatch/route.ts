@@ -90,7 +90,7 @@ export async function GET(request:Request) {
      const current=await loadSubscription(record.id);if(!current)continue;
      if(event.types.every(t=>t.startsWith('pulse'))&&!current.preferences.pulse?.enabled)continue;
      const eligibility=notificationEligibility(event,current);let types=eligibility.types;
-     if(!types.length||!selectedEvent({...event,types},current.preferences)){await deliveryAudit(current.id,{kind:'event-filtered',eventId:event.id,runId,eventObservedAt:event.observedAt,eligibility,settingsSavedAt:current.updatedAt,gameAlerts:current.preferences.gameAlerts,gameAccess:current.gameAccess,kickoffAccess:current.kickoffAccess,following:current.preferences.following,typeSince:current.typeSince});continue;}
+     if(!types.length||!selectedEvent({...event,types},current.preferences)){await deliveryAudit(current.id,{kind:'event-filtered',eventId:event.id,runId,favoriteTeamIds:current.preferences.favorites.filter(t=>event.teamIds.includes(t.id)).map(t=>t.id),eventObservedAt:event.observedAt,eligibility,settingsSavedAt:current.updatedAt,gameAlerts:current.preferences.gameAlerts,gameAccess:current.gameAccess,kickoffAccess:current.kickoffAccess,following:current.preferences.following,typeSince:current.typeSince});continue;}
      // Discovery budgets never suppress a separately opted-in favorite/follow alert.
      const national=nationalSelected({...event,types},current.preferences);
      const legacy=selectedEvent({...event,types}, {...current.preferences,pulse:undefined});
@@ -111,6 +111,7 @@ export async function GET(request:Request) {
      const ttl=effective.expiresAt===undefined?300:Math.min(300,Math.floor((effective.expiresAt-Date.now())/1000));if(ttl<=0)continue;
      const claim=`fd:v05:sent:${record.id}:${event.id}`;
      if(!await redis('SET',claim,'claimed','NX','EX',60*60*24*400)){await redis('INCR','fd:v05:duplicates-suppressed');await deliveryAudit(current.id,{kind:'duplicate-suppressed',runId,eventId:event.id});continue;}
+     const urgency=types.includes('kickoff')?'high':'normal';
      let deliveryStage='receipt-storage';
      try {
       const receipt=randomBytes(32).toString('hex');
@@ -121,7 +122,8 @@ export async function GET(request:Request) {
       const title=types.includes('pulseFinal')?'Confirmed Major Upset':types.includes('pulseUpset')?'Upset Watch':types.includes('pulseClose')?'Close Game Discovery':types.includes('pulseInteresting')?'Interesting Live Game':types.includes('confirmedUpset')?'Confirmed Upset · Final':types.includes('upsetWatch')?'Upset Watch':types.includes('close')?'Close game':types.includes('halftime')?'Halftime score':types.includes('scoring')?'Scoring update':types.includes('final')&&!types.includes('upset')?'Final score':event.title;
       const payload={...effective,title,types,receipt};
       try{await recordNotification(current.id,payload);}catch{auditHealthy=false;await deliveryAudit(current.id,{kind:'history-unavailable',eventId:event.id,runId});}
-      await webpush.sendNotification(current.subscription,JSON.stringify(payload),{TTL:ttl,urgency:'normal',timeout:5000});sent++;if(gameKey)deliveredGames.add(gameKey);deliveryStage='acceptance-storage';
+      await deliveryAudit(current.id,{kind:'provider-send-attempt',eventId:event.id,runId,types,ttl,urgency,expiresAt:effective.expiresAt??null,favoriteTeamIds:current.preferences.favorites.filter(t=>event.teamIds.includes(t.id)).map(t=>t.id),myTeams:current.preferences.myTeams,favoriteChoices:current.preferences.gameAlerts?.favorites});
+      await webpush.sendNotification(current.subscription,JSON.stringify(payload),{TTL:ttl,urgency,timeout:5000});sent++;if(gameKey)deliveredGames.add(gameKey);deliveryStage='acceptance-storage';
       await deliveryAudit(current.id,{kind:'provider-accepted',runId,settingsSavedAt:current.updatedAt,eligibility,eventId:event.id,types,eventObservedAt:event.observedAt,following:current.preferences.following});
       for(const type of types)await redis('HSET','fd:v05:accepted-types',type,JSON.stringify({eventId:event.id,at:new Date().toISOString()}));
      }catch(error){

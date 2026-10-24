@@ -54,8 +54,8 @@ function harness() {
  const subscription=load('app/api/alerts/subscription/route.ts');
  const config=load('app/api/alerts/config/route.ts');
  const kickoffDiagnostics=load('app/lib/kickoff-diagnostics.ts');
- const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../live/route':{GET:async()=>feedError?json({error:'Fixture outage'},{status:503}):json(feed)},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});if(sendError)throw sendError;}}});
- const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload){sent.push({s,payload:JSON.parse(payload)});if(sendError)throw sendError;}}};
+ const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../live/route':{GET:async()=>feedError?json({error:'Fixture outage'},{status:503}):json(feed)},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}});
+ const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}};
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
  const verification=load('app/api/alerts/verification/route.ts');
@@ -362,4 +362,32 @@ test('outlook snapshots require two checks and hold same-edition corrections wit
 test('explicit v0.8.1 Balanced save persists all three game choices and independent rankings without replacing the endpoint',async()=>{
  const h=harness();await run(h);const p=alerts.defaultAlertPreferences();p.pulse.enabled=true;p.pulse.categories.pulseFinal=true;p.pulse.categories.pulseClose=true;p.pulse.rankings={ap:true,coaches:false,cfp:true};p.favorites=[{id:'9',name:'Permanent'}];p.myTeams={enabled:true,kickoff:true,final:true};const cap=await subscribe(h,p);const before=JSON.parse(JSON.stringify(await h.store.loadSubscription(cap.id)));const next={...p,pulse:pulsePreset('balanced',p.pulse)};
  const response=await h.subscription.POST(request({action:'update',...cap,preferences:next}));assert.equal(response.status,200);const saved=JSON.parse(JSON.stringify(await h.store.loadSubscription(cap.id)));assert.equal(saved.preferences.pulse.categories.pulseUpset,true);assert.equal(saved.preferences.pulse.categories.pulseFinal,true);assert.equal(saved.preferences.pulse.categories.pulseClose,true);assert.equal(saved.preferences.pulse.categories.pulseInteresting,false);assert.equal(saved.preferences.pulse.gameSelectionMade,true);assert.deepEqual(saved.preferences.pulse.rankings,p.pulse.rankings);assert.deepEqual(saved.preferences.favorites,p.favorites);assert.deepEqual(saved.subscription,before.subscription);assert.equal(saved.tokenHash,before.tokenHash);assert.equal(saved.typeSince.kickoff,before.typeSince.kickoff);
+});
+
+test('Tennessee permanent-favorite pipeline sends each opted-in game type without temporary subscriptions',async()=>{
+ for(const type of ['kickoff','scoring','halftime','close','final']){
+  const h=harness(),now=Date.now(),teams=[{id:'2633',name:'Tennessee Volunteers',score:'0'},{id:'2579',name:'South Carolina',score:'0'}];
+  const base={id:'401856731',name:'Tennessee at South Carolina',date:new Date(now-(type==='kickoff'?60000:3600000)).toISOString(),status:type==='kickoff'?'pre':'in',providerStatus:type==='kickoff'?'STATUS_SCHEDULED':'STATUS_IN_PROGRESS',completed:false,period:type==='close'?3:2,clock:500,teams};
+  h.setFeed(snapshot([base],[],-1000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'2633',name:'Tennessee Volunteers'}];p.myTeams={enabled:true,kickoff:true,final:true};p.gameAlerts.favorites.scoring=true;p.gameAlerts.favorites.halftime=true;p.gameAlerts.favorites.close=true;const cap=await subscribe(h,p);
+  const record=await h.store.loadSubscription(cap.id);record.kickoffAccess.favorites['2633']=now-86400000;record.kickoffAccess.favoriteEnabledAt=now-86400000;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));
+  const live={...base,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:type==='kickoff'?1:type==='close'?4:2,clock:type==='kickoff'?899.95:type==='close'?299:480};
+  const next=type==='final'?{...live,status:'post',providerStatus:'STATUS_FINAL',completed:true}:type==='halftime'?{...live,providerStatus:'STATUS_HALFTIME',clock:0}:type==='scoring'?{...live,teams:[{...teams[0],score:'7'},teams[1]]}:live;
+  h.setFeed(snapshot([next],[],10));assert.equal((await run(h)).status,200,type);assert.equal(h.sent.length,1,type);assert.deepEqual(h.sent[0].payload.types,[type]);assert.equal(h.sent[0].options.urgency,type==='kickoff'?'high':'normal');assert.ok(h.sent[0].options.TTL>0&&h.sent[0].options.TTL<=300);
+  const saved=await h.store.loadSubscription(cap.id);assert.equal(saved.preferences.following.enabled,false);assert.equal(saved.preferences.following.items.length,0);
+  const attempt=h.lists.get(`fd:v083:game-delivery:${cap.id}:401856731`).map(JSON.parse).find(e=>e.kind==='provider-send-attempt');assert.deepEqual(attempt.favoriteTeamIds,['2633']);assert.equal(attempt.myTeams.enabled,true);
+ }
+});
+test('worker arrival and suppression reports never count as confirmed browser display and preserve legacy one-time receipts',async()=>{
+ const h=harness();h.setFeed(snapshot([match('in')],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};const cap=await subscribe(h,p);h.setFeed(snapshot([match('post')],[],10));await run(h);const receipt=h.sent[0].payload.receipt;
+ assert.equal((await h.receipt.POST(request({receipt,outcome:'arbitrary'}))).status,400);
+ assert.equal((await h.receipt.POST(request({receipt,outcome:'received',receivedAt:Date.now(),workerVersion:'0.8.3',platform:'ios',openClients:0}))).status,200);
+ assert.ok(h.values.has('fd:v05:receipt:'+h.store.tokenHash(receipt)));assert.equal(h.hashes.get('fd:v05:verified-types')?.has('final')||false,false);
+ assert.equal((await h.receipt.POST(request({receipt,outcome:'expired',scope:{favoriteMatch:true,secret:'PRIVATE'},platform:'ios'}))).status,200);assert.equal(h.hashes.get('fd:v05:verified-types')?.has('final')||false,false);
+ const log=h.lists.get(`fd:v083:game-delivery:${cap.id}:123`).map(JSON.parse);assert.ok(log.some(e=>e.kind==='worker-received'));assert.ok(log.some(e=>e.kind==='worker-suppressed'&&e.outcome==='expired'));assert.equal(JSON.stringify(log).includes('PRIVATE'),false);
+ assert.equal((await h.receipt.POST(request({receipt,outcome:'displayed'}))).status,410);
+});
+test('game-specific delivery evidence survives unrelated game traffic and stays bounded without capability snapshots',async()=>{
+ const h=harness();await h.store.appendDeliveryAudit('device',{kind:'provider-accepted',eventId:'game:123:kickoff',following:{secret:'PRIVATE'},settingsSavedAt:1});
+ for(let i=0;i<205;i++)await h.store.appendDeliveryAudit('device',{kind:'event-filtered',eventId:'game:999:score:'+i,favoriteTeamIds:[]});
+ assert.equal(h.lists.get('fd:v06:audit:device').length,200);const evidence=h.lists.get('fd:v083:game-delivery:device:123');assert.equal(evidence.length,1);assert.equal(evidence[0].includes('PRIVATE'),false);assert.equal(h.lists.has('fd:v083:game-delivery:device:999'),false);
 });
