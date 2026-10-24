@@ -1,7 +1,7 @@
 import "./style.css";
 import { appleTouchIcon } from "./lib/apple-touch-icon";
 import type { Metadata, Viewport } from "next";
-export const viewport: Viewport = { themeColor: "#14243B" };
+export const viewport: Viewport = { themeColor: "#14243B", viewportFit: "cover" };
 export const metadata: Metadata = {
   metadataBase: new URL("https://fourth-down-cfp.vercel.app"),
   applicationName: "Fourth Down",

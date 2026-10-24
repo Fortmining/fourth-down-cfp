@@ -278,7 +278,7 @@ export default function Page() {
             <span className="brandDivider" />{" "}
             <span className="brandSub">THE PLAYOFF PICTURE</span>
           </a>
-          <TrackerNavigation/>
+          <TrackerNavigation contentReady={!!data}/>
           <a href="#install" className="getAppLink">Get the App</a>
         </div>
         <div className="gameDayStrip">
@@ -924,13 +924,13 @@ export default function Page() {
             <span className="brandSub">STAY IN THE GAME.</span>
           </a>
           <p>
-            v0.8.1 · Independent, unofficial college football tracker.
+            v0.8.2 · Independent, unofficial college football tracker.
             <br />
             Not affiliated with the CFP, ESPN, or any team. Team marks belong to
             their owners.
           </p>
         </footer>
-        <TrackerNavigation mobile/>
+        <TrackerNavigation mobile contentReady={!!data}/>
       </div>
     </>
   );

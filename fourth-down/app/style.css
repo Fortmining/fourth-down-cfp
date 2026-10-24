@@ -1477,11 +1477,11 @@ header .seasonCard small, header .seasonCard strong span { color: #c7d2e1; }
 .futureChat { margin:26px 0; padding:22px; border:1px dashed var(--border); border-radius:8px; background:var(--panel); }
 .futureChat h3 { margin:14px 0 10px; }
 @media(max-width:1000px) { .siteHeader { gap:12px; } .desktopTrackerNav { gap:14px; } .siteHeader .brandSub,.siteHeader .brandDivider { display:none; } .installPlatforms { grid-template-columns:1fr; } }
-@media(max-width:650px) {
+@media(max-width:1000px) {
  .siteHeader { min-height:76px; justify-content:space-between; gap:8px; }
  .siteHeader .brand { font-size:17px; gap:8px; }
  .desktopTrackerNav { display:none; }
- .mobileTrackerNav { display:grid; grid-template-columns:repeat(4,1fr); position:fixed; bottom:0; left:0; right:0; z-index:5; height:auto; background:var(--panel); border:0; border-top:1px solid var(--border); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -3px 18px #14243b12; }
+ .mobileTrackerNav { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); position:fixed; bottom:0; left:0; right:0; z-index:5; height:auto; background:var(--panel); border:0; border-top:1px solid var(--border); padding:6px max(8px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left)); box-shadow:0 -3px 18px #14243b12; }
  .mobileTrackerNav a { display:flex; flex-direction:column; gap:4px; align-items:center; justify-content:center; min-height:50px; color:var(--muted); font-size:11px; font-weight:bold; border-radius:6px; }
  .mobileTrackerNav a[aria-current] { color:var(--mint); background:var(--soft); }
  .shell { padding-bottom:calc(76px + env(safe-area-inset-bottom)); }
@@ -1532,3 +1532,9 @@ body:has(dialog[open]){overflow:hidden}
 
 .notificationSection>summary,.pulseHelp>summary{display:flex;align-items:center;justify-content:space-between;gap:12px}.settingDisclosure::after{content:'+';font-size:20px;font-weight:bold;color:var(--mint)}details[open]>summary>.settingDisclosure::after{content:'−'}
 .pulseSegments label.selected:has(:focus-visible){outline-color:var(--accent-ink)}
+
+/* v0.8.2: five comfortable destinations and inline follow management. */
+.mobileTrackerNav a{min-width:0;text-decoration:none}.followingPanel button{min-height:44px}.watchActions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.watchActions .followControl p:empty{display:none}.followingPanel .detailCard{background:var(--panel);color:var(--ink)}.watchEmpty a{display:inline-flex;min-height:44px;align-items:center}.recentWatchlist{margin-top:24px}.recentWatchlist p{font-size:14px}
+
+@media(max-width:1000px){.shell{padding-left:max(25px,env(safe-area-inset-left));padding-right:max(25px,env(safe-area-inset-right));padding-top:env(safe-area-inset-top)}.notificationSave{top:env(safe-area-inset-top,0px)}}
+@media(max-width:650px){.shell{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}}
