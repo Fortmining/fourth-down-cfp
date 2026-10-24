@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import {createRequire} from 'node:module';
+import {pulsePreset} from '../app/lib/pulse-preferences.ts';
 import * as rankingRecovery from '../app/lib/ranking-recovery.ts';
 import * as pulse from '../app/lib/pulse.ts';
 import * as outlook from '../app/lib/outlook-snapshots.ts';
@@ -357,4 +358,8 @@ test('history rejects cross-origin access and untrusted links without revealing 
 });
 test('outlook snapshots require two checks and hold same-edition corrections without sending model alerts',async()=>{
  const h=harness(),now=Date.now(),poll=pulsePoll(now);h.setFeed(snapshot([],[poll],-1000));await run(h);assert.equal(h.values.has('fd:v08:outlook'),false);h.setFeed(snapshot([],[poll],10));await run(h);assert.ok(h.values.has('fd:v08:outlook'));const stable=JSON.parse(h.values.get('fd:v08:outlook'));assert.equal(stable.snapshot.predictive,false);assert.equal(stable.comparison.notificationsSupported,false);[poll.teams[0].rank,poll.teams[1].rank]=[2,1];h.setFeed(snapshot([],[poll],50));await run(h);h.setFeed(snapshot([],[poll],100));await run(h);assert.deepEqual(JSON.parse(h.values.get('fd:v08:outlook')).snapshot.teams,stable.snapshot.teams);assert.equal(h.sent.length,0);
+});
+test('explicit v0.8.1 Balanced save persists all three game choices and independent rankings without replacing the endpoint',async()=>{
+ const h=harness();await run(h);const p=alerts.defaultAlertPreferences();p.pulse.enabled=true;p.pulse.categories.pulseFinal=true;p.pulse.categories.pulseClose=true;p.pulse.rankings={ap:true,coaches:false,cfp:true};p.favorites=[{id:'9',name:'Permanent'}];p.myTeams={enabled:true,kickoff:true,final:true};const cap=await subscribe(h,p);const before=JSON.parse(JSON.stringify(await h.store.loadSubscription(cap.id)));const next={...p,pulse:pulsePreset('balanced',p.pulse)};
+ const response=await h.subscription.POST(request({action:'update',...cap,preferences:next}));assert.equal(response.status,200);const saved=JSON.parse(JSON.stringify(await h.store.loadSubscription(cap.id)));assert.equal(saved.preferences.pulse.categories.pulseUpset,true);assert.equal(saved.preferences.pulse.categories.pulseFinal,true);assert.equal(saved.preferences.pulse.categories.pulseClose,true);assert.equal(saved.preferences.pulse.categories.pulseInteresting,false);assert.equal(saved.preferences.pulse.gameSelectionMade,true);assert.deepEqual(saved.preferences.pulse.rankings,p.pulse.rankings);assert.deepEqual(saved.preferences.favorites,p.favorites);assert.deepEqual(saved.subscription,before.subscription);assert.equal(saved.tokenHash,before.tokenHash);assert.equal(saved.typeSince.kickoff,before.typeSince.kickoff);
 });

@@ -4,7 +4,7 @@ Public College Football Playoff tracker. The Next.js application lives in `fourt
 
 ## Current release
 
-v0.8 adds optional national GameDay Pulse, presets, source-aware deep links and private device notification history. Existing team/follow alerts remain independent. Playoff-impact notifications are disabled because this is a poll-position illustration, not a CFP selection model. See [v0.8 release notes](RELEASE-v0.8.md) for thresholds, validation, model limitations and existing-infrastructure usage.
+v0.8.1 corrects GameDay Pulse preset labels and the Balanced mapping, keeps rankings independent, and compacts mobile notification settings. Saved custom choices are preserved on load. See [v0.8.1 release notes](RELEASE-v0.8.1.md) for the cause, mappings, compatibility and validation.
 
 ## Run and verify
 
@@ -48,3 +48,9 @@ wide comparison tables and brackets in keyboard-accessible scroll regions.
 All v0.2 feed, source selection, comparison, outlook, bracket, and score filters remain.
 
 Validate with `npm test` and `npm run build`. Run `npm start` to inspect the production build.
+
+Preset/mobile regressions (with a running development or production server):
+
+```sh
+TEST_URL=http://127.0.0.1:3000 npm run test:presets
+```
