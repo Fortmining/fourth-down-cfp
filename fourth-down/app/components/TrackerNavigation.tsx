@@ -7,7 +7,7 @@ export default function TrackerNavigation({mobile=false,detail=false,contentRead
  useEffect(()=>{const changed=()=>setHash(location.hash||'#content');changed();window.addEventListener('hashchange',changed);return()=>window.removeEventListener('hashchange',changed);},[]);
  // Re-anchor once the first live snapshot has expanded the page. Later refreshes
  // keep the reader's position because contentReady stays true.
- useEffect(()=>{if(!detail&&contentReady&&location.hash)document.getElementById(location.hash.slice(1))?.scrollIntoView();},[contentReady,detail]);
+ useEffect(()=>{if(detail||!contentReady||!location.hash)return;const frame=requestAnimationFrame(()=>document.getElementById(location.hash.slice(1))?.scrollIntoView({behavior:'instant',block:'start'}));return()=>cancelAnimationFrame(frame);},[contentReady,detail]);
  const selected=['#alerts','#install','#following'].includes(hash)?'#more':hash;
  return <nav className={mobile?'mobileTrackerNav':'desktopTrackerNav'} aria-label={mobile?'Mobile tracker navigation':'Tracker sections'}>{destinations.map(({label,href,Icon})=><a key={href} href={detail?`/${href}`:href} aria-current={!detail&&selected===href?'location':undefined}>{mobile&&<Icon size={19}/>}<span>{label}</span></a>)}</nav>;
 }
