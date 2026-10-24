@@ -1,6 +1,6 @@
 {
   "name": "fourth-down-cfp",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -11,7 +11,8 @@
     "lint": "eslint app",
     "test:browser": "node scripts/browser-check.mjs",
     "test:presets": "node scripts/preset-mobile-check.mjs",
-    "test:watchlist": "node scripts/watchlist-browser-check.mjs"
+    "test:watchlist": "node scripts/watchlist-browser-check.mjs",
+    "test:favorites": "node scripts/favorite-alerts-browser-check.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

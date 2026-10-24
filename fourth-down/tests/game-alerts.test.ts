@@ -53,3 +53,9 @@ test('stale or unavailable feeds cannot create optional game alerts or move stat
 test('cold-start halftime does not become a historical alert on the next unchanged poll',()=>{
  const half=game({period:2,clock:0,providerStatus:'STATUS_HALFTIME'}),first=deriveGameAlerts(null,feed(half),null,now);assert.equal(first.events.length,0);assert.equal(deriveGameAlerts(feed(half),feed(half,now+240000),first.state,now+240000).events.length,0);
 });
+
+test('permanent-favorite scoring and close opt-ins work with temporary following completely absent',()=>{
+ const p=defaultAlertPreferences();p.favorites=[{id:'2633',name:'Tennessee Volunteers'}];p.myTeams.enabled=true;p.gameAlerts!.favorites.scoring=true;p.gameAlerts!.favorites.close=true;p.following={enabled:false,items:[]};
+ const saved={id:'device',tokenHash:'fixture',subscription:{endpoint:'https://web.push.apple.com/fixture',keys:{auth:'fixture',p256dh:'fixture'}},typeSince:{},preferences:p,updatedAt:now-1000,gameAccess:gameAccessTimes(null,p,now-1000),kickoffAccess:{favorites:{'2633':now-86400000},favoriteEnabledAt:now-86400000,follows:{},followingEnabledAt:now}} as Parameters<typeof extraGameEligible>[1];
+ for(const type of ['scoring','close'] as const){const e={id:`game:401856731:${type}`,types:[type],teamIds:['2579','2633'],observedAt:now,expiresAt:now+300000,title:type,body:'Verified scores',url:'/game/401856731'};assert.equal(extraGameEligible(e,saved,type,now),true);assert.equal(selectedEvent(e,p),true);p.gameAlerts!.favorites[type]=false;assert.equal(extraGameEligible(e,saved,type,now),false);p.gameAlerts!.favorites[type]=true;}
+});

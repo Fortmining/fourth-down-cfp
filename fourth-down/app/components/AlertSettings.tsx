@@ -93,7 +93,7 @@ export default function AlertSettings({teams}:Props) {
  function category(group:'myTeams'|'breaking',key:string,value:boolean) {change({...preferences,[group]:{...preferences[group],[key]:value}});}
  function gameType(group:'favorites'|'following',type:string,value:boolean){const choices=preferences.gameAlerts||defaultGameAlerts();change({...preferences,gameAlerts:{...choices,[group]:{...choices[group],[type]:value}}});}
  const gameLabels={halftime:'Halftime scores',close:'Close game',upsetWatch:'Upset Watch',confirmedUpset:'Confirmed Upset',scoring:'Scoring updates'} as const;
- const gameChoices=(group:'favorites'|'following')=><div className="alertTypeChoices">{(Object.keys(gameLabels) as (keyof typeof gameLabels)[]).filter(t=>group==='following'||!['close','scoring'].includes(t)).map(type=><label key={type}><input type="checkbox" aria-label={`${group==='following'?'Temporary follows':'Favorite teams'} · ${gameLabels[type]}`} checked={preferences.gameAlerts?.[group][type]===true} onChange={e=>gameType(group,type,e.target.checked)}/>{gameLabels[type]}</label>)}</div>;
+ const gameChoices=(group:'favorites'|'following')=><div className="alertTypeChoices">{(Object.keys(gameLabels) as (keyof typeof gameLabels)[]).map(type=><label key={type}><input type="checkbox" aria-label={`${group==='following'?'Temporary follows':'Favorite teams'} · ${gameLabels[type]}`} checked={preferences.gameAlerts?.[group][type]===true} onChange={e=>gameType(group,type,e.target.checked)}/>{gameLabels[type]}</label>)}</div>;
  return <section id="alerts" className="alertSettings" aria-labelledby="alert-settings-heading">
   <UnsavedGuard dirty={dirty} save={save} discard={discard} busy={busy}/>
   <h2 id="alert-settings-heading">Notifications</h2>
@@ -109,7 +109,7 @@ export default function AlertSettings({teams}:Props) {
      <label><input type="checkbox" checked={preferences.myTeams.final} onChange={e=>category('myTeams','final',e.target.checked)}/> Final scores</label>
     </div>
     {gameChoices('favorites')}
-    <p className="alertHint">Kickoff alerts follow ESPN’s confirmed live status. Finals require a completed game and valid scores.</p>
+    <details className="alertPolicy"><summary>Game alert details</summary><p>Kickoff follows confirmed live status; final scores require a verified final. Scoring updates report verified score changes, at most once every ten minutes. Close game: within eight points in the final five minutes, or overtime. These options apply to permanent favorites independently of temporary follows.</p></details>
     <label className="teamSearch">Find your teams<input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by team name"/></label>
     <p className="alertHint">{preferences.favorites.length} of 20 teams selected · Teams from available FBS schedules and rankings.</p>
     <div className="favoriteChips">{preferences.favorites.map(t=><button key={t.id} onClick={()=>change({...preferences,favorites:preferences.favorites.filter(x=>x.id!==t.id)})} aria-label={`Remove ${t.name}`}>{t.name} ×</button>)}</div>

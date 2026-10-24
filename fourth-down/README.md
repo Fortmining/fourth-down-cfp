@@ -4,7 +4,7 @@ Public College Football Playoff tracker. The Next.js application lives in `fourt
 
 ## Current release
 
-v0.8.2 promotes Watchlist to primary navigation with inline temporary-follow controls, live/upcoming/recent results and mobile safe-area support. v0.8.1 preset mappings and saved choices are preserved. See [v0.8.2 release notes](RELEASE-v0.8.2.md) for behavior, validation and limitations.
+v0.8.3 exposes independent Scoring updates and Close game options for permanent favorites and adds delivery-outcome diagnostics. Saved choices remain unchanged until explicitly saved. v0.8.2 Watchlist navigation and v0.8.1 presets are preserved. See [v0.8.3 release notes](RELEASE-v0.8.3.md).
 
 ## Run and verify
 
