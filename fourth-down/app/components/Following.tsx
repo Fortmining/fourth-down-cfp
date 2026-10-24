@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useState,useSyncExternalStore} from 'react';
+import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {CHANGED,readPreferences,saveFollowing,syncFollowing,cleanFinishedFollows} from '../lib/following-client';
 import {confirmedFinal,type TemporaryFollow} from '../lib/alerts';
 import FollowDialog from './FollowDialog';
@@ -21,6 +21,7 @@ export function FollowButton({kind,id,name,games}:{kind:'game'|'team';id:string;
  const {items,ready}=useFollowing();const [open,setOpen]=useState(false),[message,setMessage]=useState('');
  const active=items.find(f=>f.kind===kind&&f.id===id&&f.expiresAt>Date.now()&&!games.some(g=>g.id===f.gameId&&finished(g)));
  const next=games.filter(g=>!finished(g)&&g.status!=='post'&&(kind==='game'?g.id===id:g.teams.some(t=>t.id===id))).sort((a,b)=>Date.parse(a.date)-Date.parse(b.date))[0];
+ const offered=useRef(false);useEffect(()=>{const query=new URLSearchParams(location.search),at=Number(query.get('alertAt')),until=Number(query.get('inviteUntil'));if(ready&&!offered.current&&kind==='game'&&query.get('follow')==='1'&&next&&!active&&Number.isFinite(at)&&at>0&&(!query.has('inviteUntil')||(Number.isFinite(until)&&until>Date.now()))&&at<=Date.now()&&Date.now()-at<900000){offered.current=true;setOpen(true);}},[ready,kind,next,active]);
  return <div className="followControl"><button disabled={!ready||(!active&&kind==='game'&&!next)} aria-haspopup="dialog" onClick={()=>setOpen(true)}>{active?'Manage Follow':kind==='game'?'Follow Game':'Follow Team'}</button>{open&&<FollowDialog kind={kind} id={id} name={name} next={next} existing={active} onClose={()=>setOpen(false)} onSaved={setMessage}/>}<p role="status">{message}</p></div>;
 }
 

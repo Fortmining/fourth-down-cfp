@@ -10,7 +10,7 @@ export function notificationEligibility(event:AlertEvent,saved:SavedSubscription
   const items=(p.following?.items||[]).filter(f=>(saved.kickoffAccess?.followTypes?.[`${f.kind}:${f.id}:${type}`]??saved.kickoffAccess?.follows[`${f.kind}:${f.id}`]??saved.updatedAt)<=event.observedAt);
   return selectedEvent({...event,types:[type]},{...p,following:p.following?{...p.following,items}:undefined});
  };
- const decisions=event.types.map(type=>({type,selected:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):extraGameTypes.includes(type as ExtraGameType)?extraGameEligible(event,saved,type as ExtraGameType):selected(type),activeSince:saved.typeSince[type],activationPassed:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):event.observedAt>=saved.typeSince[type]}));
+ const decisions=event.types.map(type=>({type,selected:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):extraGameTypes.includes(type as ExtraGameType)?extraGameEligible(event,saved,type as ExtraGameType):type.startsWith('pulse')?selectedEvent({...event,types:[type]},saved.preferences):selected(type),activeSince:saved.typeSince[type],activationPassed:type==='kickoff'&&event.eligibilityAt!==undefined?eligibleRecoveredKickoff(event,saved):(['ap','coaches','cfp'].includes(type)?event.eligibilityAt??event.observedAt:event.observedAt)>=(saved.typeSince[type]??Infinity)}));
  return {types:decisions.filter(d=>d.selected&&d.activationPassed).map(d=>d.type),decisions};
 }
 const state=(g:AlertGame|undefined)=>g?{status:g.status,providerStatus:g.providerStatus??null,scheduledAt:g.date,completed:g.completed===true,teamIds:g.teams.map(t=>t.id)}:null;

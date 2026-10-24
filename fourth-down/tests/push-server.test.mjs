@@ -4,6 +4,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import {createRequire} from 'node:module';
+import * as rankingRecovery from '../app/lib/ranking-recovery.ts';
+import * as pulse from '../app/lib/pulse.ts';
+import * as outlook from '../app/lib/outlook-snapshots.ts';
 import * as alerts from '../app/lib/alerts.ts';
 import * as gameAlerts from '../app/lib/game-alerts.ts';
 import * as recovery from '../app/lib/kickoff-recovery.ts';
@@ -19,6 +22,8 @@ function harness() {
   if(op==='LPUSH'){if(auditError)throw Error('Isolated audit failure');const list=lists.get(key)||[];list.unshift(rest[0]);lists.set(key,list);return list.length;}
   if(op==='LTRIM'){lists.set(key,(lists.get(key)||[]).slice(Number(rest[0]),Number(rest[1])+1));return 'OK';}
   if(op==='LRANGE')return (lists.get(key)||[]).slice(Number(rest[0]),Number(rest[1])+1);
+  if(op==='DEL'){values.delete(key);lists.delete(key);hashes.delete(key);return 1;}
+  if(op==='LREM'){const list=lists.get(key)||[];lists.set(key,list.filter(x=>x!==rest[1]));return list.filter(x=>x===rest[1]).length;}
   if(op==='GET')return values.get(key)??null;
   if(op==='GETDEL'){const v=values.get(key)??null;values.delete(key);return v;}
   if(op==='SET'){if(rest.includes('NX')&&values.has(key))return null;values.set(key,rest[0]);return 'OK';}
@@ -39,10 +44,12 @@ function harness() {
   const exports={};const source=ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
   vm.runInNewContext(source,{exports,process:{env:{...env}},Buffer,URL,Request,Response,AbortSignal,Date,console,
    fetch:async(_url,options)=>json({result:command(JSON.parse(options.body))}),
-   require:name=>mapping[name]??(name.includes('game-alerts')?gameAlerts:name.includes('kickoff-recovery')?recovery:name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
+   require:name=>mapping[name]??(name.includes('ranking-recovery')?rankingRecovery:name.includes('outlook-snapshots')?outlook:name.includes('notification-history')?history:name.includes('lib/pulse')?pulse:name.includes('game-alerts')?gameAlerts:name.includes('kickoff-recovery')?recovery:name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
   return exports;
  }
  const store=load('app/lib/push-store.ts');
+ const history=load('app/lib/notification-history.ts',{'./push-store':store});
+ const inbox=load('app/api/alerts/history/route.ts');
  const subscription=load('app/api/alerts/subscription/route.ts');
  const config=load('app/api/alerts/config/route.ts');
  const kickoffDiagnostics=load('app/lib/kickoff-diagnostics.ts');
@@ -51,7 +58,7 @@ function harness() {
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
  const verification=load('app/api/alerts/verification/route.ts');
- return {verification,news,setFeedError(value){feedError=value;},setAuditError(value){auditError=value;},setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,lists,sent,setFeed(next){feed=next;},command};
+ return {inbox,verification,news,setFeedError(value){feedError=value;},setAuditError(value){auditError=value;},setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,lists,sent,setFeed(next){feed=next;},command};
 }
 const request=(data,origin='https://fourth-down-cfp.vercel.app')=>new Request('https://fourth-down-cfp.vercel.app/api/alerts/subscription',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(data)});
 const endpoint={endpoint:'https://fcm.googleapis.com/fcm/send/test',keys:{p256dh:'B'.repeat(87),auth:'A'.repeat(22)}};
@@ -156,7 +163,7 @@ test('AP, Coaches, CFP and reviewed developments route independently and repeate
 test('provider expiration removes endpoints and ambiguous delivery failures never retry the same event',async()=>{
  for(const statusCode of [410,undefined]){
   const h=harness();const before=snapshot([match('in')],[],-60000);h.setFeed(before);await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;const cap=await subscribe(h,p);
-  h.setSendError(Object.assign(new Error('provider test failure'),{statusCode}));h.setFeed(snapshot([match('post')],[],10));assert.equal((await run(h)).status,502);assert.equal(h.sent.length,1);
+  h.setSendError(Object.assign(new Error('provider test failure'),{statusCode}));h.setFeed(snapshot([match('post')],[],10));const result=await run(h);assert.equal(result.status,502,JSON.stringify({check:h.values.get('fd:v05:last-check'),audit:h.lists.get(`fd:v06:audit:${cap.id}`)}));assert.equal(h.sent.length,1);
   assert.equal(!!await h.store.loadSubscription(cap.id),statusCode!==410);
   h.values.set('fd:v05:baseline',JSON.stringify(before));await run(h);assert.equal(h.sent.length,1);
  }
@@ -315,4 +322,39 @@ test('concurrent settings changes reject the following patch instead of overwrit
  const h=harness();await run(h);const cap=await subscribe(h,alerts.defaultAlertPreferences());const original=h.store.redis;
  h.store.redis=async(...args)=>{if(args[0]==='EVAL'){const record=await h.store.loadSubscription(cap.id);record.preferences.breaking.ap=true;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}return original(...args);};
  const result=await h.subscription.POST(request({action:'following',...cap,following:{enabled:true,items:[]}}));assert.equal(result.status,409);const saved=await h.store.loadSubscription(cap.id);assert.equal(saved.preferences.breaking.ap,true);assert.equal(saved.preferences.following.enabled,false);
+});
+
+const pulsePoll=(now=Date.now())=>({id:'ap',name:'AP Top 25',status:'available',season:2026,date:new Date(now-86400000).toISOString(),week:9,teams:Array.from({length:25},(_,i)=>({teamId:String(i+1),name:`Team ${i+1}`,rank:i+1}))});
+function nationalPreferences(){const p=alerts.defaultAlertPreferences();p.pulse.enabled=true;p.pulse.preset='allIn';p.pulse.categories.pulseInteresting=true;return p;}
+test('national discovery uses the existing delivery stream once, adds nothing to follows and retains private history',async()=>{
+ const h=harness(),now=Date.now(),poll=pulsePoll(now),g={...match(),date:new Date(now-3600000).toISOString()};h.setFeed(snapshot([g],[poll],-1000));await run(h);const p=nationalPreferences(),cap=await subscribe(h,p);const live={...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:800};h.setFeed(snapshot([live],[poll],10));await run(h);assert.equal(h.sent.length,1);assert.deepEqual(h.sent[0].payload.types,['pulseInteresting']);assert.match(h.sent[0].payload.url,/\/game\/123\?follow=1/);assert.ok(h.sent[0].payload.expiresAt<=Date.now()+120000);assert.equal((await h.store.loadSubscription(cap.id)).preferences.following.items.length,0);
+ h.setFeed(snapshot([{...live,clock:700}],[poll],50));await run(h);assert.equal(h.sent.length,1);const inbox=await(await h.inbox.POST(request({...cap,action:'list'}))).json();assert.equal(inbox.entries.length,1);assert.equal(inbox.entries[0].id,h.sent[0].payload.id);assert.equal(JSON.stringify(inbox).includes(endpoint.endpoint),false);assert.equal(JSON.stringify(inbox).includes(cap.token),false);
+});
+test('national and existing tactical notifications coalesce without changing the followed-game payload',async()=>{
+ const h=harness(),now=Date.now(),poll=pulsePoll(now),g={...match(),date:new Date(now-7200000).toISOString()};h.setFeed(snapshot([g],[poll],-1000));await run(h);
+ const national=nationalPreferences();national.pulse.categories.pulseInteresting=false;national.pulse.categories.pulseClose=true;const cap=await subscribe(h,national,'national');
+ const followed=structuredClone(national);followed.following={enabled:true,items:[{kind:'game',id:'123',name:'Game',duration:'game',gameId:'123',createdAt:now-3600000,expiresAt:now+86400000}]};followed.gameAlerts.following.close=true;await subscribe(h,followed,'followed');
+ h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:4,clock:240}],[poll],10));await run(h);assert.equal(h.sent.length,2);const a=h.sent.find(x=>x.s.endpoint.endsWith('national')).payload,b=h.sent.find(x=>x.s.endpoint.endsWith('followed')).payload;assert.deepEqual(a.types,['pulseClose']);assert.match(a.url,/follow=1/);assert.deepEqual(b.types,['close']);assert.equal(b.url,'/game/123');assert.equal(b.body.includes('Tap to'),false);assert.equal(a.id,b.id);
+ assert.ok(h.values.has(`fd:v08:pulse-budget:${cap.id}`));
+});
+test('late-created follows still suppress national invitations and cannot receive retroactive kickoff',async()=>{
+ const h=harness(),now=Date.now(),poll=pulsePoll(now),g={...match(),date:new Date(now-3600000).toISOString()};h.setFeed(snapshot([g],[poll],-1000));await run(h);const p=nationalPreferences();p.following={enabled:false,items:[{kind:'game',id:'123',gameId:'123',name:'Game',duration:'game',createdAt:now+1,expiresAt:now+86400000}]};await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:800}],[poll],10));await run(h);assert.equal(h.sent.length,0);
+});
+test('national budget does not mute an independently opted-in favorite and existing subscribers stay opted out',async()=>{
+ const h=harness(),now=Date.now(),poll=pulsePoll(now),g={...match(),date:new Date(now-7200000).toISOString()};h.setFeed(snapshot([g],[poll],-1000));await run(h);
+ const p=nationalPreferences();p.pulse.categories.pulseClose=true;p.favorites=[{id:'1',name:'Favorite'}];p.myTeams.enabled=true;p.gameAlerts.favorites.close=true;const cap=await subscribe(h,p);h.values.set(`fd:v08:pulse-budget:${cap.id}`,JSON.stringify(Array.from({length:12},()=>({at:Date.now(),types:['pulseClose']}))));await subscribe(h,alerts.defaultAlertPreferences(),'legacy');
+ h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:4,clock:240}],[poll],10));await run(h);assert.equal(h.sent.length,1);assert.deepEqual(h.sent[0].payload.types,['close']);
+});
+test('national confirmed major upset requires verified final and frozen AP ranking and merges overlapping legacy upset',async()=>{
+ const h=harness(),now=Date.now(),poll=pulsePoll(now);poll.teams=Array.from({length:25},(_,i)=>({teamId:String(i+2),rank:i+1,name:`Team ${i+2}`}));const g={...match(),date:new Date(now-7200000).toISOString()};h.setFeed(snapshot([g],[poll],-1000));await run(h);const p=alerts.defaultAlertPreferences();p.pulse.enabled=true;p.pulse.categories.pulseFinal=true;p.breaking.enabled=true;p.breaking.upsets=true;await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:4,clock:120}],[poll],10));await run(h);assert.equal(h.sent.length,0);const final={...g,status:'post',providerStatus:'STATUS_FINAL',completed:true,period:4,clock:0,teams:[{...g.teams[0],score:'34',winner:true},{...g.teams[1],score:'31',winner:false}]};h.setFeed(snapshot([final],[poll],50));await run(h);assert.equal(h.sent.length,1);assert.ok(h.sent[0].payload.types.includes('pulseFinal'));assert.ok(h.sent[0].payload.types.includes('upset'));assert.equal(h.sent[0].payload.id,'game:123:final');
+});
+test('notification history capability isolates devices; dismiss and clear do not reset push claims',async()=>{
+ const h=harness();await run(h);const p=alerts.defaultAlertPreferences();p.breaking.enabled=true;p.breaking.ap=true;const a=await subscribe(h,p,'a'),b=await subscribe(h,p,'b');const entry={id:'poll:ap:2026:9',title:'AP published',body:'Actual edition',url:'/?ranking=ap#rankings-heading',types:['ap'],generatedAt:Date.now(),recordedAt:Date.now(),delivery:'generated-display-unverified'};h.lists.set(`fd:v08:inbox:${a.id}`,[JSON.stringify(entry)]);h.values.set(`fd:v05:sent:${a.id}:${entry.id}`,'claimed');
+ assert.equal((await h.inbox.POST(request({id:a.id,token:b.token,action:'list'}))).status,403);assert.equal((await(await h.inbox.POST(request({...b,action:'list'}))).json()).entries.length,0);assert.equal((await(await h.inbox.POST(request({...a,action:'list'}))).json()).entries.length,1);assert.equal((await h.inbox.POST(request({...a,action:'dismiss',eventId:entry.id}))).status,200);assert.equal(h.lists.get(`fd:v08:inbox:${a.id}`).length,0);h.lists.set(`fd:v08:inbox:${a.id}`,[JSON.stringify(entry)]);await h.inbox.POST(request({...a,action:'clear'}));assert.ok(h.values.has(`fd:v05:sent:${a.id}:${entry.id}`));assert.equal(h.lists.has(`fd:v08:inbox:${a.id}`),false);
+});
+test('history rejects cross-origin access and untrusted links without revealing capabilities',async()=>{
+ const h=harness();await run(h);const a=await subscribe(h,alerts.defaultAlertPreferences());assert.equal((await h.inbox.POST(request({...a,action:'list'},'https://evil.test'))).status,403);h.lists.set(`fd:v08:inbox:${a.id}`,[JSON.stringify({id:'evil',title:'Evil',body:'Bad',url:'https://evil.test/',types:[],generatedAt:Date.now(),recordedAt:Date.now()})]);const data=await(await h.inbox.POST(request({...a,action:'list'}))).json();assert.equal(data.entries.length,0);
+});
+test('outlook snapshots require two checks and hold same-edition corrections without sending model alerts',async()=>{
+ const h=harness(),now=Date.now(),poll=pulsePoll(now);h.setFeed(snapshot([],[poll],-1000));await run(h);assert.equal(h.values.has('fd:v08:outlook'),false);h.setFeed(snapshot([],[poll],10));await run(h);assert.ok(h.values.has('fd:v08:outlook'));const stable=JSON.parse(h.values.get('fd:v08:outlook'));assert.equal(stable.snapshot.predictive,false);assert.equal(stable.comparison.notificationsSupported,false);[poll.teams[0].rank,poll.teams[1].rank]=[2,1];h.setFeed(snapshot([],[poll],50));await run(h);h.setFeed(snapshot([],[poll],100));await run(h);assert.deepEqual(JSON.parse(h.values.get('fd:v08:outlook')).snapshot.teams,stable.snapshot.teams);assert.equal(h.sent.length,0);
 });

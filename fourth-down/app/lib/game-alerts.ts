@@ -2,7 +2,7 @@ import {followsType} from './alerts.ts';
 import type {AlertEvent,AlertFeed,AlertGame,AlertPreferences,ExtraGameType} from './alerts.ts';
 import type {SavedSubscription} from './push-store';
 type Ranking={source:'AP';edition:string;ranks:Record<string,number>};
-type GameMemory={teamIds:string[];lastSeenAt:number;phase:string;terminal?:boolean;halftimeWitness?:boolean;scores:number[];ranking:Ranking|null;events:Record<string,number>};
+type GameMemory={lastClock?:number;lastPeriod?:number;lastProgressAt?:number;teamIds:string[];lastSeenAt:number;phase:string;terminal?:boolean;halftimeWitness?:boolean;scores:number[];ranking:Ranking|null;events:Record<string,number>};
 export type GameAlertMemory={season:number|null;lastFeedAt:number;games:Record<string,GameMemory>};
 const validScores=(g:AlertGame)=>g.teams.length===2&&g.teams.every(t=>typeof t.score==='string'&&/^\d{1,3}$/.test(t.score)&&Number(t.score)<=199);
 const ids=(g:AlertGame)=>g.teams.map(t=>t.id).sort();
@@ -16,6 +16,7 @@ function matchup(g:AlertGame,r:Ranking|null) {
  for(const strong of g.teams){const rank=r.ranks[strong.id];const weak=g.teams.find(t=>t.id!==strong.id)!;const weakRank=r.ranks[weak.id];if(rank&&rank<=10&&(!weakRank||weakRank-rank>=10))return {strong,weak,rank};}
  return null;
 }
+export function lateSituation(g:AlertGame,r:Ranking|null){const late=(g.period===4&&g.clock!==undefined&&g.clock<=300)||(g.period!==undefined&&g.period>=5);const contest=matchup(g,r);return {late,close:late&&(g.period!>=5||Math.abs(Number(g.teams[0].score)-Number(g.teams[1].score))<=8),threat:!!(late&&contest&&Number(contest.strong.score)-Number(contest.weak.score)<=8)};}
 export function deriveGameAlerts(previous:AlertFeed|null,current:AlertFeed,input:unknown,now=Date.now()) {
  const old=input as GameAlertMemory|null;
  const state:GameAlertMemory=old?.season===current.season&&old.games?{season:old.season,lastFeedAt:old.lastFeedAt,games:{...old.games}}:{season:current.season,lastFeedAt:0,games:{}};
@@ -35,6 +36,7 @@ export function deriveGameAlerts(previous:AlertFeed|null,current:AlertFeed,input
   const currentScores=g.teams.slice().sort((a,b)=>a.id.localeCompare(b.id)).map(t=>Number(t.score));
   const valid=validScores(g),time=Date.parse(g.date);
   const live=g.status==='in'&&g.completed!==true&&/^STATUS_(IN_PROGRESS|END_PERIOD|HALFTIME)$/.test(g.providerStatus||'')&&Number.isInteger(g.period)&&g.period!>=1&&g.period!<=20&&Number.isFinite(g.clock)&&g.clock!>=0&&g.clock!<=900&&Number.isFinite(time)&&time<=now&&now-time<8*3600000&&m.phase!=='post'&&!m.terminal;
+  if(live&&valid){if((saved?.lastPeriod!==undefined&&(saved.lastPeriod!==g.period||saved.lastClock!==g.clock||currentScores.some((v,i)=>v!==saved.scores[i])))||prior?.status==='pre')m.lastProgressAt=now;m.lastClock=g.clock;m.lastPeriod=g.period;}
   const scoreBody=g.teams.map(t=>`${t.name} ${t.score}`).join(' · ');
   const offer=(suffix:string,types:AlertEvent['types'],title:string,body:string,eligibilityAt?:number)=>{
    const id=`game:${g.id}:${suffix}`;
@@ -47,8 +49,8 @@ export function deriveGameAlerts(previous:AlertFeed|null,current:AlertFeed,input
   const contest=matchup(g,m.ranking);
   if(live&&valid){
    if(g.providerStatus==='STATUS_HALFTIME'&&g.period===2&&g.clock===0&&m.halftimeWitness) {offer('halftime',['halftime'],'Halftime score',scoreBody);}
-   const late=(g.period===4&&g.clock!<=300)||g.period!>=5;
-   if(late){const close=g.period!>=5||Math.abs(currentScores[0]-currentScores[1])<=8;const threat=contest&&Number(contest.strong.score)-Number(contest.weak.score)<=8;
+   const situation=lateSituation(g,m.ranking);
+   if(situation.late){const close=situation.close,threat=situation.threat;
     const types:AlertEvent['types']=[];if(close)types.push('close');if(threat)types.push('upsetWatch');
     if(types.length){const phase=g.period!>=5?'overtime':'fourth';const clock=g.period!>=5?`OT ${g.period!-4}`:`Q4 ${Math.floor(g.clock!/60)}:${String(Math.floor(g.clock!%60)).padStart(2,'0')}`;
      offer(`late:${phase}`,types,threat?'Upset Watch':'Close game',`${scoreBody} · ${clock}${threat?` · AP No. ${contest!.rank} threatened (edition ${m.ranking!.edition.slice(0,10)})`:''}`);}

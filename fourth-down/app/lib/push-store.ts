@@ -1,9 +1,9 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { PushSubscription } from 'web-push';
-import { followsType,extraGameTypes,normalizePreferences, type AlertPreferences, type AlertType } from './alerts';
+import { pulseTypes,followsType,extraGameTypes,normalizePreferences, type AlertPreferences, type AlertType } from './alerts';
 import type {KickoffAccess} from './kickoff-recovery';
 export const SUBS='fd:v05:subscriptions';
-export type SavedSubscription={id:string;tokenHash:string;subscription:PushSubscription;preferences:AlertPreferences;typeSince:Record<AlertType,number>;updatedAt:number;kickoffAccess?:KickoffAccess;gameAccess?:Record<string,number>};
+export type SavedSubscription={id:string;tokenHash:string;subscription:PushSubscription;preferences:AlertPreferences;typeSince:Partial<Record<AlertType,number>>;updatedAt:number;kickoffAccess?:KickoffAccess;gameAccess?:Record<string,number>};
 const storageUrl=()=>process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const storageToken=()=>process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 export function pushConfigured() {return !!storageUrl() && !!storageToken() && ['VAPID_PUBLIC_KEY','VAPID_PRIVATE_KEY','VAPID_SUBJECT','CRON_SECRET'].every(key=>!!process.env[key]);}
@@ -27,14 +27,14 @@ export function validPushSubscription(s:unknown):s is PushSubscription {
 }
 export function typeFlags(p:AlertPreferences):Record<AlertType,boolean> {
  const extra=Object.fromEntries(extraGameTypes.map(type=>[type,!!(p.myTeams.enabled&&p.favorites.length&&p.gameAlerts?.favorites[type])||!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()&&followsType(p,f,type)))])) as Record<typeof extraGameTypes[number],boolean>;
- return {...extra,kickoff:!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()&&followsType(p,f,'kickoff')))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.kickoff,final:!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()&&followsType(p,f,'final')))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.final,
+ return {...Object.fromEntries(pulseTypes.map(t=>[t,p.pulse?.enabled===true&&p.pulse.categories[t]===true])) as Record<typeof pulseTypes[number],boolean>,...extra,kickoff:!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()&&followsType(p,f,'kickoff')))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.kickoff,final:!!(p.following?.enabled&&p.following.items.some(f=>f.expiresAt>Date.now()&&followsType(p,f,'final')))||p.myTeams.enabled&&p.favorites.length>0&&p.myTeams.final,
  upset:p.breaking.enabled&&p.breaking.upsets,development:p.breaking.enabled&&p.breaking.developments,
- ap:p.breaking.enabled&&p.breaking.ap,coaches:p.breaking.enabled&&p.breaking.coaches,cfp:p.breaking.enabled&&p.breaking.cfp};
+ ap:(p.breaking.enabled&&p.breaking.ap)||(p.pulse?.enabled===true&&p.pulse.rankings.ap===true),coaches:(p.breaking.enabled&&p.breaking.coaches)||(p.pulse?.enabled===true&&p.pulse.rankings.coaches===true),cfp:(p.breaking.enabled&&p.breaking.cfp)||(p.pulse?.enabled===true&&p.pulse.rankings.cfp===true)};
 }
 export function activationTimes(old:SavedSubscription|null,p:AlertPreferences,now:number):Record<AlertType,number> {
  const flags=typeFlags(p),before=old?typeFlags(old.preferences):null;
  const favoriteChange=!!old&&JSON.stringify(old.preferences.favorites.map(t=>t.id).sort())!==JSON.stringify(p.favorites.map(t=>t.id).sort());
- return Object.fromEntries((Object.keys(flags) as AlertType[]).map(type=>[type,flags[type]&&before?.[type]&&!(favoriteChange&&(type==='kickoff'||type==='final'))?old!.typeSince[type]:now])) as Record<AlertType,number>;
+ return Object.fromEntries((Object.keys(flags) as AlertType[]).map(type=>[type,flags[type]&&before?.[type]&&!(favoriteChange&&(type==='kickoff'||type==='final'))?old!.typeSince[type]??now:now])) as Record<AlertType,number>;
 }
 export async function loadSubscription(id:string):Promise<SavedSubscription|null> {const value=await redis('HGET',SUBS,id);return value?JSON.parse(value):null;}
 export function safePreferences(value:unknown) {return normalizePreferences(value);}
