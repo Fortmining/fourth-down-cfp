@@ -1,5 +1,7 @@
+export {pulseTypes,defaultPulse} from './pulse-preferences.ts';
+import {defaultPulse,normalizePulse,pulseTypes,type PulsePreferences,type PulseType} from './pulse-preferences.ts';
 import type { Poll, SourceId } from './rankings';
-export type AlertType = 'halftime' | 'close' | 'upsetWatch' | 'confirmedUpset' | 'scoring' | 'kickoff' | 'final' | 'upset' | 'development' | 'ap' | 'coaches' | 'cfp';
+export type AlertType = PulseType | 'halftime' | 'close' | 'upsetWatch' | 'confirmedUpset' | 'scoring' | 'kickoff' | 'final' | 'upset' | 'development' | 'ap' | 'coaches' | 'cfp';
 export const followAlertTypes=['kickoff','halftime','close','scoring','final','upsetWatch','confirmedUpset'] as const;
 export type FollowAlertType=typeof followAlertTypes[number];
 export type FollowChoices=Record<FollowAlertType,boolean>;
@@ -9,6 +11,7 @@ export type ExtraGameType=typeof extraGameTypes[number];
 export type GameAlertChoices={favorites:Record<ExtraGameType,boolean>;following:Record<ExtraGameType,boolean>&{kickoff:boolean;final:boolean}};
 export function defaultGameAlerts():GameAlertChoices {const off={halftime:false,close:false,upsetWatch:false,confirmedUpset:false,scoring:false};return {favorites:{...off},following:{...off,kickoff:true,final:true}};}
 export type AlertPreferences = {
+ pulse?:PulsePreferences;
  gameAlerts?:GameAlertChoices;
  following?:{enabled:boolean;items:TemporaryFollow[]};
  version: 1; favorites: {id:string; name:string}[];
@@ -16,11 +19,12 @@ export type AlertPreferences = {
  breaking: {enabled:boolean; upsets:boolean; developments:boolean; ap:boolean; coaches:boolean; cfp:boolean};
 };
 export function defaultAlertPreferences(): AlertPreferences {
- return {version:1,gameAlerts:defaultGameAlerts(),following:{enabled:false,items:[]},favorites:[],myTeams:{enabled:false,kickoff:false,final:false},breaking:{enabled:false,upsets:false,developments:false,ap:false,coaches:false,cfp:false}};
+ return {version:1,pulse:defaultPulse(),gameAlerts:defaultGameAlerts(),following:{enabled:false,items:[]},favorites:[],myTeams:{enabled:false,kickoff:false,final:false},breaking:{enabled:false,upsets:false,developments:false,ap:false,coaches:false,cfp:false}};
 }
 export function normalizePreferences(input: unknown): AlertPreferences {
  const p = (input && typeof input==='object' ? input : {}) as Partial<AlertPreferences>;
  const d=defaultAlertPreferences();const bool=(value:unknown)=>value===true;
+ d.pulse=normalizePulse(p.pulse);
  const ids=new Set<string>();
  d.favorites=(Array.isArray(p.favorites)?p.favorites:[]).filter(t=>t && typeof t.id==='string' && /^\d{1,12}$/.test(t.id) && typeof t.name==='string' && t.name.length>0 && t.name.length<=120 && !ids.has(t.id) && !!ids.add(t.id)).slice(0,20).map(t=>({id:t.id,name:t.name}));
  for(const key of ['enabled','kickoff','final'] as const)d.myTeams[key]=bool(p.myTeams?.[key]);
@@ -37,13 +41,13 @@ export function normalizePreferences(input: unknown): AlertPreferences {
 export function followChoices(p:AlertPreferences,f?:TemporaryFollow):FollowChoices {return Object.fromEntries(followAlertTypes.map(t=>[t,f?.alerts ? f.alerts[t]===true : (t==='kickoff'||t==='final'?p.gameAlerts?.following[t]!==false:p.gameAlerts?.following[t]===true)])) as FollowChoices;}
 export function followsType(p:AlertPreferences,f:TemporaryFollow,t:string){return followAlertTypes.includes(t as FollowAlertType)&&followChoices(p,f)[t as FollowAlertType];}
 export function hasAlerts(p:AlertPreferences) {
- return !!(p.following?.enabled && p.following.items.some(f=>f.expiresAt>Date.now()&&followAlertTypes.some(t=>followsType(p,f,t)))) || (p.myTeams.enabled && p.favorites.length>0 && (p.myTeams.kickoff||p.myTeams.final||extraGameTypes.some(t=>p.gameAlerts?.favorites[t]))) ||
+ return !!(p.pulse?.enabled&&(pulseTypes.some(t=>p.pulse?.categories[t])||Object.values(p.pulse.rankings).some(Boolean)))||!!(p.following?.enabled && p.following.items.some(f=>f.expiresAt>Date.now()&&followAlertTypes.some(t=>followsType(p,f,t)))) || (p.myTeams.enabled && p.favorites.length>0 && (p.myTeams.kickoff||p.myTeams.final||extraGameTypes.some(t=>p.gameAlerts?.favorites[t]))) ||
  (p.breaking.enabled && (p.breaking.upsets||p.breaking.developments||p.breaking.ap||p.breaking.coaches||p.breaking.cfp));
 }
 export type AlertGame={id:string;date:string;name:string;status:string;providerStatus?:string;completed?:boolean;period?:number;clock?:number;teams:{id:string;name:string;score?:string;rank?:number|null;winner?:boolean}[]};
 export type AlertFeed={updatedAt:string;season:number|null;games:AlertGame[];polls:Poll[];warnings?:string[];scoreboardAvailable?:boolean;scoreboardDate?:string|null};
 export type ConfirmedDevelopment={id:string;title:string;summary:string;sourceUrl:string;publishedAt:string;verifiedAt:string;confirmed:boolean};
-export type AlertEvent={id:string;types:AlertType[];teamIds:string[];title:string;body:string;url:string;observedAt:number;eligibilityAt?:number;expiresAt?:number};
+export type AlertEvent={id:string;types:AlertType[];teamIds:string[];title:string;body:string;url:string;observedAt:number;discovery?:{expiresAt:number};pulseContent?:{title:string;body:string;url:string;expiresAt?:number};eligibilityAt?:number;expiresAt?:number};
 const trustedNewsHosts=new Set(['collegefootballplayoff.com','apnews.com','afca.com','espn.com','ncaa.com']);
 export function verifiedDevelopment(n:ConfirmedDevelopment,now:number) {
  try { const u=new URL(n.sourceUrl); return n.confirmed===true && /^[a-z0-9-]{1,100}$/.test(n.id) &&
@@ -107,7 +111,7 @@ export function deriveAlertEvents(previous:AlertFeed|null,current:AlertFeed,news
  for(const p of current.polls) {
   const old=previous!.polls.find(q=>q.id===p.id);
   if(validPoll(p,current.season,now) && old && edition(old)!==edition(p) && (!old.date || Date.parse(p.date!)>Date.parse(old.date)))
-   events.push({id:`poll:${edition(p)}`,types:[p.id as SourceId],teamIds:[],title:`New ${p.name} published`,body:`Published ${p.date!.slice(0,10)}${p.week?` · Week ${p.week}`:''}. View the actual published edition.`,url:'/#rankings-heading',observedAt:now});
+   events.push({id:`poll:${edition(p)}`,types:[p.id as SourceId],teamIds:[],title:`New ${p.name} published`,body:`Published ${p.date!.slice(0,10)}${p.week?` · Week ${p.week}`:''}. View the actual published edition.`,url:`/?ranking=${p.id}#rankings-heading`,observedAt:now});
  }
  for(const n of news)if(verifiedDevelopment(n,now))events.push({id:`development:${n.id}`,types:['development'],teamIds:[],title:n.title,body:n.summary,url:n.sourceUrl,observedAt:Date.parse(n.publishedAt)});
  return events;
@@ -121,7 +125,10 @@ export function selectedEvent(e:AlertEvent,p:AlertPreferences):boolean {
  const teamMatch=p.myTeams.enabled && e.teamIds.some(id=>p.favorites.some(t=>t.id===id));
  const favorite=teamMatch&&((p.myTeams.kickoff&&e.types.includes('kickoff'))||(p.myTeams.final&&e.types.includes('final'))||extraGameTypes.some(t=>e.types.includes(t)&&p.gameAlerts?.favorites[t]));
  const breaking=p.breaking.enabled&&((p.breaking.upsets&&e.types.includes('upset'))||(p.breaking.developments&&e.types.includes('development'))||(['ap','coaches','cfp'] as const).some(t=>p.breaking[t]&&e.types.includes(t)));
- return !!(followed||favorite||breaking);
+ const national=p.pulse?.enabled&&e.types.some(t=>pulseTypes.includes(t as PulseType)?p.pulse?.categories[t as PulseType]===true: (['ap','coaches','cfp'].includes(t)&&p.pulse?.rankings[t as 'ap'|'coaches'|'cfp']===true));
+ const already=p.favorites.some(t=>e.teamIds.includes(t.id))||(p.following?.items||[]).some(f=>f.expiresAt>Date.now()&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&e.teamIds.includes(f.id)));
+ const nationalEligible=national&&(!e.types.some(t=>['pulseUpset','pulseClose','pulseInteresting'].includes(t))||(!already&&!!e.discovery&&e.discovery.expiresAt>Date.now()));
+ return !!(followed||favorite||breaking||nationalEligible);
 }
 
 // Apply only after processing final events so the final notification stays eligible.

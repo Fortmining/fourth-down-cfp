@@ -8,7 +8,7 @@ function openAlertsDb() {
 }
 function selected(message,p) {
  if(!p)return false;
- if(message.test===true)return !!(p.myTeams?.enabled||p.breaking?.enabled||p.following?.enabled);
+ if(message.test===true)return !!(p.myTeams?.enabled||p.breaking?.enabled||p.following?.enabled||p.pulse?.enabled);
  const types=Array.isArray(message.types)?message.types:[];
  const gameId=/^game:([^:]+):/.exec(message.id)?.[1];
  const extras=['halftime','close','upsetWatch','confirmedUpset','scoring'];
@@ -17,7 +17,10 @@ function selected(message,p) {
  const team=p.myTeams?.enabled&&Array.isArray(message.teamIds)&&message.teamIds.some(id=>p.favorites?.some(t=>t.id===id));
  const favorite=team&&((p.myTeams.kickoff&&types.includes('kickoff'))||(p.myTeams.final&&types.includes('final'))||extras.some(t=>types.includes(t)&&p.gameAlerts?.favorites?.[t]===true));
  const breaking=p.breaking?.enabled&&((p.breaking.upsets&&types.includes('upset'))||(p.breaking.developments&&types.includes('development'))||['ap','coaches','cfp'].some(t=>p.breaking[t]&&types.includes(t)));
- return !!(followed||favorite||breaking);
+ const already=p.favorites?.some(t=>message.teamIds?.includes(t.id))||p.following?.items?.some(f=>f.expiresAt>Date.now()&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&message.teamIds?.includes(f.id)));
+ const national=p.pulse?.enabled&&types.some(t=>['pulseUpset','pulseFinal','pulseClose','pulseInteresting'].includes(t)?p.pulse.categories?.[t]===true:['ap','coaches','cfp'].includes(t)&&p.pulse.rankings?.[t]===true);
+ const invite=types.some(t=>['pulseUpset','pulseClose','pulseInteresting'].includes(t));
+ return !!(followed||favorite||breaking||(national&&(!invite||(!already&&message.discovery?.expiresAt>Date.now()))));
 }
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -45,7 +48,7 @@ self.addEventListener('push',event=>{
   db.close();if(!fresh)return;
   await self.registration.showNotification(message.title,{body:message.body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:message.id,data:{url:message.url},actions:[{action:'settings',title:'Alert settings'}]});
   if(/^[a-f0-9]{64}$/.test(message.receipt||''))try{
-   await fetch('/api/alerts/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt:message.receipt,workerVersion:'0.7.1',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});
+   await fetch('/api/alerts/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt:message.receipt,workerVersion:'0.8.0',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});
   }catch{}
  })());
 });

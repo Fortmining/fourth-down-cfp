@@ -2,6 +2,10 @@
 
 Public College Football Playoff tracker. The Next.js application lives in `fourth-down/` (the existing Vercel root directory).
 
+## Current release
+
+v0.8 adds optional national GameDay Pulse, presets, source-aware deep links and private device notification history. Existing team/follow alerts remain independent. Playoff-impact notifications are disabled because this is a poll-position illustration, not a CFP selection model. See [v0.8 release notes](RELEASE-v0.8.md) for thresholds, validation, model limitations and existing-infrastructure usage.
+
 ## Run and verify
 
 Requires Node.js 22.18+ (24 recommended).

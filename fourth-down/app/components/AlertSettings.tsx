@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { defaultGameAlerts,defaultAlertPreferences,hasAlerts,normalizePreferences,type AlertPreferences } from '../lib/alerts';
 import {DRAFT,persistNotifications,writeWorker} from '../lib/notification-client';
+import PulsePreferences from './PulsePreferences';
 import UnsavedGuard from './UnsavedGuard';
 import {CHANGED,inspectThisDevice} from '../lib/following-client';
 const PREFS='fourth-down-alert-preferences-v1';
@@ -75,7 +76,7 @@ export default function AlertSettings({teams}:Props) {
  async function unsubscribe() {
   if(working.current)return;working.current=true;setBusy(true);setStatus('');
   try{
-   const off={...preferences,following:{...preferences.following!,enabled:false},myTeams:{...preferences.myTeams,enabled:false},breaking:{...preferences.breaking,enabled:false}};
+   const off={...preferences,pulse:preferences.pulse?{...preferences.pulse,enabled:false}:undefined,following:{...preferences.following!,enabled:false},myTeams:{...preferences.myTeams,enabled:false},breaking:{...preferences.breaking,enabled:false}};
    change(off);
    if('serviceWorker' in navigator)await writeWorker(off);
    if(control){
@@ -83,7 +84,7 @@ export default function AlertSettings({teams}:Props) {
     if(!r.ok)throw Error('Server unsubscribe could not be confirmed. This device is muted; retry to remove the server subscription.');
    }
    if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration('/');const sub=await reg?.pushManager.getSubscription();if(sub)await sub.unsubscribe();}
-   localStorage.setItem(PREFS,JSON.stringify(off));localStorage.removeItem(DRAFT);window.dispatchEvent(new Event(CHANGED));localStorage.removeItem(CONTROL);localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(null);setBrowserSubscribed(false);setDirty(false);setStatus('Unsubscribed from all alerts on this device. Your favorite teams are kept.');
+   localStorage.setItem(PREFS,JSON.stringify(off));localStorage.removeItem(DRAFT);localStorage.removeItem(CONTROL);window.dispatchEvent(new Event(CHANGED));localStorage.removeItem('fourth-down-alert-settings-pending-v1');setControl(null);setBrowserSubscribed(false);setDirty(false);setStatus('Unsubscribed from all alerts on this device. Your favorite teams are kept.');
   }catch(error){setStatus(error instanceof Error?error.message:'Could not confirm unsubscribe. Please retry.');}
   finally{working.current=false;setBusy(false);}
  }
@@ -96,6 +97,7 @@ export default function AlertSettings({teams}:Props) {
   <div className="notificationSave"><button disabled={!ready||busy||!storageOk} onClick={save}>{busy?'Saving…':'Save Changes'}</button><p role="status" aria-live="polite" aria-atomic="true">{status|| (dirty?'Unsaved changes':'Your saved notification settings')}</p></div>
   <div className="intro"><div><div className="eyebrow">YOUR GAME DAY. YOUR CHOICE.</div><h2 id="alert-settings-heading">Notifications</h2></div><span className="badge">OFF UNTIL YOU OPT IN</span></div>
   <p className="context">Choose alerts for permanent favorites, temporary follows, and ranking publications separately. Changes stay in a draft until Save Changes confirms the server saved them. Permission is requested only when you explicitly save selected alerts.</p>
+  <PulsePreferences value={preferences.pulse} disabled={!ready||busy} onChange={pulse=>change({...preferences,pulse})}/>
   <fieldset className="followingAlert" disabled={!ready||busy}><legend>Temporary Following</legend><label className="alertToggle"><input type="checkbox" checked={preferences.following?.enabled===true} onChange={e=>{followingEdited.current=true;localStorage.setItem('fourth-down-follow-master-draft','true');change({...preferences,following:{items:preferences.following?.items||[],enabled:e.target.checked}});}}/><span><b>Following alerts</b><small>Choose defaults for follows without individual choices. Manage each follow in Following. Independent of permanent favorites and rankings.</small></span></label><p>Individual choices are available when you follow a game or team. This switch pauses or enables all temporary follow alerts; it does not change favorites.</p><div className="alertTypeChoices">{(['kickoff','final'] as const).map(type=><label key={type}><input type="checkbox" aria-label={`Temporary follows · ${type==='kickoff'?'Kickoff confirmed':'Final scores'}`} checked={preferences.gameAlerts?.following[type]!==false} onChange={e=>gameType('following',type,e.target.checked)}/>{type==='kickoff'?'Kickoff confirmed':'Final scores'}</label>)}</div>{gameChoices('following')}</fieldset>
   <div className="alertCategories">
    <fieldset disabled={!ready||busy}><legend>My Teams</legend>

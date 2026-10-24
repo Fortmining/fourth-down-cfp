@@ -11,7 +11,7 @@ export async function POST(request:Request) {
   if(typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id))return json({error:'Invalid receipt'},400);
   const deviceEvidence={deviceAlias:id.slice(0,12),workerVersion:typeof workerVersion==='string'&&/^\d+\.\d+\.\d+$/.test(workerVersion)?workerVersion:null,platform:['ios','macos','other','unknown'].includes(platform)?platform:null,openClients:Number.isInteger(openClients)&&openClients>=0&&openClients<=1000?openClients:null};
   await appendDeliveryAudit(id,{kind:'browser-displayed',eventId:kind==='event'?eventId:null,test:kind!=='event',...deviceEvidence});
-  if(kind==='event'&&typeof eventId==='string')for(const type of types)if(['halftime','close','upsetWatch','confirmedUpset','scoring','kickoff','final','upset','development','ap','coaches','cfp'].includes(type))await redis('HSET','fd:v05:verified-types',type,JSON.stringify({eventId,at:new Date().toISOString(),...deviceEvidence}));
+  if(kind==='event'&&typeof eventId==='string')for(const type of types)if(['pulseUpset','pulseFinal','pulseClose','pulseInteresting','playoffShakeup','bubbleMovement','halftime','close','upsetWatch','confirmedUpset','scoring','kickoff','final','upset','development','ap','coaches','cfp'].includes(type))await redis('HSET','fd:v05:verified-types',type,JSON.stringify({eventId,at:new Date().toISOString(),...deviceEvidence}));
   if(kind==='background')await redis('SET','fd:v05:last-background-delivery',String(Date.now()),'EX',60*60*24*30);
   await redis('SET',`fd:v05:delivery:${id}`,String(Date.now()),'EX',60*60*24*30);
   await redis('SET','fd:v05:last-verified-delivery',String(Date.now()),'EX',60*60*24*30);

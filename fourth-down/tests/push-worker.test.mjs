@@ -53,7 +53,7 @@ test('temporary worker eligibility, overlap dedupe, timed expiry and queued unfo
 });
 
 test('worker reports its revision and zero open clients after processing a background real event',async()=>{
- const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.7.1');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
+ const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.8.0');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
 });
 test('recovered kickoff enforces expiry and original eligibility time without consuming final dedupe',async()=>{
  const now=Date.now(),w=worker(),p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await w.prefs(p);
@@ -75,4 +75,12 @@ test('per-follow options survive worker restart, override legacy defaults and ke
  await w.prefs(p);await w.push({...message,observedAt:now});assert.equal(w.shown.length,0);await w.push({...message,id:'game:1:halftime',types:['halftime'],observedAt:now});assert.equal(w.shown.length,1);
  const restarted=worker(db);await restarted.push({...message,id:'game:1:halftime',types:['halftime'],observedAt:now});assert.equal(restarted.shown.length,0);
  p.favorites=[{id:'1',name:'Favorite'}];p.myTeams={enabled:true,kickoff:true,final:true};await restarted.prefs(p);await restarted.push({...message,observedAt:now});await restarted.push({...message,observedAt:now});assert.equal(restarted.shown.length,1);
+});
+
+test('national opt-in is independent, suppresses followed games and expires discovery invitations',async()=>{
+ const w=worker(),p=defaultAlertPreferences(),now=Date.now(),invite={...message,id:'game:123:discovery',types:['pulseInteresting'],teamIds:['1','2'],observedAt:now,expiresAt:now+60000,discovery:{expiresAt:now+60000},url:'/game/123?follow=1'};await w.prefs(p);await w.push(invite);assert.equal(w.shown.length,0);
+ p.pulse.enabled=true;p.pulse.categories.pulseInteresting=true;await w.prefs(p);await w.push({...invite,expiresAt:now-1});assert.equal(w.shown.length,0);p.following={enabled:false,items:[{kind:'team',id:'1',name:'One',duration:'24h',createdAt:now-1000,expiresAt:now+86400000}]};await w.prefs(p);await w.push(invite);assert.equal(w.shown.length,0);p.following.items=[];await w.prefs(p);await Promise.all([w.push(invite),w.push(invite)]);assert.equal(w.shown.length,1);assert.equal(w.shown[0].options.data.url,'/game/123?follow=1');
+});
+test('national official-ranking preferences reuse published poll identities and do not opt legacy devices in',async()=>{
+ const w=worker(),p=defaultAlertPreferences(),rank={...message,id:'poll:ap:2026:9',types:['ap'],teamIds:[],url:'/?ranking=ap#rankings-heading'};await w.prefs(p);await w.push(rank);assert.equal(w.shown.length,0);p.pulse.enabled=true;p.pulse.rankings.ap=true;await w.prefs(p);await w.push(rank);await w.push(rank);assert.equal(w.shown.length,1);assert.equal(w.shown[0].options.data.url,rank.url);
 });

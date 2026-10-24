@@ -1,5 +1,6 @@
 "use client";
 import Following,{FollowButton} from "./components/Following";
+import ModelStatus from './components/ModelStatus';
 import MoreSettings from "./components/MoreSettings";
 import TrackerNavigation from "./components/TrackerNavigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -134,6 +135,7 @@ export default function Page() {
     try { localStorage.setItem("fourth-down-theme", value); } catch {}
   }
   const [chosenSource, setChosenSource] = useState<SourceId | null>(null);
+  useEffect(()=>{const source=new URLSearchParams(location.search).get('ranking');if(['ap','coaches','cfp'].includes(source||''))setChosenSource(source as SourceId);},[]);
   const [rankingView, setRankingView] = useState("list");
   const selectedPoll = data?.polls?.find(
     (p) => p.id === (chosenSource ?? data.defaultRankingSource),
@@ -541,7 +543,7 @@ export default function Page() {
               </>
             )}
           </section>
-          <div id="outlook" className="sectionNav" aria-label="Tracker views">
+          <ModelStatus/><div id="outlook" className="sectionNav" aria-label="Tracker views">
             {[
               ["outlook", "Playoff outlook"],
               ["bracket", "12-team bracket"],
@@ -922,7 +924,7 @@ export default function Page() {
             <span className="brandSub">STAY IN THE GAME.</span>
           </a>
           <p>
-            v0.7.1 · Independent, unofficial college football tracker.
+            v0.8.0 · Independent, unofficial college football tracker.
             <br />
             Not affiliated with the CFP, ESPN, or any team. Team marks belong to
             their owners.
