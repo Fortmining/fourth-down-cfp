@@ -4,7 +4,7 @@ Public College Football Playoff tracker. The Next.js application lives in `fourt
 
 ## Current release
 
-v0.8.1 corrects GameDay Pulse preset labels and the Balanced mapping, keeps rankings independent, and compacts mobile notification settings. Saved custom choices are preserved on load. See [v0.8.1 release notes](RELEASE-v0.8.1.md) for the cause, mappings, compatibility and validation.
+v0.8.2 promotes Watchlist to primary navigation with inline temporary-follow controls, live/upcoming/recent results and mobile safe-area support. v0.8.1 preset mappings and saved choices are preserved. See [v0.8.2 release notes](RELEASE-v0.8.2.md) for behavior, validation and limitations.
 
 ## Run and verify
 
