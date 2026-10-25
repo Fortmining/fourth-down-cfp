@@ -73,3 +73,12 @@ npm run test:records
 ```
 
 The first command reads the current ESPN calendar, standings, rankings and all regular-season weeks. No Redis, QStash or push mutations occur. Replays use revised current inputs and scheduled-start ordering; they are not historical as-of predictions. Source captures, input hashes and compact content-addressed snapshots support exact model-version replay. Archives stop at 64 MiB/768 snapshots rather than overwrite retained history. See `docs/SHADOW-ENGINE-VALIDATION.md` for measured results and activation blockers.
+
+The resumed shadow workflow is described in `docs/SHADOW-ENGINE-PHASE2.md`:
+
+```sh
+SHADOW_SESSION=/private/session SHADOW_SEED=/private/bootstrap/inputs.json npm run shadow:session
+SHADOW_HISTORY=/private/historical-inputs npm run shadow:historical
+```
+
+The committed `scripts/data/historical-vintages-2025.json` pins the historical sources; an optional private `historical-manifest.json` can override it. Scripts verify committed file identities and never silently replace a missing historical vintage with today's data. `SHADOW_COMPARE_ALTERNATIVES=1` is an explicit local comparison option. No script creates production schedules or sends pushes.

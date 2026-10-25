@@ -51,7 +51,9 @@ export type Inputs = {
     futureComplete?: boolean;
     issues: string[];
   };
-  rulesVersion: "cfp-2026-unverified-conference-adapters";
+  rulesVersion:
+    | "cfp-2026-unverified-conference-adapters"
+    | "historical-resume-no-qualification-v1";
 };
 export type RecordRow = {
   overall: string;

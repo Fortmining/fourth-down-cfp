@@ -45,12 +45,7 @@ export class ShadowArchive {
     this.write("blobs", id, value);
     return id;
   }
-  save(s: Snapshot) {
-    const existing = path.join(this.directory, "snapshots", s.id + ".json");
-    if (fs.existsSync(existing)) return existing;
-    if (this.count >= this.maxSnapshots)
-      throw Error("Archive snapshot limit reached; retained history unchanged");
-    const i = s.inputs;
+  storeInputs(i: Inputs) {
     const observations: { observedAt: string; source: string }[] = [];
     const games = i.games.map((g) => {
       const { observedAt, source, ...facts } = g;
@@ -74,6 +69,13 @@ export class ShadowArchive {
       games,
       pendingGames: i.pendingGames,
     };
+    return this.blob(manifest);
+  }
+  save(s: Snapshot) {
+    const existing = path.join(this.directory, "snapshots", s.id + ".json");
+    if (fs.existsSync(existing)) return existing;
+    if (this.count >= this.maxSnapshots)
+      throw Error("Archive snapshot limit reached; retained history unchanged");
     const compact = {
       schema: 2,
       id: s.id,
@@ -85,7 +87,7 @@ export class ShadowArchive {
       mode: s.mode,
       parentId: s.parentId,
       weights: s.weights,
-      inputRef: this.blob(manifest),
+      inputRef: this.storeInputs(s.inputs),
       anchorIds: s.anchorIds,
       assumptions: s.assumptions,
       issues: s.issues,
@@ -115,6 +117,23 @@ export class ShadowArchive {
     if (hash(value) !== id) throw Error("Corrupt archive input");
     return value;
   }
+  restoreInputs(ref: string): Inputs {
+    const m = this.readBlob(ref);
+    return {
+      ...(m.pendingGames ? { pendingGames: m.pendingGames } : {}),
+      season: m.season,
+      observedAt: m.observedAt,
+      coverage: m.coverage,
+      rulesVersion: m.rulesVersion,
+      teams: this.readBlob(m.teams),
+      editions: this.readBlob(m.editions),
+      games: m.games.map((r: string | [string, number]) =>
+        typeof r === "string"
+          ? this.readBlob(r)
+          : { ...this.readBlob(r[0]), ...m.observations[r[1]] },
+      ),
+    };
+  }
   restore(id: string): Snapshot {
     if (!/^[a-f0-9]{64}$/.test(id)) throw Error("Invalid snapshot ID");
     const saved = JSON.parse(
@@ -129,21 +148,7 @@ export class ShadowArchive {
       saved.modelVersion !== "resume-shadow-v1.1.0"
     )
       throw Error("Unsupported archive schema");
-    const m = this.readBlob(saved.inputRef),
-      input: Inputs = {
-        ...(m.pendingGames ? { pendingGames: m.pendingGames } : {}),
-        season: m.season,
-        observedAt: m.observedAt,
-        coverage: m.coverage,
-        rulesVersion: m.rulesVersion,
-        teams: this.readBlob(m.teams),
-        editions: this.readBlob(m.editions),
-        games: m.games.map((ref: string | [string, number]) =>
-          typeof ref === "string"
-            ? this.readBlob(ref)
-            : { ...this.readBlob(ref[0]), ...m.observations[ref[1]] },
-        ),
-      };
+    const input = this.restoreInputs(saved.inputRef);
     if (hash(input) !== saved.inputHash) throw Error("Input hash mismatch");
     const snapshot = runShadow(
       input,

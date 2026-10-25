@@ -17,6 +17,9 @@ export function mergeLedger(prior: GameRevision[], incoming: GameRevision[]) {
   for (const g of incoming) {
     const key = `${g.season}:${g.id}`,
       old = m.get(key);
+    // A transient feed regression or incomplete score must not erase a verified final.
+    // A newer valid final can still correct the result under the same event identity.
+    if (old && validFinal(old) && !validFinal(g)) continue;
     if (!old || Date.parse(g.observedAt) >= Date.parse(old.observedAt))
       m.set(key, g);
   }

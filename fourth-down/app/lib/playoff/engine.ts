@@ -323,7 +323,9 @@ export function runShadow(
   rows.forEach((r, i) => (r.position = i + 1));
   const fieldReasons = [
     "Shadow-only testing candidate; not approved for public selection",
-    "2026 conference tiebreaker adapters not verified",
+    input.season === 2026
+      ? "2026 conference tiebreaker adapters not verified"
+      : "Historical résumé comparison; no qualification adapter applied",
     ...(input.teams.some((t) => t.eligible === null)
       ? ["Season eligibility not fully verified"]
       : []),

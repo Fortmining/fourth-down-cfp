@@ -1,5 +1,7 @@
 # Shadow engine validation — October 25, 2026
 
+This is the first validation pass. See [the resumed development report](SHADOW-ENGINE-PHASE2.md) for subsequent rule adapters, actual native meters, historical vintages and integration results.
+
 **Recommendation: keep public projections inactive.** The candidate engine, canonical-record foundation and reproducible local archive are implemented and tested on `dev/v0.8.6-live-outlook`. No production engine, additional scheduler, paid service or Redis writer has been activated. Record-view changes are staged for review, not published to the main site.
 
 ## What is implemented

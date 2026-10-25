@@ -1,4 +1,5 @@
 import type { Edition, GameRevision, TeamSeason } from "./types";
+import { isPac12FlexGame } from "./schedule.ts";
 export function standingsTeams(raw: any): TeamSeason[] {
   const rows = new Map<string, TeamSeason>();
   function walk(node: any, conference: string) {
@@ -68,7 +69,17 @@ export function gameFromEspn(
     scores,
     winner: winner.length === 1 ? String(winner[0].team.id) : null,
     conferenceGame:
-      !!a && !!b && a.conference !== "18" && a.conference === b.conference,
+      !!a &&
+      !!b &&
+      a.conference !== "18" &&
+      a.conference === b.conference &&
+      !isPac12FlexGame(
+        season,
+        e.date,
+        a.conference,
+        b.conference,
+        String(e.id),
+      ),
     period: Number.isInteger(status.period) ? status.period : null,
     clock:
       typeof status.clock === "number" && Number.isFinite(status.clock)

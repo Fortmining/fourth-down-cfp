@@ -16,7 +16,9 @@
     "test:desktop": "node scripts/desktop-push-browser-check.mjs",
     "shadow:playoff": "node --experimental-strip-types scripts/shadow-playoff.mjs",
     "shadow:profile": "node --experimental-strip-types scripts/profile-shadow.mjs",
-    "test:records": "node scripts/current-records-browser-check.mjs"
+    "test:records": "node scripts/current-records-browser-check.mjs",
+    "shadow:session": "node --experimental-strip-types scripts/shadow-session.mjs",
+    "shadow:historical": "python3 scripts/prepare-historical-shadow.py && node --experimental-strip-types scripts/historical-shadow.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
