@@ -1,6 +1,6 @@
 {
   "name": "fourth-down-cfp",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -12,7 +12,8 @@
     "test:browser": "node scripts/browser-check.mjs",
     "test:presets": "node scripts/preset-mobile-check.mjs",
     "test:watchlist": "node scripts/watchlist-browser-check.mjs",
-    "test:favorites": "node scripts/favorite-alerts-browser-check.mjs"
+    "test:favorites": "node scripts/favorite-alerts-browser-check.mjs",
+    "test:desktop": "node scripts/desktop-push-browser-check.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

@@ -398,3 +398,16 @@ test('fresh-source fetch timing survives through scheduled checks and selected f
  const observed=h.lists.get('fd:v06:scheduler').map(JSON.parse).find(x=>x.kind==='feed-observed');assert.equal(observed.sourceFetch.scoreboard.policy,'no-store');assert.equal(observed.sourceFetch.scoreboard.bodyParsedAt,trace.bodyParsedAt);
  const event=h.lists.get(`fd:v083:game-delivery:${cap.id}:123`).map(JSON.parse).find(x=>x.kind==='provider-send-attempt');assert.equal(event.scoreboardSource.bodyParsedAt,trace.bodyParsedAt);assert.equal(event.scoreboardSource.ageSeconds,0);
 });
+
+test('desktop push endpoint families use isolated capabilities and deleting desktop keeps iPhone preferences and subscription',async()=>{
+ const h=harness();await h.dispatcher.GET(new Request('https://fourth-down-cfp.vercel.app/api/alerts/dispatch',{headers:{authorization:'Bearer secret'}}));
+ // Establish scheduler health without relying on a real production invocation.
+ h.values.set('fd:v05:heartbeat',String(Date.now()));
+ const p=alerts.defaultAlertPreferences();p.favorites=[{id:'2633',name:'Tennessee Volunteers'}];p.myTeams={enabled:true,kickoff:true,final:true};
+ const phonesub={...endpoint,endpoint:'https://web.push.apple.com/iphone-fixture'};const phone=await(await h.subscription.POST(request({action:'create',subscription:phonesub,preferences:p}))).json();assert.ok(phone.id);
+ for(const host of ['fcm.googleapis.com','updates.push.services.mozilla.com','wns2.notify.windows.com','web.push.apple.com'])assert.equal(h.store.validPushSubscription({...endpoint,endpoint:'https://'+host+'/desktop-fixture'}),true);
+ const desktop=await(await h.subscription.POST(request({action:'create',subscription:endpoint,preferences:p}))).json();assert.ok(desktop.id);assert.notEqual(desktop.id,phone.id);assert.notEqual(desktop.token,phone.token);
+ assert.equal((await h.subscription.POST(request({action:'create',subscription:endpoint,preferences:p}))).status,409);
+ assert.equal((await h.subscription.POST(request({action:'delete',id:phone.id,token:desktop.token}))).status,403);
+ assert.equal((await h.subscription.POST(request({action:'delete',id:desktop.id,token:desktop.token}))).status,200);assert.equal(JSON.stringify((await h.store.loadSubscription(phone.id)).preferences.favorites),JSON.stringify(p.favorites));
+});
