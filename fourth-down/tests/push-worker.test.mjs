@@ -53,7 +53,7 @@ test('temporary worker eligibility, overlap dedupe, timed expiry and queued unfo
 });
 
 test('worker reports its revision and zero open clients after processing a background real event',async()=>{
- const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.8.4');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
+ const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.8.5');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
 });
 test('recovered kickoff enforces expiry and original eligibility time without consuming final dedupe',async()=>{
  const now=Date.now(),w=worker(),p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await w.prefs(p);
@@ -103,4 +103,13 @@ test('received telemetry cannot delay display and uses a rollback-safe non-displ
 });
 test('worker storage failure is distinct from locally muted preferences',async()=>{
  const w=worker({open(){throw Error('Blocked storage');}});await w.push({...message,receipt:'a'.repeat(64)});assert.equal(w.shown.length,0);assert.equal(w.reports.at(-1).body.outcome,'storage-failed');assert.equal(w.receipts.length,0);
+});
+
+test('desktop notification clicks open internal game, team, rankings and playoff destinations without an open site tab',async()=>{
+ for(const path of ['/game/401856729','/team/2633','/#rankings','/#playoff']){
+  const listeners={},opened=[];vm.runInNewContext(fs.readFileSync('public/alerts-sw.js','utf8'),{URL,self:{location:{origin:'https://fourth-down-cfp.vercel.app'},addEventListener:(k,v)=>listeners[k]=v,clients:{matchAll:async()=>[],openWindow:async url=>opened.push(url)}}});let pending,closed=false;listeners.notificationclick({notification:{data:{url:path},close(){closed=true;}},waitUntil:p=>pending=p});await pending;assert.equal(closed,true);assert.deepEqual(opened,['https://fourth-down-cfp.vercel.app'+path]);
+ }
+});
+test('desktop notification click reuses and focuses a same-origin tab; invalid schemes fall back to settings',async()=>{
+ for(const path of ['/game/123','javascript:alert(1)']){const listeners={},navigations=[];let focused=0;vm.runInNewContext(fs.readFileSync('public/alerts-sw.js','utf8'),{URL,self:{location:{origin:'https://fourth-down-cfp.vercel.app'},addEventListener:(k,v)=>listeners[k]=v,clients:{matchAll:async()=>[{url:'https://fourth-down-cfp.vercel.app/',navigate:async u=>navigations.push(u),focus:async()=>focused++}],openWindow:async()=>assert.fail('Existing tab should be reused')}}});let pending;listeners.notificationclick({notification:{data:{url:path},close(){}},waitUntil:p=>pending=p});await pending;assert.equal(focused,1);assert.equal(navigations[0],'https://fourth-down-cfp.vercel.app'+(path.startsWith('/')?path:'/#alerts'));}
 });

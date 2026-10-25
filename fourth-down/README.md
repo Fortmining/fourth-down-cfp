@@ -4,6 +4,8 @@ Public College Football Playoff tracker. The Next.js application lives in `fourt
 
 ## Current release
 
+v0.8.5 adds explicit desktop notification enable/test controls using the existing per-browser web-push infrastructure. No PWA installation is required on compatible desktop browsers. See [v0.8.5 release notes](RELEASE-v0.8.5.md).
+
 v0.8.4 bypasses the Next.js scoreboard and current-ranking cache for scheduled notification detection while preserving public visitor caching. It records source-fetch timing for latency investigation. Polling remains every four minutes. See [v0.8.4 release notes](RELEASE-v0.8.4.md).
 
 v0.8.3 exposes independent Scoring updates and Close game options for permanent favorites and adds delivery-outcome diagnostics. Saved choices remain unchanged until explicitly saved. v0.8.2 Watchlist navigation and v0.8.1 presets are preserved. See [v0.8.3 release notes](RELEASE-v0.8.3.md).

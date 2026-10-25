@@ -38,7 +38,7 @@ self.addEventListener('message',event=>{
 // alongside local checks; terminal outcomes are reported after display/suppression.
 async function reportOutcome(message,outcome,receivedAt,scope) {
  if(!/^[a-f0-9]{64}$/.test(message.receipt||''))return;
- try{await fetch(outcome==='displayed'?'/api/alerts/receipt':'/api/alerts/receipt-status',{method:'POST',headers:{'Content-Type':'application/json'},...(typeof AbortSignal!=='undefined'&&AbortSignal.timeout?{signal:AbortSignal.timeout(2500)}:{}),body:JSON.stringify({receipt:message.receipt,outcome,receivedAt,scope,workerVersion:'0.8.4',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});}catch{}
+ try{await fetch(outcome==='displayed'?'/api/alerts/receipt':'/api/alerts/receipt-status',{method:'POST',headers:{'Content-Type':'application/json'},...(typeof AbortSignal!=='undefined'&&AbortSignal.timeout?{signal:AbortSignal.timeout(2500)}:{}),body:JSON.stringify({receipt:message.receipt,outcome,receivedAt,scope,workerVersion:'0.8.5',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});}catch{}
 }
 self.addEventListener('push',event=>{
  if(!event.data)return;
