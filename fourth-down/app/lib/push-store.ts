@@ -46,7 +46,7 @@ export async function appendDeliveryAudit(id:string,entry:Record<string,unknown>
  const general=await appendPrivateAudit(`fd:v06:audit:${id}`,entry,200);
  const gameId=typeof entry.eventId==='string'?/^game:(\d{1,12}):/.exec(entry.eventId)?.[1]:undefined;
  const relevant=entry.kind!=='event-filtered'||(Array.isArray(entry.favoriteTeamIds)&&entry.favoriteTeamIds.length>0);
- const compact=Object.fromEntries(['kind','eventId','runId','types','ttl','urgency','expiresAt','favoriteTeamIds','myTeams','favoriteChoices','eligibility','settingsSavedAt','eventObservedAt','outcome','receivedAt','scope','deviceAlias','workerVersion','platform','openClients','test','stage','status'].filter(key=>entry[key]!==undefined).map(key=>[key,entry[key]]));
+ const compact=Object.fromEntries(['scoreboardSource','kind','eventId','runId','types','ttl','urgency','expiresAt','favoriteTeamIds','myTeams','favoriteChoices','eligibility','settingsSavedAt','eventObservedAt','outcome','receivedAt','scope','deviceAlias','workerVersion','platform','openClients','test','stage','status'].filter(key=>entry[key]!==undefined).map(key=>[key,entry[key]]));
  const game=gameId&&relevant?await appendPrivateAudit(`fd:v083:game-delivery:${id}:${gameId}`,compact,300):true;
  return general&&game;
 }

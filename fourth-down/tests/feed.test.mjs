@@ -5,7 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as rankingModule from "../app/lib/rankings.ts";
 const source = ts.transpileModule(
-  fs.readFileSync("app/api/live/route.ts", "utf8"),
+  fs.readFileSync("app/lib/live-feed.ts", "utf8"),
   {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
@@ -18,7 +18,7 @@ async function feed(scores, rankings, previous=rankings, future={}, now="2026-10
   vm.runInNewContext(source, {
     exports,
     require: (name) =>
-      name.includes("lib/rankings")
+      name.includes("rankings")
         ? rankingModule
         : {
             NextResponse: {
@@ -38,7 +38,7 @@ async function feed(scores, rankings, previous=rankings, future={}, now="2026-10
       return { ok: true, json: async () => v };
     },
   });
-  return exports.GET();
+  return exports.loadLiveFeed();
 }
 const poll = {
   name: "AFCA Coaches Poll",
