@@ -14,6 +14,7 @@ import {
   Search,
   ChevronRight,
 } from "lucide-react";
+import {displayRecord,type CurrentRecord} from "./lib/playoff/record-view";
 import { Ranked, tiers, tierFor, movement, matchups } from "./lib/model";
 import { readAppearance, saveAppearance, type Appearance } from "./lib/appearance";
 import { Poll, SourceId, comparisonRows } from "./lib/rankings";
@@ -38,6 +39,9 @@ type Game = {
   broadcast: string;
 };
 type Feed = {
+  currentRecords?:Record<string,CurrentRecord>;
+  recordObservedAt?:string;
+  recordStatus?:string;
   polls: Poll[];
   defaultRankingSource: SourceId;
   updatedAt: string;
@@ -217,6 +221,7 @@ export default function Page() {
   const stale = !!data && now - Date.parse(data.updatedAt) > 180000;
   const live = data?.games.filter((g) => g.status === "in").length || 0;
   const rankedTeams = data?.rankings || [];
+  const recordFor=(t:{record:string;teamId?:string;id?:string})=>data?.currentRecords?displayRecord(t.teamId??t.id??"",data.currentRecords):t.record;
   const movers = [
     ...rankedTeams
       .filter((t) => (movement(t) ?? 0) > 0)
@@ -237,7 +242,7 @@ export default function Page() {
           <span className="teamIdentity">
             <b>{t.name}</b>
             <small>
-              {t.conference} <span>·</span> {t.record || "Record unavailable"}
+              {t.conference} <span>·</span> {recordFor(t) || "Current record unavailable"}
             </small>
           </span>
           <Change t={t} />
@@ -449,6 +454,7 @@ export default function Page() {
               </div>
             ) : rankingView === "list" ? (
               <>
+                <p className="context">Records are current ESPN totals when available; positions and arrows belong to the published edition.</p>
                 <h3 className="pollListTitle">
                   {selectedPoll?.name}{" "}
                   <span>
@@ -464,7 +470,7 @@ export default function Page() {
                         <span className="teamIdentity">
                           <b>{t.name}</b>
                           <small>
-                            {t.conference} · {t.record || "Record unavailable"}
+                            {t.conference} · {recordFor(t) || "Current record unavailable"}
                           </small>
                         </span>
                         <Change t={t} />
@@ -543,6 +549,7 @@ export default function Page() {
               </>
             )}
           </section>
+          {data?.recordObservedAt&&<p className="context">Current records: latest available ESPN totals · observed {new Date(data.recordObservedAt).toLocaleString(undefined,{timeZoneName:"short"})}. Official ranks and poll movement retain their publication dates. {data.recordStatus}</p>}
           <ModelStatus/><div id="outlook" className="sectionNav" aria-label="Tracker views">
             {[
               ["outlook", "Playoff outlook"],
@@ -829,7 +836,7 @@ export default function Page() {
                             {t.name}
                           </b>
                           <small>
-                            {t.record || "Record unavailable"} ·{" "}
+                            {recordFor(t) || "Current record unavailable"} ·{" "}
                             {t.homeAway === "home" ? "Home" : "Away"}
                           </small>
                         </div>

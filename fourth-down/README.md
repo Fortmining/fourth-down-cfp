@@ -58,3 +58,18 @@ Preset/mobile regressions (with a running development or production server):
 ```sh
 TEST_URL=http://127.0.0.1:3000 npm run test:presets
 ```
+
+## Live playoff engine: shadow development
+
+The `app/lib/playoff/` engine is a testing candidate, not a public projection. It is not imported by dispatch, the public model API or the page. Candidate weights are 35/35/10/20, with alternative models and ±5-point sensitivity variants. Confirmed results and “if leads hold” scenarios remain separate. Qualification stays withheld pending verified conference adapters and eligibility. Public-page changes on this branch only join current ESPN records; official poll editions remain intact.
+
+Use a private directory outside the repository:
+
+```sh
+SHADOW_OUTPUT=/absolute/private/directory npm run shadow:playoff
+SHADOW_OFFLINE=1 SHADOW_OUTPUT=/absolute/private/directory npm run shadow:playoff
+SHADOW_OUTPUT=/absolute/private/directory npm run shadow:profile
+npm run test:records
+```
+
+The first command reads the current ESPN calendar, standings, rankings and all regular-season weeks. No Redis, QStash or push mutations occur. Replays use revised current inputs and scheduled-start ordering; they are not historical as-of predictions. Source captures, input hashes and compact content-addressed snapshots support exact model-version replay. Archives stop at 64 MiB/768 snapshots rather than overwrite retained history. See `docs/SHADOW-ENGINE-VALIDATION.md` for measured results and activation blockers.

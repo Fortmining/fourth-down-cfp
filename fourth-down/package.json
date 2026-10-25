@@ -13,7 +13,10 @@
     "test:presets": "node scripts/preset-mobile-check.mjs",
     "test:watchlist": "node scripts/watchlist-browser-check.mjs",
     "test:favorites": "node scripts/favorite-alerts-browser-check.mjs",
-    "test:desktop": "node scripts/desktop-push-browser-check.mjs"
+    "test:desktop": "node scripts/desktop-push-browser-check.mjs",
+    "shadow:playoff": "node --experimental-strip-types scripts/shadow-playoff.mjs",
+    "shadow:profile": "node --experimental-strip-types scripts/profile-shadow.mjs",
+    "test:records": "node scripts/current-records-browser-check.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

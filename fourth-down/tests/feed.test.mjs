@@ -13,12 +13,12 @@ const source = ts.transpileModule(
     },
   },
 ).outputText;
-async function feed(scores, rankings, previous=rankings, future={}, now="2026-10-18T18:00Z") {
+async function feed(scores, rankings, previous=rankings, future={}, now="2026-10-18T18:00Z", records={}) {
   const exports = {};
   vm.runInNewContext(source, {
     exports,
     require: (name) =>
-      name.includes("rankings")
+      name.includes("current-records") ? {loadCurrentRecords:async()=>({currentRecords:records})} : name.includes("rankings")
         ? rankingModule
         : {
             NextResponse: {
@@ -146,4 +146,11 @@ test("calendar follows postseason type instead of assuming another regular-seaso
  ]}]}]};
  const r=await feed(scores,{rankings:[poll]},undefined,{1:{events:[]}},"2026-12-12T18:00Z");
  assert.equal(r.body.schedulePeriods.length,1);assert.equal(r.body.schedulePeriods[0].type,3);
+});
+
+test('independent outlook record aliases join current totals while published edition records and ranks stay immutable',async()=>{
+ const ap={...poll,name:'AP Top 25'},original=JSON.stringify(ap),scores={season:{year:2026},events:[]};
+ const r=await feed(scores,{rankings:[ap]},undefined,{},'2026-10-25T12:00Z',{'2390':{overall:'7-0',conference:'4-0',observedAt:'2026-10-25T12:00Z',source:'ESPN standings',status:'available'}});
+ assert.equal(r.body.rankings[0].record,'7-0');assert.equal(r.body.rankings[0].publishedRecord,'6-0');assert.equal(r.body.outlook.teams[0].record,'7-0');assert.equal(r.body.outlook.liveEngineActive,false);assert.equal(r.body.polls.find(p=>p.id==='ap').teams[0].record,'6-0');assert.equal(r.body.rankings[0].rank,1);assert.equal(r.body.rankings[0].previous,3);assert.equal(JSON.stringify(ap),original);
+ const missing=await feed(scores,{rankings:[ap]},undefined,{},'2026-10-25T12:00Z');assert.equal(missing.body.rankings[0].record,'');assert.equal(missing.body.rankings[0].publishedRecord,'6-0');
 });
