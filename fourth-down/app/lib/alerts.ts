@@ -1,3 +1,4 @@
+import type {SourceFetchTrace} from './live-feed';
 export {pulseTypes,defaultPulse} from './pulse-preferences.ts';
 import {defaultPulse,normalizePulse,pulseTypes,type PulsePreferences,type PulseType} from './pulse-preferences.ts';
 import type { Poll, SourceId } from './rankings';
@@ -45,7 +46,7 @@ export function hasAlerts(p:AlertPreferences) {
  (p.breaking.enabled && (p.breaking.upsets||p.breaking.developments||p.breaking.ap||p.breaking.coaches||p.breaking.cfp));
 }
 export type AlertGame={id:string;date:string;name:string;status:string;providerStatus?:string;completed?:boolean;period?:number;clock?:number;teams:{id:string;name:string;score?:string;rank?:number|null;winner?:boolean}[]};
-export type AlertFeed={updatedAt:string;season:number|null;games:AlertGame[];polls:Poll[];warnings?:string[];scoreboardAvailable?:boolean;scoreboardDate?:string|null};
+export type AlertFeed={sourceFetch?:{scoreboard:SourceFetchTrace;rankings:SourceFetchTrace};updatedAt:string;season:number|null;games:AlertGame[];polls:Poll[];warnings?:string[];scoreboardAvailable?:boolean;scoreboardDate?:string|null};
 export type ConfirmedDevelopment={id:string;title:string;summary:string;sourceUrl:string;publishedAt:string;verifiedAt:string;confirmed:boolean};
 export type AlertEvent={id:string;types:AlertType[];teamIds:string[];title:string;body:string;url:string;observedAt:number;discovery?:{expiresAt:number};pulseContent?:{title:string;body:string;url:string;expiresAt?:number};eligibilityAt?:number;expiresAt?:number};
 const trustedNewsHosts=new Set(['collegefootballplayoff.com','apnews.com','afca.com','espn.com','ncaa.com']);

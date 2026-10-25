@@ -54,7 +54,7 @@ function harness() {
  const subscription=load('app/api/alerts/subscription/route.ts');
  const config=load('app/api/alerts/config/route.ts');
  const kickoffDiagnostics=load('app/lib/kickoff-diagnostics.ts');
- const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../live/route':{GET:async()=>feedError?json({error:'Fixture outage'},{status:503}):json(feed)},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}});
+ const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../../lib/live-feed':{loadLiveFeed:async options=>{assert.equal(options?.forAlerts,true);return feedError?json({error:'Fixture outage'},{status:503}):json(feed);}},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}});
  const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}};
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
@@ -390,4 +390,11 @@ test('game-specific delivery evidence survives unrelated game traffic and stays 
  const h=harness();await h.store.appendDeliveryAudit('device',{kind:'provider-accepted',eventId:'game:123:kickoff',following:{secret:'PRIVATE'},settingsSavedAt:1});
  for(let i=0;i<205;i++)await h.store.appendDeliveryAudit('device',{kind:'event-filtered',eventId:'game:999:score:'+i,favoriteTeamIds:[]});
  assert.equal(h.lists.get('fd:v06:audit:device').length,200);const evidence=h.lists.get('fd:v083:game-delivery:device:123');assert.equal(evidence.length,1);assert.equal(evidence[0].includes('PRIVATE'),false);assert.equal(h.lists.has('fd:v083:game-delivery:device:999'),false);
+});
+
+test('fresh-source fetch timing survives through scheduled checks and selected final send evidence',async()=>{
+ const h=harness();h.setFeed(snapshot([match('in')],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};const cap=await subscribe(h,p);
+ const trace={policy:'no-store',requestStartedAt:new Date(Date.now()-100).toISOString(),responseReceivedAt:new Date().toISOString(),bodyParsedAt:new Date().toISOString(),responseDate:new Date().toUTCString(),ageSeconds:0,ok:true};h.setFeed({...snapshot([match('post')],[],10),sourceFetch:{scoreboard:trace,rankings:trace}});await run(h);assert.equal(h.sent.length,1);
+ const observed=h.lists.get('fd:v06:scheduler').map(JSON.parse).find(x=>x.kind==='feed-observed');assert.equal(observed.sourceFetch.scoreboard.policy,'no-store');assert.equal(observed.sourceFetch.scoreboard.bodyParsedAt,trace.bodyParsedAt);
+ const event=h.lists.get(`fd:v083:game-delivery:${cap.id}:123`).map(JSON.parse).find(x=>x.kind==='provider-send-attempt');assert.equal(event.scoreboardSource.bodyParsedAt,trace.bodyParsedAt);assert.equal(event.scoreboardSource.ageSeconds,0);
 });

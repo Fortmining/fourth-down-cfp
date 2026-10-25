@@ -5,7 +5,7 @@ import {outlookSnapshot,compareOutlooks} from '../../../lib/outlook-snapshots';
 import { NextResponse } from 'next/server';
 import { timingSafeEqual,randomBytes } from 'node:crypto';
 import webpush from 'web-push';
-import { GET as liveFeed } from '../../live/route';
+import {loadLiveFeed} from '../../../lib/live-feed';
 import { alertFeedGate,deriveAlertEvents,selectedEvent,hasAlerts,remainingFollows,type AlertFeed,type ConfirmedDevelopment } from '../../../lib/alerts';
 import { appendDeliveryAudit,appendKickoffAudit,appendSchedulerAudit,loadSubscription,pushConfigured,redis,SUBS,tokenHash,type SavedSubscription } from '../../../lib/push-store';
 import {kickoffFeedObservations,kickoffObservations,notificationEligibility} from '../../../lib/kickoff-diagnostics';
@@ -32,12 +32,12 @@ export async function GET(request:Request) {
   webpush.setVapidDetails(process.env.VAPID_SUBJECT!,process.env.VAPID_PUBLIC_KEY!,process.env.VAPID_PRIVATE_KEY!);
   stage='background-tests';const backgroundTests=await deliverBackgroundTests();
   stage='fetch-feed';
-  const response=await liveFeed();if(!response.ok)throw Error('Feed unavailable');
+  const response=await loadLiveFeed({forAlerts:true});if(!response.ok)throw Error('Feed unavailable');
   const feed=await response.json() as AlertFeed;
   const previous=await redis('GET','fd:v05:baseline');
   const prior=previous?JSON.parse(previous) as AlertFeed:null;const observedAt=Date.now();
   const precedingCheck=await redis('GET','fd:v05:last-check');
-  const context={previousFeedAt:prior?.updatedAt??null,currentFeedAt:feed.updatedAt,baselineAgeMs:prior?observedAt-Date.parse(prior.updatedAt):null,currentFeedAgeMs:observedAt-Date.parse(feed.updatedAt),pollGapMs:precedingCheck?observedAt-Date.parse(JSON.parse(precedingCheck).at):null,feedGate:alertFeedGate(prior,feed,observedAt),warnings:feed.warnings??[],scoreboardAvailable:feed.scoreboardAvailable??null,scoreboardDate:feed.scoreboardDate??null};
+  const context={sourceFetch:feed.sourceFetch??null,previousFeedAt:prior?.updatedAt??null,currentFeedAt:feed.updatedAt,baselineAgeMs:prior?observedAt-Date.parse(prior.updatedAt):null,currentFeedAgeMs:observedAt-Date.parse(feed.updatedAt),pollGapMs:precedingCheck?observedAt-Date.parse(JSON.parse(precedingCheck).at):null,feedGate:alertFeedGate(prior,feed,observedAt),warnings:feed.warnings??[],scoreboardAvailable:feed.scoreboardAvailable??null,scoreboardDate:feed.scoreboardDate??null};
   stage='kickoff-recovery';
   let recovery:ReturnType<typeof recoverKickoffs>|null=null;
   try{
@@ -122,7 +122,7 @@ export async function GET(request:Request) {
       const title=types.includes('pulseFinal')?'Confirmed Major Upset':types.includes('pulseUpset')?'Upset Watch':types.includes('pulseClose')?'Close Game Discovery':types.includes('pulseInteresting')?'Interesting Live Game':types.includes('confirmedUpset')?'Confirmed Upset · Final':types.includes('upsetWatch')?'Upset Watch':types.includes('close')?'Close game':types.includes('halftime')?'Halftime score':types.includes('scoring')?'Scoring update':types.includes('final')&&!types.includes('upset')?'Final score':event.title;
       const payload={...effective,title,types,receipt};
       try{await recordNotification(current.id,payload);}catch{auditHealthy=false;await deliveryAudit(current.id,{kind:'history-unavailable',eventId:event.id,runId});}
-      await deliveryAudit(current.id,{kind:'provider-send-attempt',eventId:event.id,runId,types,ttl,urgency,expiresAt:effective.expiresAt??null,favoriteTeamIds:current.preferences.favorites.filter(t=>event.teamIds.includes(t.id)).map(t=>t.id),myTeams:current.preferences.myTeams,favoriteChoices:current.preferences.gameAlerts?.favorites});
+      await deliveryAudit(current.id,{kind:'provider-send-attempt',scoreboardSource:feed.sourceFetch?.scoreboard??null,eventId:event.id,runId,types,ttl,urgency,expiresAt:effective.expiresAt??null,favoriteTeamIds:current.preferences.favorites.filter(t=>event.teamIds.includes(t.id)).map(t=>t.id),myTeams:current.preferences.myTeams,favoriteChoices:current.preferences.gameAlerts?.favorites});
       await webpush.sendNotification(current.subscription,JSON.stringify(payload),{TTL:ttl,urgency,timeout:5000});sent++;if(gameKey)deliveredGames.add(gameKey);deliveryStage='acceptance-storage';
       await deliveryAudit(current.id,{kind:'provider-accepted',runId,settingsSavedAt:current.updatedAt,eligibility,eventId:event.id,types,eventObservedAt:event.observedAt,following:current.preferences.following});
       for(const type of types)await redis('HSET','fd:v05:accepted-types',type,JSON.stringify({eventId:event.id,at:new Date().toISOString()}));
