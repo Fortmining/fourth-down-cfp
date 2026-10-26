@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
 import assert from 'node:assert/strict';
@@ -6,15 +7,19 @@ const browser = await chromium.launch({headless:true});
 try {
  const context = await browser.newContext({viewport:{width:1440,height:1000},timezoneId:"America/New_York"});
  const page = await context.newPage();
+ const fixture=process.env.TEST_FEED_FILE?JSON.parse(fs.readFileSync(process.env.TEST_FEED_FILE,'utf8')):null;
+ if(fixture)await page.route('**/api/live',r=>r.fulfill({json:fixture}));
  const errors=[]; page.on('pageerror', e=>errors.push(e.message));
- await page.goto(url);
+ const [liveResponse]=await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/api/live'),page.goto(url)]);
+ const initialFeed=await liveResponse.json();
  await page.locator('.pollStatus').first().waitFor();
  assert.equal(await page.locator('.shell').getAttribute('data-appearance'),'light');
  await page.getByRole('button',{name:'Upcoming',exact:true}).click();
  assert.ok(await page.locator('.scoreGrid .game').count()>0,'Next scheduled games must survive Sunday rollover');
  assert.match(await page.locator('.scoreGrid .gameTop b').first().innerText(),/EDT|EST|TBD/);
  await page.getByRole('button',{name:'Final',exact:true}).click();
- assert.ok(await page.locator('.scoreGrid .game').count()>0,'Completed games remain available');
+ if(initialFeed.games.some(g=>g.status==='post')) assert.ok(await page.locator('.scoreGrid .game').count()>0,'Completed games supplied by the current feed remain available');
+ else assert.equal(await page.locator('.scoreGrid .game').count(),0,'Do not invent finals after the source rolls to a new week');
  await page.getByRole('button',{name:'All games',exact:true}).click();
  const originalOutlook=await page.locator('.outlook').innerText().catch(()=> '');
  for(const appearance of ['light','dark']) {
@@ -52,6 +57,7 @@ try {
  await page.route('**/api/live', route=>route.fulfill({status:503,json:{error:'Unavailable'}}));
  await page.reload(); await page.getByText('The scoreboard could not be loaded. Try refreshing.').waitFor();
  await page.unroute('**/api/live');
+ if(fixture)await page.route('**/api/live',r=>r.fulfill({json:fixture}));
  await page.getByRole('button',{name:'Refresh scores and rankings'}).click();
  await page.locator('.pollStatus').first().waitFor();
  await page.route('**/api/live', route=>route.fulfill({status:503,json:{error:'Unavailable'}}));
@@ -59,5 +65,6 @@ try {
  await page.getByText(/Last successful data remains visible/).waitFor();
  assert.ok(await page.locator('.publishedList li').count()>0);
  assert.deepEqual(errors,[]);
+ console.log(fixture?'Captured public-feed fixture; no real delivery claims.':'Live source browser run.');
  console.log('Browser checks passed: persistence, independent rankings, compare, bracket, 320/390px layout, outage recovery.');
 } finally { await browser.close(); }

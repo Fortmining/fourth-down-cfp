@@ -75,6 +75,7 @@ for (const [engine, mobile] of [
     page = await context.newPage();
   await context.addInitScript(() => localStorage.setItem('fourth-down-alert-preferences-v1',JSON.stringify({version:1,favorites:[],myTeams:{enabled:false,kickoff:false,final:false},breaking:{enabled:false},following:{enabled:false,items:[{kind:'game',id:'401856731',gameId:'401856731',name:'Tennessee at South Carolina',duration:'game',createdAt:Date.now()-3600000,expiresAt:Date.now()+86400000}]}})));
   await page.route("**/api/live", (r) => r.fulfill({ json: feed }));
+  await page.route("**/api/teams/2633",r=>r.fulfill({json:{id:'2633',name:t.name,nickname:'Volunteers',mascot:null,conference:'SEC',logo:null,standing:null,season:2026,record:feed.currentRecords['2633'],games:[],polls:feed.polls,stats:[],warnings:[],sources:[],observedAt:at,scheduleAvailable:true}}));
   await page.route("**/api/pulse/model", (r) =>
     r.fulfill({
       json: {

@@ -1538,3 +1538,32 @@ body:has(dialog[open]){overflow:hidden}
 
 @media(max-width:1000px){.shell{padding-left:max(25px,env(safe-area-inset-left));padding-right:max(25px,env(safe-area-inset-right));padding-top:env(safe-area-inset-top)}.notificationSave{top:env(safe-area-inset-top,0px)}}
 @media(max-width:650px){.shell{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}}
+
+/* Team center: theme variables shared with the tracker; no fixed controls over content. */
+.teamToolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.teamToolbar button,.teamToolbar select{min-height:44px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--ink)}
+.teamToolbar label{display:flex;align-items:center;gap:8px;font-size:13px}
+.teamPage .teamHero{display:flex;align-items:center;gap:22px}.teamHero>img{object-fit:contain;flex-shrink:0;background:white;border-radius:12px;padding:6px}
+.teamPage .teamHero h1{font-size:clamp(2rem,5vw,3.8rem);margin:8px 0}.teamHero p{margin:8px 0}
+.teamSections{display:flex;gap:6px;position:sticky;top:0;z-index:5;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:4px;margin:20px 0}
+.teamSections a{display:flex;justify-content:center;align-items:center;min-height:44px;flex:1;font-weight:700}.teamSections a:hover{background:var(--bg)}
+.teamPage section[id]{scroll-margin-top:80px}.teamFreshness,.teamGameMeta{color:var(--muted);font-size:13px;line-height:1.6}
+.teamWarning{padding:12px 16px;border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:6px}
+.teamWarning summary,.teamSources summary,#stats summary{min-height:44px;cursor:pointer;padding:12px 0}
+.teamRecordGrid,.teamPollGrid,.teamStatsGrid{display:grid;gap:12px}.teamRecordGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.teamPollGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.teamStatsGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.teamRecordGrid article,.teamPollGrid article,.teamStatsGrid article,.teamScheduleCard{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;min-width:0}
+.teamRecordGrid h3,.teamStatsGrid h3,.teamPollGrid h4{margin:0 0 12px;font-size:15px}.teamRecordGrid strong{font-size:36px}.teamPollGrid strong,.teamStatsGrid strong{font-size:26px}
+.teamStatsGrid p,.teamPollGrid p{font-size:13px}.teamStatsGrid small{color:var(--muted)}
+.teamActions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.teamActions .followControl{margin:0}.teamActions .followControl>p:empty{display:none}
+.teamScheduleCard{margin:12px 0}.teamScheduleCard p{margin:10px 0}.teamOpponent{display:flex;justify-content:space-between;align-items:center;gap:12px}.teamOpponent strong{font-size:22px;white-space:nowrap}
+.teamProfileLink{display:inline-flex;align-items:center;gap:10px;min-height:44px;min-width:0}.teamProfileLink img{object-fit:contain;flex-shrink:0}.teamGameLink{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline}
+.nextTeamGame{border:2px solid var(--gold)}.teamPage .teamSources{margin-top:28px}.teamPage main a:focus-visible{outline-offset:2px}
+@media(max-width:600px){.teamPage main{padding:16px}.teamPage .teamHero{padding:18px;gap:12px}.teamHero>img{width:60px;height:60px}.teamPage .teamHero h1{font-size:2rem}.teamStatsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.teamPollGrid{grid-template-columns:1fr}.teamOpponent{align-items:flex-start;flex-wrap:wrap}.teamScheduleCard{padding:16px}.teamToolbar label{flex:1}.teamToolbar select{max-width:150px}.teamStatsGrid article{padding:16px}.teamStatsGrid strong{font-size:23px}.teamPage .teamSections{top:0}}
+.teamHero>img{width:88px;height:88px}
+.publishedList li>a,.team summary>a,.gameTeam>a,.movers>div>a,.match>div>a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;flex-shrink:0}
+.teamIdentity b>a{display:inline-flex;align-items:center;min-height:44px}
+@media(max-width:600px){.teamHero>img{width:60px;height:60px}}
+.teamPage .teamHero{min-height:0}
+@media(max-width:600px){.teamPage .siteHeader{min-height:60px}.teamPage .siteHeader>a:not(.brand){display:none}.teamPage .teamToolbar label{font-size:12px}.teamPage .teamHero{margin-bottom:16px}}
+.teamOverview{display:flex;align-items:center;gap:12px;min-height:78px}.team>details>summary{min-height:44px;font-size:12px;color:var(--muted)}
+.teamSections{height:auto;min-height:54px}
