@@ -31,7 +31,9 @@ export function planShadowWrites(receipt:BudgetReceipt,pairBytes:number,requeste
   }
   const readCommands=360*receipt.daysRemaining;
   const available=Math.max(0,Math.floor(receipt.monthlyLimit*.8)-receipt.commandsUsed-reservedBaseline-readCommands);
-  const commandsPerPair=5;
+  // Five core operations were verified locally; reserve ten for bounded-index
+  // lookup, eviction/deletion and CAS retry overhead. Hosted billing still gates activation.
+  const commandsPerPair=10;
   const overheadBytes=512; // conservative index allowance; allocator overhead remains a separate unmeasured gate
   const storageReserve=Math.max(0,Math.min(64*1024*1024,Math.floor(receipt.storageLimitBytes*.8)-receipt.storageUsedBytes));
   const maxPairs=Math.min(Math.floor(available/commandsPerPair),Math.floor(storageReserve/(pairBytes+overheadBytes)));

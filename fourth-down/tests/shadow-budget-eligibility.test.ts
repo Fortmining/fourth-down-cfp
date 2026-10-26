@@ -4,9 +4,9 @@ import {planShadowWrites} from '../app/lib/playoff/write-budget.ts';
 import {applyEligibility,eligibilityCoverage,type EligibilityEvidence} from '../app/lib/playoff/eligibility.ts';
 const receipt={observedAt:'2026-10-26T16:00Z',monthlyLimit:500000,commandsUsed:60000,daysRemaining:6,storageUsedBytes:15000000,storageLimitBytes:250000000,
  dailyUsage:Array.from({length:7},(_,i)=>({day:'2026-10-'+String(19+i),commands:i===5?19000:8000,complete:true}))};
-test('write plan uses complete weekday observations, reserves polling reads and five commands per pair',()=>{
+test('write plan uses complete weekday observations, reserves polling reads and ten commands per pair including retention/retry reserve',()=>{
  const p=planShadowWrites(receipt,27000,50);assert.equal(p.weeklyPatternObserved,true);assert.equal(p.completeUsageDays,7);
- assert.equal(p.periodicReadCommandsReserved,2160);assert.equal(p.commandsPerPair,5);assert.equal(p.productionActivationPermitted,false);assert.equal(p.transportInstalled,false);
+ assert.equal(p.periodicReadCommandsReserved,2160);assert.equal(p.commandsPerPair,10);assert.equal(p.productionActivationPermitted,false);assert.equal(p.transportInstalled,false);
  assert.ok(p.maxPairsWithinEstimatedHeadroom<=Math.floor(p.storageReserveBytes/(27000+512)));
 });
 test('partial days, missing weekends and stale observations cannot establish a sustainable production budget',()=>{

@@ -1,5 +1,6 @@
 /** Official qualification dependencies are not extra résumé-model weights. */
 export const qualificationDependencies = {
+  "pac12-2026": ["specific-cfp-edition", "team-rating", "conference-draw"],
   "acc-2026": ["team-success", "conference-draw"],
   "big12-current": ["eligible-total-wins", "team-rating", "conference-draw"],
   "sec-current": ["capped-relative-margin", "conference-draw"],
@@ -11,6 +12,8 @@ export function requiredEvidence(
   issues: string[],
 ) {
   const unresolved = qualificationDependencies[policy].filter((metric) => {
+    if (metric === "specific-cfp-edition")
+      return issues.some((i) => i.includes("Tuesday-before-week-13 CFP edition unavailable"));
     if (metric === "current-full-policy-confirmation")
       return issues.some((i) => i.includes("full-policy confirmation"));
     if (metric === "conference-draw")
