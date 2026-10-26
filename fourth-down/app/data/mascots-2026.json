@@ -1,0 +1,4271 @@
+{
+  "season": 2026,
+  "inventorySources": [
+    "https://site.api.espn.com/apis/v2/sports/football/college-football/standings?season=2026&group=80",
+    "https://site.api.espn.com/apis/v2/sports/football/college-football/standings?season=2026&group=81"
+  ],
+  "inventoryObservedAt": "2026-10-26",
+  "entries": [
+    {
+      "espnId": "2636",
+      "school": "UTSA Roadrunners",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rowdy the Roadrunner"
+      ],
+      "sources": [
+        "https://www.utsa.edu/about/traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university or athletics mascot program. Individual retired live animals are not assumed current."
+    },
+    {
+      "espnId": "235",
+      "school": "Memphis Tigers",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Pouncer"
+      ],
+      "sources": [
+        "https://gotigersgo.com/news/2005/2/16/MEMPHIS_MASCOT"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university or athletics mascot program. Individual retired live animals are not assumed current."
+    },
+    {
+      "espnId": "249",
+      "school": "North Texas Mean Green",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Scrappy"
+      ],
+      "sources": [
+        "https://studentaffairs.unt.edu/student-activities-center/programs-and-services/spirit/scrappy/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university or athletics mascot program. Individual retired live animals are not assumed current."
+    },
+    {
+      "espnId": "349",
+      "school": "Army Black Knights",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2226",
+      "school": "Florida Atlantic Owls",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Owlsley",
+        "Hoot"
+      ],
+      "sources": [
+        "https://www.fau.edu/president/traditions/",
+        "https://calendar.fau.edu/event/hoots-birthday-party-red-blue-week"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot or traditions program."
+    },
+    {
+      "espnId": "58",
+      "school": "South Florida Bulls",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rocky the Bull"
+      ],
+      "sources": [
+        "https://www.usf.edu/about-usf/traditions.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot or traditions program."
+    },
+    {
+      "espnId": "5",
+      "school": "UAB Blazers",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Blaze"
+      ],
+      "sources": [
+        "https://www.uab.edu/students/home/spirit"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot or traditions program."
+    },
+    {
+      "espnId": "202",
+      "school": "Tulsa Golden Hurricane",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Captain Cane"
+      ],
+      "sources": [
+        "https://utulsa.edu/news/tu-mascot-history/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot history and current spirit appearance policy."
+    },
+    {
+      "espnId": "151",
+      "school": "East Carolina Pirates",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "PeeDee the Pirate"
+      ],
+      "sources": [
+        "https://brand.ecu.edu/wp-content/pv-uploads/sites/168/ECU_Brand-Guidelines_3.24.26-3.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Current 2026 brand guidance explicitly names PeeDee; it takes precedence over older athletics history describing a 1985 name change."
+    },
+    {
+      "espnId": "2655",
+      "school": "Tulane Green Wave",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Riptide"
+      ],
+      "sources": [
+        "https://news.tulane.edu/news/green-wave-riptide-and-more-tulane-mascots-1890s-today"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Riptide is the character; Green Wave is the athletics nickname."
+    },
+    {
+      "espnId": "218",
+      "school": "Temple Owls",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Hooter",
+        "Stella"
+      ],
+      "sources": [
+        "https://owlsports.com/sports/2009/8/31/GEN_0831093640"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university or athletics mascot program; no live-animal numeral inferred."
+    },
+    {
+      "espnId": "2426",
+      "school": "Navy Midshipmen",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bill the Goat"
+      ],
+      "sources": [
+        "https://www.usna.edu/Admissions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university or athletics mascot program; no live-animal numeral inferred."
+    },
+    {
+      "espnId": "2429",
+      "school": "Charlotte 49ers",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Norm the Niner"
+      ],
+      "sources": [
+        "https://alumni.charlotte.edu/history-spirit-and-traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university or athletics mascot program; no live-animal numeral inferred."
+    },
+    {
+      "espnId": "242",
+      "school": "Rice Owls",
+      "division": "fbs",
+      "conference": "American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sammy the Owl"
+      ],
+      "sources": [
+        "https://riceowls.com/sports/2025/8/27/rice-owls-kids-club"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university or athletics mascot program; no live-animal numeral inferred."
+    },
+    {
+      "espnId": "2390",
+      "school": "Miami Hurricanes",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sebastian the Ibis"
+      ],
+      "sources": [
+        "https://ucomm.miami.edu/_assets/pdf/tools-and-resources/umiami-visual-identity-guide.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university traditions, brand or athletics source."
+    },
+    {
+      "espnId": "2567",
+      "school": "SMU Mustangs",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Peruna"
+      ],
+      "sources": [
+        "https://www.smu.edu/stories/spirit-and-traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university traditions, brand or athletics source."
+    },
+    {
+      "espnId": "154",
+      "school": "Wake Forest Demon Deacons",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Demon Deacon"
+      ],
+      "sources": [
+        "https://traditions.campuslife.wfu.edu/mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university traditions, brand or athletics source."
+    },
+    {
+      "espnId": "259",
+      "school": "Virginia Tech Hokies",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "HokieBird"
+      ],
+      "sources": [
+        "https://news.vt.edu/articles/2025/09/cm-hokiebirthday.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university traditions, brand or athletics source."
+    },
+    {
+      "espnId": "150",
+      "school": "Duke Blue Devils",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Blue Devil"
+      ],
+      "sources": [
+        "https://trademarklicensing.duke.edu/DukeUniversity_03.20.24.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official mascot designation; N/A for a separate mascot nickname does not mean no mascot."
+    },
+    {
+      "espnId": "221",
+      "school": "Pittsburgh Panthers",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "ROC the Panther"
+      ],
+      "sources": [
+        "https://pittsburghpanthers.com/sports/2017/8/28/roc-the-panther-about-roc"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official athletics mascot name."
+    },
+    {
+      "espnId": "97",
+      "school": "Louisville Cardinals",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Louie the Cardinal"
+      ],
+      "sources": [
+        "https://gocards.com/sports/2015/3/26/GEN_20140101180"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official athletics mascot name, also confirmed by 2026 university coverage."
+    },
+    {
+      "espnId": "228",
+      "school": "Clemson Tigers",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Tiger",
+        "The Tiger Cub"
+      ],
+      "sources": [
+        "https://clemsontigers.com/news/2012/08/01/the-tiger-tiger-cub-mascot-tradition"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Both recognized costumed mascots."
+    },
+    {
+      "espnId": "153",
+      "school": "North Carolina Tar Heels",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rameses"
+      ],
+      "sources": [
+        "https://goheels.com/sports/2012/7/15/205498275"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Named ram tradition; current animal numeral is not inferred."
+    },
+    {
+      "espnId": "103",
+      "school": "Boston College Eagles",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Baldwin the Eagle"
+      ],
+      "sources": [
+        "https://bceagles.com/sports/2021/3/24/aboutbaldwin"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university athletics mascot designation."
+    },
+    {
+      "espnId": "24",
+      "school": "Stanford Cardinal",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "none",
+      "names": [],
+      "sources": [
+        "https://gostanford.com/news/2013/04/17/on-campus-1",
+        "https://approaching.stanford.edu/campus-life-oc-blog-posts"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University has no official mascot. The Tree is the official Band mascot and unofficial school mascot, not an official university mascot."
+    },
+    {
+      "espnId": "258",
+      "school": "Virginia Cavaliers",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "CavMan"
+      ],
+      "sources": [
+        "https://virginiasports.com/virginia-cheerleading"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university athletics mascot designation."
+    },
+    {
+      "espnId": "52",
+      "school": "Florida State Seminoles",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "none",
+      "names": [],
+      "sources": [
+        "https://pcs.coe.fsu.edu/seminole-tribe/know.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "FSU explicitly identifies Osceola and Renegade as symbols honoring its Seminole partners, not mascots."
+    },
+    {
+      "espnId": "152",
+      "school": "NC State Wolfpack",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Mr. Wuf",
+        "Ms. Wuf"
+      ],
+      "sources": [
+        "https://brand.ncsu.edu/editorial-style/mr-and-ms-wuf/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot/traditions source. Mascots and school nicknames are kept distinct."
+    },
+    {
+      "espnId": "183",
+      "school": "Syracuse Orange",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Otto the Orange"
+      ],
+      "sources": [
+        "https://cuse.com/news/2026/5/8/mascot-syracuse-unveils-the-ottomobile"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot/traditions source. Mascots and school nicknames are kept distinct."
+    },
+    {
+      "espnId": "25",
+      "school": "California Golden Bears",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Oski"
+      ],
+      "sources": [
+        "https://calbears.com/sports/2013/4/17/208216533"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot/traditions source. Mascots and school nicknames are kept distinct."
+    },
+    {
+      "espnId": "59",
+      "school": "Georgia Tech Yellow Jackets",
+      "division": "fbs",
+      "conference": "Atlantic Coast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Buzz",
+        "Ramblin’ Wreck"
+      ],
+      "sources": [
+        "https://commencement.gatech.edu/traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot/traditions source. Mascots and school nicknames are kept distinct."
+    },
+    {
+      "espnId": "254",
+      "school": "Utah Utes",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Swoop"
+      ],
+      "sources": [
+        "https://www.swoop.utah.edu/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot or spirit program; no performer identity or animal numeral inferred."
+    },
+    {
+      "espnId": "252",
+      "school": "BYU Cougars",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Cosmo the Cougar"
+      ],
+      "sources": [
+        "https://byucougars.com/sports/cosmo"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot or spirit program; no performer identity or animal numeral inferred."
+    },
+    {
+      "espnId": "12",
+      "school": "Arizona Wildcats",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Wilbur Wildcat",
+        "Wilma Wildcat"
+      ],
+      "sources": [
+        "https://www.arizona.edu/campus-life/spirit-traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot or spirit program; no performer identity or animal numeral inferred."
+    },
+    {
+      "espnId": "2641",
+      "school": "Texas Tech Red Raiders",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Masked Rider",
+        "Raider Red"
+      ],
+      "sources": [
+        "https://www.depts.ttu.edu/provost/studentlife/spirit-squads/traditions-history.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot or spirit program; no performer identity or animal numeral inferred."
+    },
+    {
+      "espnId": "248",
+      "school": "Houston Cougars",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Shasta",
+        "Sasha"
+      ],
+      "sources": [
+        "https://www.uh.edu/kgmca/msm/spirit-of-houston/spirit-teams.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot identification; individual student performers are not mascot names."
+    },
+    {
+      "espnId": "197",
+      "school": "Oklahoma State Cowboys",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Pistol Pete",
+        "Bullet"
+      ],
+      "sources": [
+        "https://news.okstate.edu/articles/agriculture/2026/triple-threat-the-trio-of-ferguson-college-students-serving-as-the-faces-of-osu-this-fall"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot identification; individual student performers are not mascot names."
+    },
+    {
+      "espnId": "2132",
+      "school": "Cincinnati Bearcats",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Bearcat"
+      ],
+      "sources": [
+        "https://www.uc.edu/about/marketing-communications/brand-guide/logos-marks/athletics.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot identification; individual student performers are not mascot names."
+    },
+    {
+      "espnId": "277",
+      "school": "West Virginia Mountaineers",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Mountaineer"
+      ],
+      "sources": [
+        "https://mountaineer.wvu.edu/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university mascot identification; individual student performers are not mascot names."
+    },
+    {
+      "espnId": "239",
+      "school": "Baylor Bears",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bruiser",
+        "Marigold",
+        "Indy",
+        "Belle"
+      ],
+      "sources": [
+        "https://magazine.web.baylor.edu/news/story/2026/fan-first-era-here",
+        "https://president.web.baylor.edu/news/story/2026/presidential-perspective-sept-17-2026"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "9",
+      "school": "Arizona State Sun Devils",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sparky"
+      ],
+      "sources": [
+        "https://brandguide.asu.edu/brand-elements/logos/spirit"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2116",
+      "school": "UCF Knights",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Knightro"
+      ],
+      "sources": [
+        "https://www.ucf.edu/about-ucf/traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2306",
+      "school": "Kansas State Wildcats",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Willie the Wildcat"
+      ],
+      "sources": [
+        "https://www.k-state.edu/communications-marketing/brand-style/voice-style/style-guide/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "66",
+      "school": "Iowa State Cyclones",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Cy"
+      ],
+      "sources": [
+        "https://trademark.iastate.edu/files/documents/2021-11/iowastate_athletic.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2305",
+      "school": "Kansas Jayhawks",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Big Jay",
+        "Baby Jay"
+      ],
+      "sources": [
+        "https://jayhawkglobal.ku.edu/2025-ku-mini-college-presentations-and-instructor-bios"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2628",
+      "school": "TCU Horned Frogs",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "SuperFrog"
+      ],
+      "sources": [
+        "https://brand.tcu.edu/horned-frogs/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "38",
+      "school": "Colorado Buffaloes",
+      "division": "fbs",
+      "conference": "Big 12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Ralphie",
+        "Chip"
+      ],
+      "sources": [
+        "https://www.colorado.edu/offcampus/student-resources/student-life-resources"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "26",
+      "school": "UCLA Bruins",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Joe Bruin",
+        "Josie Bruin"
+      ],
+      "sources": [
+        "https://spirit.ucla.edu/join"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "84",
+      "school": "Indiana Hoosiers",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "194",
+      "school": "Ohio State Buckeyes",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Brutus Buckeye"
+      ],
+      "sources": [
+        "https://ohiostatebuckeyes.com/sports/2018/6/4/brutus-buckeye"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official athletics mascot history."
+    },
+    {
+      "espnId": "77",
+      "school": "Northwestern Wildcats",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Willie the Wildcat"
+      ],
+      "sources": [
+        "https://www.northwestern.edu/studentaffairs/news-events/willie-reveal.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "30",
+      "school": "USC Trojans",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Tommy Trojan",
+        "Traveler"
+      ],
+      "sources": [
+        "https://uscband.usc.edu/usc-mascots/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "135",
+      "school": "Minnesota Golden Gophers",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Goldy Gopher"
+      ],
+      "sources": [
+        "https://cse.umn.edu/hub/goldy-gopher"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "275",
+      "school": "Wisconsin Badgers",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bucky Badger"
+      ],
+      "sources": [
+        "https://brand.wisc.edu/visual-identity/logos/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2294",
+      "school": "Iowa Hawkeyes",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Herky"
+      ],
+      "sources": [
+        "https://brand.uiowa.edu/logos/secondary-logos"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "158",
+      "school": "Nebraska Cornhuskers",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Herbie Husker",
+        "Lil’ Red"
+      ],
+      "sources": [
+        "https://licensing.unl.edu/sites/unl.edu.university-communication.licensing/files/media/file/Nebraska-Art-Sheet.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "356",
+      "school": "Illinois Fighting Illini",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2483",
+      "school": "Oregon Ducks",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Duck"
+      ],
+      "sources": [
+        "https://communications.uoregon.edu/duck"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Current university style guide explicitly rejects Puddles as the current name."
+    },
+    {
+      "espnId": "130",
+      "school": "Michigan Wolverines",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "none",
+      "names": [],
+      "sources": [
+        "https://bentley.umich.edu/discover/athletics/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "264",
+      "school": "Washington Huskies",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Dubs",
+        "Harry the Husky"
+      ],
+      "sources": [
+        "https://nstp.washington.edu/connect-through-academics/shared-content-programs/traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2509",
+      "school": "Purdue Boilermakers",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Boilermaker Special"
+      ],
+      "sources": [
+        "https://www.purdue.edu/home/about/traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "213",
+      "school": "Penn State Nittany Lions",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Nittany Lion"
+      ],
+      "sources": [
+        "https://www.psu.edu/about/traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university traditions identify the Nittany Lion."
+    },
+    {
+      "espnId": "164",
+      "school": "Rutgers Scarlet Knights",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Scarlet Knight"
+      ],
+      "sources": [
+        "https://communications.rutgers.edu/sites/default/files/rutgers_visual_identity_system_user_guide.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "120",
+      "school": "Maryland Terrapins",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Testudo"
+      ],
+      "sources": [
+        "https://umpd.umd.edu/directory/testudo"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "127",
+      "school": "Michigan State Spartans",
+      "division": "fbs",
+      "conference": "Big Ten Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sparty"
+      ],
+      "sources": [
+        "https://msu.edu/about/facts"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2335",
+      "school": "Liberty Flames",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sparky"
+      ],
+      "sources": [
+        "https://www.liberty.edu/marketing/editorial-style-guide/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "55",
+      "school": "Jacksonville State Gamecocks",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Cocky"
+      ],
+      "sources": [
+        "https://www.jsu.edu/discover/at-a-glance.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2393",
+      "school": "Middle Tennessee Blue Raiders",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Lightning"
+      ],
+      "sources": [
+        "https://spirit.mtsu.edu/lightning/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "166",
+      "school": "New Mexico State Aggies",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Pistol Pete"
+      ],
+      "sources": [
+        "https://people.nmsu.edu/pistolpete/index.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "98",
+      "school": "Western Kentucky Hilltoppers",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Big Red"
+      ],
+      "sources": [
+        "https://www.wku.edu/halloween/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "48",
+      "school": "Delaware Blue Hens",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "YoUDee",
+        "Baby Blue"
+      ],
+      "sources": [
+        "https://www.udel.edu/alumni-friends/connect/students/ud-bucket-list/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2229",
+      "school": "Florida International Panthers",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Roary the Panther"
+      ],
+      "sources": [
+        "https://admissions.fiu.edu/viewbook/explore-the-possibilities/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "2623",
+      "school": "Missouri State Bears",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Boomer",
+        "Growl"
+      ],
+      "sources": [
+        "https://www.missouristate.edu/SpiritSquads/boomer.htm"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names explicitly identified by the institution; not inferred from team nickname."
+    },
+    {
+      "espnId": "338",
+      "school": "Kennesaw State Owls",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Scrappy"
+      ],
+      "sources": [
+        "https://campus.kennesaw.edu/current-students/student-affairs/spirit-traditions/scrappy-history.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2534",
+      "school": "Sam Houston Bearkats",
+      "division": "fbs",
+      "conference": "Conference USA",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sammy the Bearkat"
+      ],
+      "sources": [
+        "https://intranet.shsu.edu/dept/campus-recreation/spirit-programs/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "87",
+      "school": "Notre Dame Fighting Irish",
+      "division": "fbs",
+      "conference": "FBS Independents",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Leprechaun"
+      ],
+      "sources": [
+        "https://onmessage.nd.edu/athletics-branding/logos/leprechaun/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "41",
+      "school": "UConn Huskies",
+      "division": "fbs",
+      "conference": "FBS Independents",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Jonathan the Husky"
+      ],
+      "sources": [
+        "https://uconn.edu/directory/jonathan-the-husky/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "195",
+      "school": "Ohio Bobcats",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rufus the Bobcat"
+      ],
+      "sources": [
+        "https://www.ohio.edu/about/history-traditions/rufus-bobcat"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2649",
+      "school": "Toledo Rockets",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rocky",
+        "Rocksy"
+      ],
+      "sources": [
+        "https://www.utoledo.edu/mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2711",
+      "school": "Western Michigan Broncos",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Buster Bronco"
+      ],
+      "sources": [
+        "https://wmich.edu/news/2012/04/354"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2084",
+      "school": "Buffalo Bulls",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Victor E. Bull"
+      ],
+      "sources": [
+        "https://www.buffalo.edu/grad/news.host.html/content/shared/university/news/ub-reporter-articles/stories/2022/03/true-blue-victor.detail.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "193",
+      "school": "Miami (OH) RedHawks",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Swoop"
+      ],
+      "sources": [
+        "https://meet.miamioh.edu/campus-life/miami-number-one-fan-swoop/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "113",
+      "school": "Massachusetts Minutemen",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sam the Minuteman"
+      ],
+      "sources": [
+        "https://www.umass.edu/gateway/why-umass/about/sam-minuteman"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2199",
+      "school": "Eastern Michigan Eagles",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Swoop"
+      ],
+      "sources": [
+        "https://today.emich.edu/story/story/12831"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2309",
+      "school": "Kent State Golden Flashes",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Flash"
+      ],
+      "sources": [
+        "https://www.kent.edu/ucm/kent-state-university-intercollegiate-athletics-logo"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2050",
+      "school": "Ball State Cardinals",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Charlie Cardinal"
+      ],
+      "sources": [
+        "https://bsu.edu/admissions/international/international-admissions-counselors"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2117",
+      "school": "Central Michigan Chippewas",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "189",
+      "school": "Bowling Green Falcons",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Freddy Falcon",
+        "Frieda Falcon"
+      ],
+      "sources": [
+        "https://www.bgsu.edu/content/dam/pdfs/marketing/2025/508-bgsu-branding-guide-fy26.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "2006",
+      "school": "Akron Zips",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Zippy"
+      ],
+      "sources": [
+        "https://www.uakron.edu/akron-magazine/issues/ua-mag-spring-25.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names. Historical retired mascots excluded."
+    },
+    {
+      "espnId": "16",
+      "school": "Sacramento State Hornets",
+      "division": "fbs",
+      "conference": "Mid-American Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Herky the Hornet"
+      ],
+      "sources": [
+        "https://www.csus.edu/student-affairs/meet-mewe.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "167",
+      "school": "New Mexico Lobos",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Lobo Louie",
+        "Lobo Lucy"
+      ],
+      "sources": [
+        "https://www.unm.edu/welcome/traditions/mascot.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "2449",
+      "school": "North Dakota State Bison",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Thundar"
+      ],
+      "sources": [
+        "https://www.ndsu.edu/about/campus/history-traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "2005",
+      "school": "Air Force Falcons",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Bird"
+      ],
+      "sources": [
+        "https://goairforcefalcons.com/sports/2018/6/21/trads-afa-bird-html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2751",
+      "school": "Wyoming Cowboys",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Cowboy Joe",
+        "Pistol Pete"
+      ],
+      "sources": [
+        "https://www.uwyo.edu/student-success/cowboy-coaches/characters/index.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "2439",
+      "school": "UNLV Rebels",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "none",
+      "names": [],
+      "sources": [
+        "https://www.unlv.edu/campuslife/mascot-nickname"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source explicitly confirms no current mascot; retired characters are not current mascots."
+    },
+    {
+      "espnId": "23",
+      "school": "San José State Spartans",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sammy the Spartan"
+      ],
+      "sources": [
+        "https://sjsu.edu/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "2440",
+      "school": "Nevada Wolf Pack",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Alphie",
+        "Wolfie Jr.",
+        "Luna"
+      ],
+      "sources": [
+        "https://www.unr.edu/nevada-today/news/2026/history-of-the-brand"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "62",
+      "school": "Hawai'i Rainbow Warriors",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2638",
+      "school": "UTEP Miners",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Paydirt Pete"
+      ],
+      "sources": [
+        "https://www.utep.edu/student-affairs/cheerleading/paydirt-pete/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "2459",
+      "school": "Northern Illinois Huskies",
+      "division": "fbs",
+      "conference": "Mountain West Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Mission",
+        "Victor E. Huskie"
+      ],
+      "sources": [
+        "https://niuhuskies.com/news/2025/8/14/general-brothers-country-supply-becomes-official-food-supplier-of-mission-and-niu-athletics.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "68",
+      "school": "Boise State Broncos",
+      "division": "fbs",
+      "conference": "Pac-12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Buster Bronco"
+      ],
+      "sources": [
+        "https://www.boisestate.edu/brand/design/horse-imagery/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "204",
+      "school": "Oregon State Beavers",
+      "division": "fbs",
+      "conference": "Pac-12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Benny Beaver"
+      ],
+      "sources": [
+        "https://admissions.oregonstate.edu/traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "326",
+      "school": "Texas State Bobcats",
+      "division": "fbs",
+      "conference": "Pac-12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Boko",
+        "Koko"
+      ],
+      "sources": [
+        "https://family.txst.edu/family-weekend-holding/signature-events.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "278",
+      "school": "Fresno State Bulldogs",
+      "division": "fbs",
+      "conference": "Pac-12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "TimeOut",
+        "Victor E. Bulldog"
+      ],
+      "sources": [
+        "https://gobulldogs.com/sports/2016/6/8/trads-mascot-home-html",
+        "https://alumni.fresnostate.edu/get-involved/alumni-homecoming.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "36",
+      "school": "Colorado State Rams",
+      "division": "fbs",
+      "conference": "Pac-12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "CAM the Ram"
+      ],
+      "sources": [
+        "https://alumni.colostate.edu/cam-the-ram/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "21",
+      "school": "San Diego State Aztecs",
+      "division": "fbs",
+      "conference": "Pac-12 Conference",
+      "season": 2026,
+      "status": "none",
+      "names": [],
+      "sources": [
+        "https://brand.sdsu.edu/identity/messaging/editorial-style-guide"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source explicitly confirms no current mascot; retired characters are not current mascots."
+    },
+    {
+      "espnId": "328",
+      "school": "Utah State Aggies",
+      "division": "fbs",
+      "conference": "Pac-12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Big Blue"
+      ],
+      "sources": [
+        "https://www.usu.edu/about/fast-facts/USU_fast-facts.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "265",
+      "school": "Washington State Cougars",
+      "division": "fbs",
+      "conference": "Pac-12 Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Butch T. Cougar"
+      ],
+      "sources": [
+        "https://ansci.wsu.edu/2025/05/05/kat-moen-was-butch-t-cougar/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "96",
+      "school": "Kentucky Wildcats",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Wildcat",
+        "Scratch"
+      ],
+      "sources": [
+        "https://www.uky.edu/Alumni/web/2024/Wildcats.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "61",
+      "school": "Georgia Bulldogs",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Uga",
+        "Hairy Dawg"
+      ],
+      "sources": [
+        "https://brand.uga.edu/wp-content/uploads/UGA_HG_Logo_Guide_2021.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Live and costumed mascot names explicitly listed by the university."
+    },
+    {
+      "espnId": "333",
+      "school": "Alabama Crimson Tide",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Big Al"
+      ],
+      "sources": [
+        "https://rolltide.com/form/18"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University athletics identifies Big Al as its mascot."
+    },
+    {
+      "espnId": "99",
+      "school": "LSU Tigers",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Mike the Tiger"
+      ],
+      "sources": [
+        "https://www.lsu.edu/mikethetiger/index.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Named mascot tradition; no assumption about the current animal numeral."
+    },
+    {
+      "espnId": "2633",
+      "school": "Tennessee Volunteers",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Smokey"
+      ],
+      "sources": [
+        "https://tennessee.edu/wp-content/uploads/2025/12/utknoxville_tennessee-clc.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary mascot name in the university licensing guide; the spirit program also has Junior Smokey and Davy Crockett."
+    },
+    {
+      "espnId": "57",
+      "school": "Florida Gators",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Albert",
+        "Alberta"
+      ],
+      "sources": [
+        "https://floridagators.com/sports/2015/12/10/_spirit_mascots_"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Both costumed mascots are recognized."
+    },
+    {
+      "espnId": "145",
+      "school": "Ole Miss Rebels",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Landshark"
+      ],
+      "sources": [
+        "https://olemisssports.com/sports/2018/7/20/trads-landshark-html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "142",
+      "school": "Missouri Tigers",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Truman the Tiger"
+      ],
+      "sources": [
+        "https://missouri.edu/about/traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "251",
+      "school": "Texas Longhorns",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bevo",
+        "Hook ’Em"
+      ],
+      "sources": [
+        "https://www.utexas.edu/about/longhorn-traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "201",
+      "school": "Oklahoma Sooners",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Boomer",
+        "Sooner"
+      ],
+      "sources": [
+        "https://www.ou.edu/about/history"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot names. Retired mascots and unrelated spirit leaders excluded."
+    },
+    {
+      "espnId": "344",
+      "school": "Mississippi State Bulldogs",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bully",
+        "Dak"
+      ],
+      "sources": [
+        "https://www.msstate.edu/about/traditions/dak-bully-xxii"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2",
+      "school": "Auburn Tigers",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Aubie the Tiger"
+      ],
+      "sources": [
+        "https://auburntigers.com/traditions-about-auburn"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "War Eagle is a battle cry and symbol, not a second official mascot."
+    },
+    {
+      "espnId": "2579",
+      "school": "South Carolina Gamecocks",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Cocky"
+      ],
+      "sources": [
+        "https://www.sc.edu/uofsc/posts/2026/02/one-and-only-cocky-history-of-usc-mascot.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University history confirms Cocky; earlier Big Spur is not substituted for the current mascot."
+    },
+    {
+      "espnId": "245",
+      "school": "Texas A&M Aggies",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Reveille"
+      ],
+      "sources": [
+        "https://www.tamu.edu/campus-community/traditions/aggie-culture/reveille.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "8",
+      "school": "Arkansas Razorbacks",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Big Red",
+        "Sue E.",
+        "Pork Chop",
+        "Boss Hog",
+        "Ribby",
+        "Tusk"
+      ],
+      "sources": [
+        "https://brand.uark.edu/editorial-style-and-usage/editorial-guide.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "238",
+      "school": "Vanderbilt Commodores",
+      "division": "fbs",
+      "conference": "Southeastern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Mr. C"
+      ],
+      "sources": [
+        "https://news.vanderbilt.edu/2026/05/18/the-evolution-of-mr-c/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "256",
+      "school": "James Madison Dukes",
+      "division": "fbs",
+      "conference": "Sun Belt - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Duke Dog"
+      ],
+      "sources": [
+        "https://www.jmu.edu/centennialcelebration/cartoon.shtml"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2026",
+      "school": "App State Mountaineers",
+      "division": "fbs",
+      "conference": "Sun Belt - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Yosef"
+      ],
+      "sources": [
+        "https://disc.library.appstate.edu/university-archives/timelines/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2247",
+      "school": "Georgia State Panthers",
+      "division": "fbs",
+      "conference": "Sun Belt - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Pounce"
+      ],
+      "sources": [
+        "https://engagement.gsu.edu/student-life/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "276",
+      "school": "Marshall Thundering Herd",
+      "division": "fbs",
+      "conference": "Sun Belt - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Marco the Bison"
+      ],
+      "sources": [
+        "https://www.marshall.edu/history-and-traditions/symbols/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "290",
+      "school": "Georgia Southern Eagles",
+      "division": "fbs",
+      "conference": "Sun Belt - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "GUS",
+        "Freedom"
+      ],
+      "sources": [
+        "https://www.georgiasouthern.edu/student-life/traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "324",
+      "school": "Coastal Carolina Chanticleers",
+      "division": "fbs",
+      "conference": "Sun Belt - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Chauncey"
+      ],
+      "sources": [
+        "https://www.coastal.edu/media/2024siteassets/contentassets/documents/provost/professionaldevelopment/GuideForTeachingFaculty2025-2026.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "295",
+      "school": "Old Dominion Monarchs",
+      "division": "fbs",
+      "conference": "Sun Belt - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Big Blue"
+      ],
+      "sources": [
+        "https://sites.wp.odu.edu/oduwiki/2020/03/30/big-blue/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2348",
+      "school": "Louisiana Tech Bulldogs",
+      "division": "fbs",
+      "conference": "Sun Belt - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Tech",
+        "Champ"
+      ],
+      "sources": [
+        "https://brand.latech.edu/documents/2021/07/art-sheet.pdf/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "309",
+      "school": "Louisiana Ragin' Cajuns",
+      "division": "fbs",
+      "conference": "Sun Belt - West",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "6",
+      "school": "South Alabama Jaguars",
+      "division": "fbs",
+      "conference": "Sun Belt - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "SouthPaw",
+        "Miss Pawla"
+      ],
+      "sources": [
+        "https://www.southalabama.edu/colleges/ceps/resources/ceps-pillars-2026.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2032",
+      "school": "Arkansas State Red Wolves",
+      "division": "fbs",
+      "conference": "Sun Belt - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Howl"
+      ],
+      "sources": [
+        "https://www.astate.edu/dotAsset/5c27d8c3-fe0c-4840-b50e-edac64ca0a02.ukn"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2653",
+      "school": "Troy Trojans",
+      "division": "fbs",
+      "conference": "Sun Belt - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "T-Roy"
+      ],
+      "sources": [
+        "https://helpdesk.troy.edu/TDClient/1924/Portal/KB/Article/44524/What-is-the-school-mascot"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2572",
+      "school": "Southern Miss Golden Eagles",
+      "division": "fbs",
+      "conference": "Sun Belt - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Seymour"
+      ],
+      "sources": [
+        "https://www.usm.edu/news/2021/release/eagle-walk-childrens-center.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "2433",
+      "school": "UL Monroe Warhawks",
+      "division": "fbs",
+      "conference": "Sun Belt - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Ace the Warhawk"
+      ],
+      "sources": [
+        "https://ulmapps.ulm.edu/policies/download-policy/461"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source names mascot; live animal succession numerals omitted from tradition name."
+    },
+    {
+      "espnId": "147",
+      "school": "Montana State Bobcats",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Champ"
+      ],
+      "sources": [
+        "https://msubobcats.com/sports/2020/9/27/mens-basketball-quick-facts"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2464",
+      "school": "Northern Arizona Lumberjacks",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Louie the Lumberjack"
+      ],
+      "sources": [
+        "https://nau.edu/flagstaff-campus/lumberjack-spirit/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "149",
+      "school": "Montana Grizzlies",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Monte"
+      ],
+      "sources": [
+        "https://www.umt.edu/police/default.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "302",
+      "school": "UC Davis Aggies",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Gunrock"
+      ],
+      "sources": [
+        "https://siss.ucdavis.edu/campus-resources"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "304",
+      "school": "Idaho State Bengals",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Benny the Bengal"
+      ],
+      "sources": [
+        "https://www.isu.edu/news/2025-fall/benny-gets-a-fresh-look-for-isus-125th-anniversary.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "2692",
+      "school": "Weber State Wildcats",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Waldo the Wildcat"
+      ],
+      "sources": [
+        "https://www.weber.edu/prospectiveemployees/athletics.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "13",
+      "school": "Cal Poly Mustangs",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Musty"
+      ],
+      "sources": [
+        "https://advising.calpoly.edu/cal-poly-lingo-and-terms"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "70",
+      "school": "Idaho Vandals",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Joe Vandal"
+      ],
+      "sources": [
+        "https://www.uidaho.edu/-/media/UIdaho-Responsive/Files/brand/u-of-i-brand-book.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional mascot identification; no conversion of nickname to mascot name."
+    },
+    {
+      "espnId": "253",
+      "school": "Southern Utah Thunderbirds",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Thor Thunderbird"
+      ],
+      "sources": [
+        "https://www.suu.edu/blog/images/2021/2021-03-example-resume-thor.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source identifies mascot. Unconfirmed secondary characters excluded."
+    },
+    {
+      "espnId": "2458",
+      "school": "Northern Colorado Bears",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Klawz"
+      ],
+      "sources": [
+        "https://www.unco.edu/athletics/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source identifies mascot. Unconfirmed secondary characters excluded."
+    },
+    {
+      "espnId": "2502",
+      "school": "Portland State Vikings",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Victor E. Viking"
+      ],
+      "sources": [
+        "https://www.pdx.edu/portland-state-university-facts"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source identifies mascot. Unconfirmed secondary characters excluded."
+    },
+    {
+      "espnId": "331",
+      "school": "Eastern Washington Eagles",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Swoop the Eagle"
+      ],
+      "sources": [
+        "https://www.ewu.edu/about/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source identifies mascot. Unconfirmed secondary characters excluded."
+    },
+    {
+      "espnId": "3101",
+      "school": "Utah Tech Trailblazers",
+      "division": "fcs",
+      "conference": "Big Sky Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Brooks the Bison"
+      ],
+      "sources": [
+        "https://utahtech.edu/brooks-the-bison/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source identifies mascot. Unconfirmed secondary characters excluded."
+    },
+    {
+      "espnId": "2097",
+      "school": "Campbell Fighting Camels",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Gaylord the Camel"
+      ],
+      "sources": [
+        "https://www.campbell.edu/about/traditions/our-camel-mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source identifies mascot. Unconfirmed secondary characters excluded."
+    },
+    {
+      "espnId": "2405",
+      "school": "Monmouth Hawks",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Shadow"
+      ],
+      "sources": [
+        "https://www.monmouth.edu/magazine/wp-content/uploads/sites/7/2025/03/Monmouth-2025-Spring-SPREADS.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source identifies mascot. Unconfirmed secondary characters excluded."
+    },
+    {
+      "espnId": "399",
+      "school": "UAlbany Great Danes",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Damien the Great Dane"
+      ],
+      "sources": [
+        "https://www.albany.edu/style-guide/names-phrases"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "2619",
+      "school": "Stony Brook Seawolves",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Wolfie"
+      ],
+      "sources": [
+        "https://www.stonybrook.edu/commcms/traditions/athletics.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Names confirmed by primary university source, including official unnamed character designations."
+    },
+    {
+      "espnId": "2803",
+      "school": "Bryant Bulldogs",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Tupper the Bulldog"
+      ],
+      "sources": [
+        "https://bryantbulldogs.com/sports/2024/4/23/information-Employment-MainPage.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2210",
+      "school": "Elon Phoenix",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Phoenix"
+      ],
+      "sources": [
+        "https://www.elon.edu/u/university-communications/brand/guide/platform-voice/style-guide/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Names confirmed by primary university source, including official unnamed character designations."
+    },
+    {
+      "espnId": "227",
+      "school": "Rhode Island Rams",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rhody the Ram"
+      ],
+      "sources": [
+        "https://web.uri.edu/studentinvolvement/rhody-the-ram/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Names confirmed by primary university source, including official unnamed character designations."
+    },
+    {
+      "espnId": "2529",
+      "school": "Sacred Heart Pioneers",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Big Red"
+      ],
+      "sources": [
+        "https://www.sacredheart.edu/offices--departments-directory/university-advancement/support-pioneer-athletics/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Names confirmed by primary university source, including official unnamed character designations."
+    },
+    {
+      "espnId": "2448",
+      "school": "North Carolina A&T Aggies",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Aggie",
+        "Aggietha"
+      ],
+      "sources": [
+        "https://www.ncat.edu/news/2019/11/winter-wishes-aggieland.php",
+        "https://ncataggies.com/news/2025/8/14/cheerleading-has-excellent-camp-showing-in-myrtle-beach.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university naming corroborated by current athletics mascot program."
+    },
+    {
+      "espnId": "160",
+      "school": "New Hampshire Wildcats",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Wild E. Cat",
+        "Gnarlz"
+      ],
+      "sources": [
+        "https://library.unh.edu/exhibits/mascots"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Names confirmed by primary university source, including official unnamed character designations."
+    },
+    {
+      "espnId": "311",
+      "school": "Maine Black Bears",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bananas the Bear"
+      ],
+      "sources": [
+        "https://umaine.edu/studentinvolvement/umaine-traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Names confirmed by primary university source, including official unnamed character designations."
+    },
+    {
+      "espnId": "2261",
+      "school": "Hampton Pirates",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Pete the Pirate"
+      ],
+      "sources": [
+        "https://hamptonpirates.com/form/129"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "119",
+      "school": "Towson Tigers",
+      "division": "fcs",
+      "conference": "Coastal Athletic Association",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Doc the Tiger"
+      ],
+      "sources": [
+        "https://www.towson.edu/brand/visual-guidelines/brand-marks/doc-tiger.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "2771",
+      "school": "Merrimack Warriors",
+      "division": "fcs",
+      "conference": "FCS Independents",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Mack the Warrior"
+      ],
+      "sources": [
+        "https://www.merrimack.edu/about/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "2130",
+      "school": "Chicago State Cougars",
+      "division": "fcs",
+      "conference": "FCS Independents",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Southside T. Cougar"
+      ],
+      "sources": [
+        "https://www.gocsucougars.com/sports/2012/11/24/GEN_1124120723.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "108",
+      "school": "Harvard Crimson",
+      "division": "fcs",
+      "conference": "Ivy League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "John Harvard the Pilgrim"
+      ],
+      "sources": [
+        "https://hura.harvard.edu/sites/g/files/omnuum1296/files/hura/files/hura_febmar2023.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "163",
+      "school": "Princeton Tigers",
+      "division": "fcs",
+      "conference": "Ivy League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Tiger"
+      ],
+      "sources": [
+        "https://paw.princeton.edu/article/behind-stripes-tiger-mascot-costume-history"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "171",
+      "school": "Columbia Lions",
+      "division": "fcs",
+      "conference": "Ivy League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Roar-ee the Lion"
+      ],
+      "sources": [
+        "https://www.magazine.columbia.edu/article/year-lion"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "159",
+      "school": "Dartmouth Big Green",
+      "division": "fcs",
+      "conference": "Ivy League",
+      "season": 2026,
+      "status": "none",
+      "names": [],
+      "sources": [
+        "https://sites.dartmouth.edu/jacko/keggy/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "No official mascot; Keggy belongs to the student humor publication and is unofficial."
+    },
+    {
+      "espnId": "225",
+      "school": "Brown Bears",
+      "division": "fcs",
+      "conference": "Ivy League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bruno the Bear"
+      ],
+      "sources": [
+        "https://policy.brown.edu/policy/visual-identity"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "172",
+      "school": "Cornell Big Red",
+      "division": "fcs",
+      "conference": "Ivy League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Touchdown the Big Red Bear"
+      ],
+      "sources": [
+        "https://scl.cornell.edu/get-involved/campus-activities/annual-events-traditions"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "219",
+      "school": "Pennsylvania Quakers",
+      "division": "fcs",
+      "conference": "Ivy League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Quaker"
+      ],
+      "sources": [
+        "https://www.nettercenter.upenn.edu/sites/default/files/JUST%20RELEASED%20FLYER%20%282019%29.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "43",
+      "school": "Yale Bulldogs",
+      "division": "fcs",
+      "conference": "Ivy League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Handsome Dan"
+      ],
+      "sources": [
+        "https://www.yale.edu/about-yale/traditions-history"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "2569",
+      "school": "South Carolina State Bulldogs",
+      "division": "fcs",
+      "conference": "Mid-Eastern Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Spike",
+        "Spirit"
+      ],
+      "sources": [
+        "https://www.scsu.edu/campus-life/cheerleading.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "2415",
+      "school": "Morgan State Bears",
+      "division": "fcs",
+      "conference": "Mid-Eastern Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Benny the Bear"
+      ],
+      "sources": [
+        "https://events.morgan.edu/event/morgan-state-lady-bears-second-annual-youth-education-day"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university source identifies mascot, separate from athletic nickname."
+    },
+    {
+      "espnId": "47",
+      "school": "Howard Bison",
+      "division": "fcs",
+      "conference": "Mid-Eastern Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Bison"
+      ],
+      "sources": [
+        "https://hubison.com/sports/2018/11/26/bison-cool-kids-club"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2169",
+      "school": "Delaware State Hornets",
+      "division": "fcs",
+      "conference": "Mid-Eastern Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Too-Fly"
+      ],
+      "sources": [
+        "https://dsuhornets.com/news/2012/1/24/205367567.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2450",
+      "school": "Norfolk State Spartans",
+      "division": "fcs",
+      "conference": "Mid-Eastern Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Mr. Spartan"
+      ],
+      "sources": [
+        "https://www.nsu.edu/communications-and-marketing/council-directory/faqs"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source identifies mascot names, not simply team nickname."
+    },
+    {
+      "espnId": "2428",
+      "school": "North Carolina Central Eagles",
+      "division": "fcs",
+      "conference": "Mid-Eastern Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Eddie the Eagle",
+        "Annie the Eagle"
+      ],
+      "sources": [
+        "https://www.nccu.edu/administration/ocm/communications-and-marketing-resources-and-tools/nccu-fact-sheet"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source identifies mascot names, not simply team nickname."
+    },
+    {
+      "espnId": "233",
+      "school": "South Dakota Coyotes",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Charlie Coyote"
+      ],
+      "sources": [
+        "https://www.usd.edu/Student-Life/Activities-and-Involvement/Athletics-and-Spirit-Squad/Spirit-Squad"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source identifies mascot names, not simply team nickname."
+    },
+    {
+      "espnId": "2754",
+      "school": "Youngstown State Penguins",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Pete Penguin",
+        "Penny Penguin"
+      ],
+      "sources": [
+        "https://ysu.edu/tech-demo-portraits"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source identifies mascot names, not simply team nickname."
+    },
+    {
+      "espnId": "2571",
+      "school": "South Dakota State Jackrabbits",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Jack Rabbit"
+      ],
+      "sources": [
+        "https://gojacks.com/sports/2022/7/14/quick-facts"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2287",
+      "school": "Illinois State Redbirds",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Reggie Redbird"
+      ],
+      "sources": [
+        "https://news.illinoisstate.edu/2026/05/reggies-new-look/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source identifies mascot names, not simply team nickname."
+    },
+    {
+      "espnId": "155",
+      "school": "North Dakota Fighting Hawks",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Fighting Hawk"
+      ],
+      "sources": [
+        "https://campus.und.edu/brand/brand-assets/logo-system.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source identifies mascot names, not simply team nickname."
+    },
+    {
+      "espnId": "79",
+      "school": "Southern Illinois Salukis",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Brown Dawg",
+        "Grey Dawg"
+      ],
+      "sources": [
+        "https://siusalukis.com/news/2014/12/2/Ask_The_AD_November_edition"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2460",
+      "school": "Northern Iowa Panthers",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "TC Panther",
+        "TK Panther"
+      ],
+      "sources": [
+        "https://tc.uni.edu/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "282",
+      "school": "Indiana State Sycamores",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Sycamore Sam"
+      ],
+      "sources": [
+        "https://gosycamores.com/sports/2025/2/7/sycamore-sam.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "93",
+      "school": "Murray State Racers",
+      "division": "fcs",
+      "conference": "Missouri Valley Football Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Dunker",
+        "Racer One"
+      ],
+      "sources": [
+        "https://goracers.com/documents/download/2025/10/29/11-1-25_vs_SIU__1_.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2115",
+      "school": "Central Connecticut Blue Devils",
+      "division": "fcs",
+      "conference": "Northeast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Kizer"
+      ],
+      "sources": [
+        "https://docs.ccsu.edu/Central-Brand-Guidelines.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified in primary institutional source."
+    },
+    {
+      "espnId": "2523",
+      "school": "Robert Morris Colonials",
+      "division": "fcs",
+      "conference": "Northeast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "RoMo"
+      ],
+      "sources": [
+        "https://www.rmu.edu/athletics/timeline"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified in primary institutional source."
+    },
+    {
+      "espnId": "2184",
+      "school": "Duquesne Dukes",
+      "division": "fcs",
+      "conference": "Northeast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Duke"
+      ],
+      "sources": [
+        "https://goduquesne.com/sports/2024/6/18/mascot.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "284",
+      "school": "Stonehill Skyhawks",
+      "division": "fcs",
+      "conference": "Northeast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Ace the Skyhawk"
+      ],
+      "sources": [
+        "https://www.stonehill.edu/news/details/student-spotlight-elijah-byrd-27-soars-as-ace-the-skyhawk/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified in primary institutional source."
+    },
+    {
+      "espnId": "2341",
+      "school": "Long Island University Sharks",
+      "division": "fcs",
+      "conference": "Northeast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Finley the Shark"
+      ],
+      "sources": [
+        "https://www.liuathletics.com/sports/2023/11/21/meet-finely.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2441",
+      "school": "New Haven Chargers",
+      "division": "fcs",
+      "conference": "Northeast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Charlie the Charger"
+      ],
+      "sources": [
+        "https://www.newhaven.edu/about/facts-figures.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified in primary institutional source."
+    },
+    {
+      "espnId": "2385",
+      "school": "Mercyhurst Lakers",
+      "division": "fcs",
+      "conference": "Northeast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Luke the Laker"
+      ],
+      "sources": [
+        "https://www.mercyhurst.edu/about/meet-mascot"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified in primary institutional source."
+    },
+    {
+      "espnId": "2681",
+      "school": "Wagner Seahawks",
+      "division": "fcs",
+      "conference": "Northeast Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Seahawk"
+      ],
+      "sources": [
+        "https://wagner.edu/admissions/files/2022/04/New-Student-Guide-2022-web-2.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2546",
+      "school": "Southeast Missouri State Redhawks",
+      "division": "fcs",
+      "conference": "Ohio Valley Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rowdy the Redhawk"
+      ],
+      "sources": [
+        "https://semo.edu/stories/2023/07/sagamore-and-rowdy"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university evidence identifies mascot separately from team nickname."
+    },
+    {
+      "espnId": "2710",
+      "school": "Western Illinois Leathernecks",
+      "division": "fcs",
+      "conference": "Ohio Valley Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rocky the Bulldog"
+      ],
+      "sources": [
+        "https://www.wiu.edu/about/traditions.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university evidence identifies mascot separately from team nickname."
+    },
+    {
+      "espnId": "2127",
+      "school": "Charleston Southern Buccaneers",
+      "division": "fcs",
+      "conference": "Ohio Valley Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bucky"
+      ],
+      "sources": [
+        "https://www.csuniv.edu/about/campus-map/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university evidence identifies mascot separately from team nickname."
+    },
+    {
+      "espnId": "2815",
+      "school": "Lindenwood Lions",
+      "division": "fcs",
+      "conference": "Ohio Valley Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Leo the Lion"
+      ],
+      "sources": [
+        "https://lindenwoodlions.com/news/2014/2/20/CHEER_0220145304_14896.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source identifies mascot. Official character designation retained where a separate proper name is not given."
+    },
+    {
+      "espnId": "2630",
+      "school": "UT Martin Skyhawks",
+      "division": "fcs",
+      "conference": "Ohio Valley Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Captain"
+      ],
+      "sources": [
+        "https://alumni.utm.edu/traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university evidence identifies mascot separately from team nickname."
+    },
+    {
+      "espnId": "2197",
+      "school": "Eastern Illinois Panthers",
+      "division": "fcs",
+      "conference": "Ohio Valley Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Billy Panther"
+      ],
+      "sources": [
+        "https://www.eiu.edu/marcom/billypanther.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university evidence identifies mascot separately from team nickname."
+    },
+    {
+      "espnId": "2241",
+      "school": "Gardner-Webb Runnin' Bulldogs",
+      "division": "fcs",
+      "conference": "Ohio Valley Conference",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2634",
+      "school": "Tennessee State Tigers",
+      "division": "fcs",
+      "conference": "Ohio Valley Conference",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2329",
+      "school": "Lehigh Mountain Hawks",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Clutch"
+      ],
+      "sources": [
+        "https://studentaffairs.lehigh.edu/content/lehigh-lingo"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Primary university evidence identifies mascot separately from team nickname."
+    },
+    {
+      "espnId": "257",
+      "school": "Richmond Spiders",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "WebstUR"
+      ],
+      "sources": [
+        "https://www.richmond.edu/about/facts.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source explicitly names institutional mascot."
+    },
+    {
+      "espnId": "2142",
+      "school": "Colgate Raiders",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Raider"
+      ],
+      "sources": [
+        "https://www.colgate.edu/media/41171/download?attachment="
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source explicitly names institutional mascot."
+    },
+    {
+      "espnId": "222",
+      "school": "Villanova Wildcats",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Will D. Cat"
+      ],
+      "sources": [
+        "https://www.villanova.edu/dam/villanova/recreation/ClubSportsAppendicies/4.%20Branding%2C%20Logos%2C%20and%20Marketing.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source explicitly names institutional mascot."
+    },
+    {
+      "espnId": "46",
+      "school": "Georgetown Hoyas",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Jack the Bulldog"
+      ],
+      "sources": [
+        "https://www.georgetown.edu/jack-the-bulldog/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source explicitly names institutional mascot."
+    },
+    {
+      "espnId": "322",
+      "school": "Lafayette Leopards",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Roary"
+      ],
+      "sources": [
+        "https://www.lafayette.edu/bicentennial/2025/11/10/from-the-archives-in-1924-the-lafayette-declares-leopard-to-be-college-mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source explicitly names institutional mascot."
+    },
+    {
+      "espnId": "107",
+      "school": "Holy Cross Crusaders",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2729",
+      "school": "William & Mary Tribe",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Reveley"
+      ],
+      "sources": [
+        "https://www.wm.edu/about/traditions/mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source explicitly names institutional mascot."
+    },
+    {
+      "espnId": "2230",
+      "school": "Fordham Rams",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Ramses"
+      ],
+      "sources": [
+        "https://now.fordham.edu/university-news/fordham-teams-up-with-the-new-york-liberty/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source names mascot."
+    },
+    {
+      "espnId": "2083",
+      "school": "Bucknell Bison",
+      "division": "fcs",
+      "conference": "Patriot League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bucky"
+      ],
+      "sources": [
+        "https://www.bucknell.edu/azdirectory/marketing-communications/brand-guidelines-policies/bucknell-style-guide"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source explicitly names institutional mascot."
+    },
+    {
+      "espnId": "2168",
+      "school": "Dayton Flyers",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rudy Flyer"
+      ],
+      "sources": [
+        "https://udayton.edu/athletics/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official source explicitly names institutional mascot."
+    },
+    {
+      "espnId": "2900",
+      "school": "St. Thomas Tommies",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Tommie"
+      ],
+      "sources": [
+        "https://blogs.stthomas.edu/libraries/2016/09/07/tales-from-the-archives-the-tommytommie-mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "2086",
+      "school": "Butler Bulldogs",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Butler Blue",
+        "Hink"
+      ],
+      "sources": [
+        "https://www.butler.edu/student-life/parents-families/butler-glossary-of-terms/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "2368",
+      "school": "Marist Red Foxes",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Frankie the Red Fox"
+      ],
+      "sources": [
+        "https://library.marist.edu/web/guest/athletics/school-spirit"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "2674",
+      "school": "Valparaiso Beacons",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Beacon",
+        "Blaze"
+      ],
+      "sources": [
+        "https://giveto.valpo.edu/register/?id=e034c783-75a0-4ca4-a4b6-2792edbeac58"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "2506",
+      "school": "Presbyterian Blue Hose",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Scotty the Scotsman"
+      ],
+      "sources": [
+        "https://www.presby.edu/about/offices-and-services/marketing-communications/logos-and-assets/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "301",
+      "school": "San Diego Toreros",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Diego Torero"
+      ],
+      "sources": [
+        "https://usdtoreros.com/sports/2018/5/23/trads-diego-torero-home-html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source names mascot."
+    },
+    {
+      "espnId": "2166",
+      "school": "Davidson Wildcats",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Mr. Cat"
+      ],
+      "sources": [
+        "https://www.davidson.edu/news/2017/05/18/wildcat-out-bag-final-reveal"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "2181",
+      "school": "Drake Bulldogs",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Griff",
+        "Spike"
+      ],
+      "sources": [
+        "https://news.drake.edu/2026/05/08/a-new-era-griff-ii-passes-the-harness-to-griff-iii-drakes-new-live-mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "2413",
+      "school": "Morehead State Eagles",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Beaker"
+      ],
+      "sources": [
+        "https://scholarworks.moreheadstate.edu/college_histories/435/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "56",
+      "school": "Stetson Hatters",
+      "division": "fcs",
+      "conference": "Pioneer Football League",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "John B."
+      ],
+      "sources": [
+        "https://www.stetson.edu/other/about/traditions.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Verified university mascot tradition names; succession numerals omitted."
+    },
+    {
+      "espnId": "2635",
+      "school": "Tennessee Tech Golden Eagles",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Awesome Eagle"
+      ],
+      "sources": [
+        "https://www.tntech.edu/about/golden-eagles.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names."
+    },
+    {
+      "espnId": "2193",
+      "school": "East Tennessee State Buccaneers",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bucky"
+      ],
+      "sources": [
+        "https://www.etsu.edu/brand/bucky.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names."
+    },
+    {
+      "espnId": "2382",
+      "school": "Mercer Bears",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Toby",
+        "Tot"
+      ],
+      "sources": [
+        "https://www.mercer.edu/about-mercer/traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names."
+    },
+    {
+      "espnId": "236",
+      "school": "Chattanooga Mocs",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Scrappy"
+      ],
+      "sources": [
+        "https://www.utc.edu/communications-and-marketing/social-media"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names."
+    },
+    {
+      "espnId": "2747",
+      "school": "Wofford Terriers",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Boss the Terrier"
+      ],
+      "sources": [
+        "https://www.wofford.edu/mascot-request"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names."
+    },
+    {
+      "espnId": "2717",
+      "school": "Western Carolina Catamounts",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Paws"
+      ],
+      "sources": [
+        "https://catamountsports.com/sports/2018/6/22/211719142.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source names mascot."
+    },
+    {
+      "espnId": "2535",
+      "school": "Samford Bulldogs",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Spike"
+      ],
+      "sources": [
+        "https://www.samford.edu/departments/files/Registrar/2003-04-Samford-Academic-Catalog.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional or athletics source names mascot."
+    },
+    {
+      "espnId": "231",
+      "school": "Furman Paladins",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Victor"
+      ],
+      "sources": [
+        "https://www.furman.edu/offices-services/university-communications/wp-content/uploads/sites/54/2024/03/UCOM23-24-Branding-Style-Guide-%E2%80%93-Trademark-and-Licensing-Update.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names."
+    },
+    {
+      "espnId": "2643",
+      "school": "The Citadel Bulldogs",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Spike"
+      ],
+      "sources": [
+        "https://www.citadel.edu/commandant/wp-content/uploads/sites/96/The-Guidon2024_2025.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names."
+    },
+    {
+      "espnId": "2678",
+      "school": "VMI Keydets",
+      "division": "fcs",
+      "conference": "Southern Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Moe"
+      ],
+      "sources": [
+        "https://www.vmi.edu/stealing-a-moe-ment-with-vmis-mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official institutional source identifies mascot names."
+    },
+    {
+      "espnId": "2617",
+      "school": "Stephen F. Austin Lumberjacks",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2320",
+      "school": "Lamar Cardinals",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Big Red",
+        "Lu"
+      ],
+      "sources": [
+        "https://www.lamar.edu/news-and-events/news/2021/07/big-red-and-lu-mascots-revealed.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source identifies mascot name or official character designation."
+    },
+    {
+      "espnId": "2916",
+      "school": "Incarnate Word Cardinals",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Red the Cardinal"
+      ],
+      "sources": [
+        "https://www.uiw.edu/marcom/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source identifies mascot name or official character designation."
+    },
+    {
+      "espnId": "2277",
+      "school": "Houston Christian Huskies",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Kiza"
+      ],
+      "sources": [
+        "https://hc.edu/publications/StudentLife/StudentHandbook/Student-Handbook-2025-2026.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source identifies mascot name or official character designation."
+    },
+    {
+      "espnId": "292",
+      "school": "UT Rio Grande Valley Vaqueros",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Vaquero"
+      ],
+      "sources": [
+        "https://www.utrgv.edu/spirit/teams/mascot/index.htm"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source identifies mascot name or official character designation."
+    },
+    {
+      "espnId": "2545",
+      "school": "SE Louisiana Lions",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Roomie"
+      ],
+      "sources": [
+        "https://www.southeastern.edu/campus_life/happenings/traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source identifies mascot name or official character designation."
+    },
+    {
+      "espnId": "2377",
+      "school": "McNeese Cowboys",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Rowdy the Cowboy"
+      ],
+      "sources": [
+        "https://mcneesesports.com/sports/2012/5/17/GEN_0517125835"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified from university or athletics source."
+    },
+    {
+      "espnId": "2447",
+      "school": "Nicholls Colonels",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Colonel Tillou"
+      ],
+      "sources": [
+        "https://geauxcolonels.com/news/2026/6/4/general-nicholls-athletics-garners-southland-saac-serves-award.aspx",
+        "https://www.nicholls.edu/news/2009/07/30/col-tillou-returns-to-nicholls/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Historical official naming corroborated by 2026 athletics appearance."
+    },
+    {
+      "espnId": "2837",
+      "school": "East Texas A&M Lions",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Lucky the Lion"
+      ],
+      "sources": [
+        "https://www.etamu.edu/brand/mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source identifies mascot name or official character designation."
+    },
+    {
+      "espnId": "2466",
+      "school": "Northwestern State Demons",
+      "division": "fcs",
+      "conference": "Southland Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Vic the Demon"
+      ],
+      "sources": [
+        "https://www.nsula.edu/spirit-groups/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university source identifies mascot name or official character designation."
+    },
+    {
+      "espnId": "2010",
+      "school": "Alabama A&M Bulldogs",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Butch"
+      ],
+      "sources": [
+        "https://www.aamu.edu/about/discover-aamu.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified from university or athletics source."
+    },
+    {
+      "espnId": "2296",
+      "school": "Jackson State Tigers",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Wavee Dave"
+      ],
+      "sources": [
+        "https://www.jsums.edu/contractual/the-history-of-wavee-dave-jsu-mascot/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official singular character designation."
+    },
+    {
+      "espnId": "2065",
+      "school": "Bethune-Cookman Wildcats",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Wil D. Cat"
+      ],
+      "sources": [
+        "https://www.cookman.edu/_migration/2026-04-13/news/2024/04/b-cu-poised-to-welcome-its-largest-freshman-class-since-pre-covid.html"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official university news identifies costumed mascot."
+    },
+    {
+      "espnId": "2011",
+      "school": "Alabama State Hornets",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Stinger"
+      ],
+      "sources": [
+        "https://www.alasu.edu/student-affairs/current-students/pilot-updated.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official singular character designation."
+    },
+    {
+      "espnId": "2400",
+      "school": "Mississippi Valley State Delta Devils",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Delta Devil"
+      ],
+      "sources": [
+        "https://mvsu.edu/sites/default/files/student_handbook_2024-2025_final.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official singular character designation."
+    },
+    {
+      "espnId": "50",
+      "school": "Florida A&M Rattlers",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - East",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Venom"
+      ],
+      "sources": [
+        "https://news.famu.edu/2026/famu-made-behind-venom-jayden-patterson-was-seen-by-thousands-known-by-few.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official singular character designation."
+    },
+    {
+      "espnId": "2755",
+      "school": "Grambling Tigers",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - West",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2029",
+      "school": "Arkansas-Pine Bluff Golden Lions",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Golden Lion"
+      ],
+      "sources": [
+        "https://uapb.edu/wp-content/uploads/2024/09/TheROAR-24-25_WEB-1.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official singular character designation."
+    },
+    {
+      "espnId": "2016",
+      "school": "Alcorn State Braves",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - West",
+      "season": 2026,
+      "status": "unresolved",
+      "names": [],
+      "sources": [],
+      "verifiedAt": null,
+      "notes": "Reviewed institutional and athletics sources; current actual mascot identity could not be conclusively verified. Do not infer from nickname or treat missing evidence as no official mascot."
+    },
+    {
+      "espnId": "2504",
+      "school": "Prairie View A&M Panthers",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Pete",
+        "Sasha"
+      ],
+      "sources": [
+        "https://www.pvamu.edu/studentengagement/spirit-and-traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official singular character designation."
+    },
+    {
+      "espnId": "2582",
+      "school": "Southern Jaguars",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "LaCumba"
+      ],
+      "sources": [
+        "https://www.subr.edu/assets/subr/communications/SU-visual-style-guide_update-jt.pdf"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official character designation."
+    },
+    {
+      "espnId": "2640",
+      "school": "Texas Southern Tigers",
+      "division": "fcs",
+      "conference": "Southwestern Athletic - West",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Tex the Tiger"
+      ],
+      "sources": [
+        "https://tsusports.com/news/2023/7/25/general-tsu-cheer-wins-big-at-nca-camp-earns-right-to-defend-national-title-in-2024.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified from university or athletics source."
+    },
+    {
+      "espnId": "2627",
+      "school": "Tarleton State Texans",
+      "division": "fcs",
+      "conference": "United Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Texan Rider"
+      ],
+      "sources": [
+        "https://www.tarleton.edu/ses/spirit-and-tradition/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official character designation."
+    },
+    {
+      "espnId": "2046",
+      "school": "Austin Peay Governors",
+      "division": "fcs",
+      "conference": "United Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Governor"
+      ],
+      "sources": [
+        "https://letsgopeay.com/news/2024/1/14/spirit-squads-national-champion-the-governor-makes-mark-on-big-stage.aspx"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Mascot names verified from university or athletics source."
+    },
+    {
+      "espnId": "110242",
+      "school": "West Florida Argonauts",
+      "division": "fcs",
+      "conference": "United Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Argie the Argonaut"
+      ],
+      "sources": [
+        "https://goargos.com/sports/2014/11/14/GEN_1114145614"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "Official athletics mascot program."
+    },
+    {
+      "espnId": "2000",
+      "school": "Abilene Christian Wildcats",
+      "division": "fcs",
+      "conference": "United Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Willie the Wildcat"
+      ],
+      "sources": [
+        "https://acu.edu/about/history-and-traditions/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official character designation."
+    },
+    {
+      "espnId": "2453",
+      "school": "North Alabama Lions",
+      "division": "fcs",
+      "conference": "United Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Leo",
+        "Una"
+      ],
+      "sources": [
+        "https://apps.una.edu/event/game-day-parking-3/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official character designation."
+    },
+    {
+      "espnId": "2198",
+      "school": "Eastern Kentucky Colonels",
+      "division": "fcs",
+      "conference": "United Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "The Colonel"
+      ],
+      "sources": [
+        "https://www.eku.edu/press/new-colonel-elevates-the-eku-brand/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official character designation."
+    },
+    {
+      "espnId": "2110",
+      "school": "Central Arkansas Bears",
+      "division": "fcs",
+      "conference": "United Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Bruce",
+        "Sugar Bear"
+      ],
+      "sources": [
+        "https://uca.edu/news/uca-to-present-stem-day-on-may-8/"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official character designation."
+    },
+    {
+      "espnId": "2698",
+      "school": "West Georgia Wolves",
+      "division": "fcs",
+      "conference": "United Athletic Conference",
+      "season": 2026,
+      "status": "verified",
+      "names": [
+        "Wolfie"
+      ],
+      "sources": [
+        "https://www.westga.edu/about-uwg/traditions.php"
+      ],
+      "verifiedAt": "2026-10-26",
+      "notes": "University primary source names mascot or official character designation."
+    }
+  ]
+}
