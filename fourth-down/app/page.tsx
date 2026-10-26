@@ -235,8 +235,8 @@ export default function Page() {
   const teamAt = (n: number) => data?.rankings.find((t) => t.rank === n);
   function TeamRow({ t }: { t: Ranked }) {
     return (
-      <details className="team">
-        <summary>
+      <article className="team">
+        <a className="teamOverview" href={`/team/${t.teamId}`}>
           <span className="rank">{t.rank.toString().padStart(2, "0")}</span>
           <Logo src={t.logo} />
           <span className="teamIdentity">
@@ -247,7 +247,8 @@ export default function Page() {
           </span>
           <Change t={t} />
           <ChevronRight size={15} className="chevron" />
-        </summary>
+        </a>
+        <details><summary>Poll context</summary>
         <div className="teamDetail">
           <b>{tierFor(t.rank)?.name}</b>
           <p>{tierFor(t.rank)?.reason}</p>
@@ -265,7 +266,8 @@ export default function Page() {
             Team schedule & results ↗
           </a>
         </div>
-      </details>
+        </details>
+      </article>
     );
   }
   return (
@@ -466,9 +468,9 @@ export default function Page() {
                     {selectedPoll.teams.map((t) => (
                       <li key={t.teamId}>
                         <span className="rank">{t.rank}</span>
-                        <Logo src={t.logo} />
+                        <a href={`/team/${t.teamId}`} aria-label={`${t.name} team page`}><Logo src={t.logo} /></a>
                         <span className="teamIdentity">
-                          <b>{t.name}</b>
+                          <b><a href={`/team/${t.teamId}`}>{t.name}</a></b>
                           <small>
                             {t.conference} · {recordFor(t) || "Current record unavailable"}
                           </small>
@@ -524,8 +526,7 @@ export default function Page() {
                         <tr key={row.team.teamId}>
                           <th scope="row">
                             <span>
-                              <Logo src={row.team.logo} />
-                              {row.team.name}
+                              <a className="teamProfileLink" href={`/team/${row.team.teamId}`}><Logo src={row.team.logo} />{row.team.name}</a>
                             </span>
                           </th>
                           {data.polls.map((p) => (
@@ -662,8 +663,7 @@ export default function Page() {
                       {[m.host, m.away].map((n) => (
                         <div key={n}>
                           <span className="rank">{n}</span>
-                          <Logo src={teamAt(n)?.logo} />
-                          <b>{teamAt(n)?.name || "TBD"}</b>
+                          {teamAt(n)?<><a href={`/team/${teamAt(n)!.teamId}`} aria-label={`${teamAt(n)!.name} team page`}><Logo src={teamAt(n)?.logo} /></a><b><a href={`/team/${teamAt(n)!.teamId}`}>{teamAt(n)!.name}</a></b></>:<b>TBD</b>}
                         </div>
                       ))}
                       <small>
@@ -680,8 +680,7 @@ export default function Page() {
                     <div className="match" key={m.bye}>
                       <div>
                         <span className="rank">{m.bye}</span>
-                        <Logo src={teamAt(m.bye)?.logo} />
-                        <b>{teamAt(m.bye)?.name || "TBD"}</b>
+                        {teamAt(m.bye)?<><a href={`/team/${teamAt(m.bye)!.teamId}`} aria-label={`${teamAt(m.bye)!.name} team page`}><Logo src={teamAt(m.bye)?.logo} /></a><b><a href={`/team/${teamAt(m.bye)!.teamId}`}>{teamAt(m.bye)!.name}</a></b></>:<b>TBD</b>}
                         <span className="bye">BYE</span>
                       </div>
                       <div className="placeholder">
@@ -732,8 +731,8 @@ export default function Page() {
               <div className="movers">
                 {movers.map((t) => (
                   <div key={t.teamId}>
-                    <Logo src={t.logo} />
-                    <b>{t.name}</b>
+                    <a href={`/team/${t.teamId}`} aria-label={`${t.name} team page`}><Logo src={t.logo} /></a>
+                    <b><a href={`/team/${t.teamId}`}>{t.name}</a></b>
                     <Change t={t} />
                   </div>
                 ))}
@@ -827,13 +826,13 @@ export default function Page() {
                         className={"gameTeam " + (t.winner ? "winner" : "")}
                         key={t.id}
                       >
-                        <Logo src={t.logo} />
+                        <a href={`/team/${t.id}`} aria-label={`${t.name} team page`}><Logo src={t.logo} /></a>
                         <div>
                           <b>
                             {t.rank && (
                               <small className="pollRank">{t.rank} </small>
                             )}
-                            {t.name}
+                            <a href={`/team/${t.id}`}>{t.name}</a>
                           </b>
                           <small>
                             {recordFor(t) || "Current record unavailable"} ·{" "}
