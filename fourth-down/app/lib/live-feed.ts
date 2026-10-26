@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { collectPolls, defaultPoll } from "./rankings";
+import {loadCurrentRecords} from "./cached-current-records";
 const BASE =
   "https://site.api.espn.com/apis/site/v2/sports/football/college-football";
 export type SourceFetchTrace = { policy: 'no-store'; requestStartedAt: string; responseReceivedAt?: string; bodyParsedAt?: string; responseDate?: string|null; ageSeconds?: number|null; lastModified?: string|null; etag?: string|null; status?: number; ok: boolean };
@@ -108,11 +109,14 @@ export async function loadLiveFeed({forAlerts=false}:{forAlerts?:boolean} = {}) 
       })),
     };
   });
-  const ranked = selected.teams;
+  // Display-only data foundation. Never add this lookup to scheduled push checks.
+  const currentRecords=forAlerts?undefined:await loadCurrentRecords(games,season,new Date().toISOString(),s?.season?.type===2?s?.week?.number:undefined);
+  const ranked=currentRecords?selected.teams.map(t=>{const current=currentRecords.currentRecords[t.teamId];return {...t,publishedRecord:t.record,record:current?.status==='available'?current.overall:'',recordObservedAt:current?.observedAt??null};}):selected.teams;
   return NextResponse.json(
     {
       updatedAt: new Date().toISOString(),
       ...(sourceFetch?{sourceFetch}:{}),
+      ...(currentRecords||{}),
       season,
       week: s?.week?.number || selected?.week || null,
       polls: pollSources,
@@ -122,6 +126,7 @@ export async function loadLiveFeed({forAlerts=false}:{forAlerts?:boolean} = {}) 
       isCommitteeRanking: defaultRankingSource === "cfp",
       rankings: ranked, // Compatibility alias for the independent outlook input.
       outlook: {
+        ...(forAlerts?{}:{liveEngineActive:false,recordBasis:"currentRecords; publication records preserved in polls"}),
         inputSource: defaultRankingSource,
         inputDate: selected.date,
         method:
