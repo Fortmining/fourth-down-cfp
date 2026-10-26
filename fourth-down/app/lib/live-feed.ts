@@ -110,7 +110,7 @@ export async function loadLiveFeed({forAlerts=false}:{forAlerts?:boolean} = {}) 
     };
   });
   // Display-only data foundation. Never add this lookup to scheduled push checks.
-  const currentRecords=forAlerts?undefined:await loadCurrentRecords(games,season,new Date().toISOString());
+  const currentRecords=forAlerts?undefined:await loadCurrentRecords(games,season,new Date().toISOString(),s?.season?.type===2?s?.week?.number:undefined);
   const ranked=currentRecords?selected.teams.map(t=>{const current=currentRecords.currentRecords[t.teamId];return {...t,publishedRecord:t.record,record:current?.status==='available'?current.overall:'',recordObservedAt:current?.observedAt??null};}):selected.teams;
   return NextResponse.json(
     {

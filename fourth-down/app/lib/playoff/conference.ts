@@ -15,6 +15,7 @@ export type ConferencePolicy =
   | "acc-2026"
   | "big12-current"
   | "sec-current"
+  | "bigten-2026-top-records"
   | "bigten-2024-carry-forward";
 type ExternalEvidence = {
   asOf: string;
@@ -42,6 +43,7 @@ export function resolveConference(
     "acc-2026": "1",
     "big12-current": "4",
     "sec-current": "8",
+    "bigten-2026-top-records": "5",
     "bigten-2024-carry-forward": "5",
   }[policy];
   if (conference !== expected) throw Error("Conference/policy mismatch");
@@ -158,6 +160,10 @@ export function resolveConference(
   function tie(ids: string[], slots: number, depth = 0): string[] {
     if (depth > members.length * 5) return fail("Tiebreaker restart guard");
     if (ids.length <= slots) return ids;
+    if (policy === "bigten-2026-top-records")
+      return fail(
+        "2026 Big Ten tied qualification requires current full-policy confirmation",
+      );
     const set = new Set(ids),
       mini = finals.filter((g) => g.teams.every((id) => set.has(id)));
     const complete = ids.every((id) =>

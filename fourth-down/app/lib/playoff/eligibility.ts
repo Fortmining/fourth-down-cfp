@@ -7,6 +7,7 @@ export type EligibilityEvidence = {
   publishedAt: string | null;
   observedAt: string;
   reason: string;
+  scope?: "institutional" | "academic" | "transition";
 };
 export const eligibilitySources = {
   ncaa2026: "https://web3.ncaa.org/lsdbi/search/proposalView?id=109240",
@@ -29,6 +30,7 @@ export function applyEligibility(
         (e) =>
           e.id === t.id &&
           e.season === season &&
+          (!e.scope || e.scope === "institutional") &&
           Number.isFinite(Date.parse(e.observedAt)) &&
           (e.publishedAt === null ||
             Number.isFinite(Date.parse(e.publishedAt))) &&

@@ -1,5 +1,7 @@
 # Live playoff engine — second validation pass, October 25, 2026
 
+Later work is recorded in [Phase 3](SHADOW-ENGINE-PHASE3.md); figures below describe this earlier validation pass.
+
 **Production assessment: do not activate or merge.** The existing candidate engine is preserved. This pass adds manual private shadow ingestion, stronger rule adapters, verified classifications for all pending fixtures, time-aware eligibility evidence, historical vintages and measured native resource use. No public projection, production shadow hook, Redis writer, schedule or paid service is activated.
 
 ## Implemented and preserved

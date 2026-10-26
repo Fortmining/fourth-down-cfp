@@ -1,5 +1,10 @@
 import { standingsTeams } from "./playoff/espn.ts";
 import { currentRecordMap } from "./playoff/record-view.ts";
+import {
+  reconcileSeasonRecords,
+  type RecordLedger,
+  type ScoreboardGame,
+} from "./season-records.ts";
 export type StandingsSnapshot = {
   teams: ReturnType<typeof standingsTeams>;
   observedAt: string;
@@ -27,30 +32,40 @@ export async function fetchTeamStandings(
   };
 }
 export async function loadCurrentRecords(
-  games: { date: string; teams: { id: string; record?: string }[] }[],
+  games: ScoreboardGame[],
   season: number | null,
   observedAt: string,
   load: typeof fetchTeamStandings = fetchTeamStandings,
+  ledger?: RecordLedger,
 ) {
   let snapshot: StandingsSnapshot | null = null;
   if (season)
     try {
       snapshot = await load(season);
     } catch {}
-  const currentRecords = currentRecordMap(
-    snapshot?.teams || [],
-    games,
-    snapshot?.observedAt || observedAt,
-  );
+  const useLedger = snapshot && ledger && ledger.season === season;
+  const currentRecords =
+    useLedger && snapshot && ledger
+      ? reconcileSeasonRecords(snapshot.teams, ledger, games, observedAt)
+      : currentRecordMap(
+          snapshot?.teams || [],
+          games,
+          snapshot?.observedAt || observedAt,
+        );
   const conflicting = Object.values(currentRecords).some(
     (r) => r.status === "unavailable",
   );
   return {
     currentRecords,
-    recordStatus: snapshot
-      ? `Current ESPN overall totals; publication records remain separate.${conflicting ? " Conflicting totals withheld pending reconciliation." : ""}`
-      : "Standings unavailable; only available scoreboard totals are shown.",
-    recordObservedAt: snapshot?.observedAt || observedAt,
+    recordStatus: useLedger
+      ? `Records derived from verified season finals and the current scoreboard; conference championship games are excluded from conference standings.${conflicting ? " Unreconciled totals withheld." : ""}`
+      : snapshot
+        ? `Current ESPN overall totals; publication records remain separate.${conflicting ? " Conflicting totals withheld pending reconciliation." : ""}`
+        : "Standings unavailable; only available scoreboard totals are shown.",
+    recordObservedAt: useLedger
+      ? observedAt
+      : snapshot?.observedAt || observedAt,
+    recordLedgerObservedAt: useLedger ? ledger.observedAt : null,
     recordSourceDate: snapshot?.sourceDate || null,
   };
 }

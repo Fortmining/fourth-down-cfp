@@ -2,7 +2,7 @@ export type CurrentRecord = {
   overall: string;
   conference: string | null;
   observedAt: string;
-  source: "ESPN standings" | "ESPN scoreboard";
+  source: "ESPN standings" | "ESPN scoreboard" | "ESPN verified game ledger";
   status: "available" | "unavailable";
 };
 // Display join never alters an official edition or its publication-time record.

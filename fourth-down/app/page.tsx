@@ -880,7 +880,7 @@ export default function Page() {
               </div>
             )}
           </section>
-          <Following games={data?.games||[]}/><MoreSettings games={data?.games||[]} teams={[...new Map([...(data?.games.flatMap(g=>g.teams)||[]), ...(data?.rankings.map(t=>({id:t.teamId,name:t.name}))||[])].map(t=>[t.id,{id:t.id,name:t.name}])).values()]} />
+          <Following games={data?.games||[]} currentRecords={data?.currentRecords}/><MoreSettings games={data?.games||[]} teams={[...new Map([...(data?.games.flatMap(g=>g.teams)||[]), ...(data?.rankings.map(t=>({id:t.teamId,name:t.name}))||[])].map(t=>[t.id,{id:t.id,name:t.name}])).values()]} />
           <section id="method" className="method">
             <div>
               <div className="eyebrow">TRANSPARENCY FIRST</div>

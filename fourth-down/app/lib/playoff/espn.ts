@@ -1,5 +1,5 @@
 import type { Edition, GameRevision, TeamSeason } from "./types";
-import { isPac12FlexGame } from "./schedule.ts";
+import { isPac12FlexGame, championshipSlots } from "./schedule.ts";
 export function standingsTeams(raw: any): TeamSeason[] {
   const rows = new Map<string, TeamSeason>();
   function walk(node: any, conference: string) {
@@ -73,6 +73,7 @@ export function gameFromEspn(
       !!b &&
       a.conference !== "18" &&
       a.conference === b.conference &&
+      !(season === 2026 && championshipSlots[String(e.id)]) &&
       !isPac12FlexGame(
         season,
         e.date,

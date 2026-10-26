@@ -15,6 +15,7 @@ import { compareAsOf } from "../app/lib/playoff/temporal.ts";
 import { resolveConference } from "../app/lib/playoff/conference.ts";
 import { applyEligibility } from "../app/lib/playoff/eligibility.ts";
 import { eligibilityEvidence2026 } from "../app/data/playoff-eligibility-2026.ts";
+import {championshipContext} from "../app/lib/playoff/sensitivity.ts";
 
 const root = process.env.SHADOW_SESSION,
   seedFile = process.env.SHADOW_SEED;
@@ -216,11 +217,12 @@ const report = {
     ["1", "acc-2026"],
     ["4", "big12-current"],
     ["8", "sec-current"],
-    ["5", "bigten-2024-carry-forward"],
+    ["5", "bigten-2026-top-records"],
   ].map(([id, policy]) =>
     resolveConference(input, id, policy, { regularSeasonComplete: false }),
   ),
   predictiveValidation: false,
+  championshipContext:championshipContext(input),
   limitations: [
     "No contemporaneous pre-game full-season vintage exists in this session",
     "Functional reconstructions are excluded from as-of evaluation",

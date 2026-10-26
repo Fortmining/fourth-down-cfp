@@ -82,3 +82,13 @@ SHADOW_HISTORY=/private/historical-inputs npm run shadow:historical
 ```
 
 The committed `scripts/data/historical-vintages-2025.json` pins the historical sources; an optional private `historical-manifest.json` can override it. Scripts verify committed file identities and never silently replace a missing historical vintage with today's data. `SHADOW_COMPARE_ALTERNATIVES=1` is an explicit local comparison option. No script creates production schedules or sends pushes.
+
+
+Phase 3 records isolation, rule gates, sensitivity, performance and the additional 2024 vintage comparison are documented in `docs/SHADOW-ENGINE-PHASE3.md`. The public records path never imports or activates the private projection engine.
+
+```sh
+SHADOW_SEED=/private/session/latest-inputs.json SHADOW_REPORT=/private/phase3-report.json npm run shadow:validate
+SHADOW_HISTORY=/private/history-2024 SHADOW_HISTORY_MANIFEST=scripts/data/historical-vintages-2024.json npm run shadow:historical
+```
+
+The first command is offline and installs no storage transport. The second preserves explicit exclusion receipts for unsupported official tied editions and incomplete input vintages. Neither changes production schedules or sends notifications.

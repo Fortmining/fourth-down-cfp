@@ -73,6 +73,7 @@ for (const [engine, mobile] of [
         : { viewport: { width: 1280, height: 900 } },
     ),
     page = await context.newPage();
+  await context.addInitScript(() => localStorage.setItem('fourth-down-alert-preferences-v1',JSON.stringify({version:1,favorites:[],myTeams:{enabled:false,kickoff:false,final:false},breaking:{enabled:false},following:{enabled:false,items:[{kind:'game',id:'401856731',gameId:'401856731',name:'Tennessee at South Carolina',duration:'game',createdAt:Date.now()-3600000,expiresAt:Date.now()+86400000}]}})));
   await page.route("**/api/live", (r) => r.fulfill({ json: feed }));
   await page.route("**/api/pulse/model", (r) =>
     r.fulfill({
@@ -104,6 +105,8 @@ for (const [engine, mobile] of [
       x.includes("Official ranks"),
     ),
   );
+  await page.locator('#watchlist').getByText(/Tennessee Volunteers.*6-2/).waitFor();
+  assert.ok(!(await page.locator('#watchlist').innerText()).includes('6-1'));
   await page.goto(url + "/team/2633");
   await page.getByText(/Current overall record: 6-2/).waitFor();
   await page.getByRole("region",{name:"Published rankings for this team"}).getByText("No. 11",{exact:true}).waitFor();

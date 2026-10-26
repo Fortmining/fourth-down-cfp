@@ -29,19 +29,19 @@ export function mergeLedger(prior: GameRevision[], incoming: GameRevision[]) {
 }
 export function currentRecords(input: Inputs): Record<string, RecordRow> {
   const rows: Record<string, RecordRow> = {};
+  // Normalize event revisions and verify finals once for the entire universe.
+  const finals = mergeLedger([], input.games).filter(
+    (g) =>
+      g.season === input.season && validFinal(g, Date.parse(input.observedAt)),
+  );
   for (const t of input.teams) {
     let wins = 0,
       losses = 0,
       cw = 0,
       cl = 0;
     const gameIds: string[] = [];
-    for (const g of mergeLedger([], input.games)) {
-      if (
-        g.season !== input.season ||
-        !g.teams.includes(t.id) ||
-        !validFinal(g, Date.parse(input.observedAt))
-      )
-        continue;
+    for (const g of finals) {
+      if (!g.teams.includes(t.id)) continue;
       gameIds.push(g.id);
       const win = g.winner === t.id;
       if (win) wins++;

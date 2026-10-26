@@ -65,12 +65,11 @@ export function historicalComparison(vintages: GitVintage[]) {
     const candidateRows = new Map(
       models[0].snapshot.rows.map((r) => [r.id, r]),
     );
+    const controlComparison = colleyReference(v.inputs);
     const controls = [
       {
         id: "colley-fbs-reference",
-        values: new Map(
-          colleyReference(v.inputs).rows.map((r) => [r.id, r.rating]),
-        ),
+        values: new Map(controlComparison.rows.map((r) => [r.id, r.rating])),
       },
       {
         id: "current-win-percentage",
@@ -103,7 +102,10 @@ export function historicalComparison(vintages: GitVintage[]) {
       controls: controls.map((control) => {
         let scored = 0,
           correct = 0,
-          candidateCorrect = 0;
+          candidateCorrect = 0,
+          candidateOnly = 0,
+          controlOnly = 0,
+          disagreements = 0;
         for (const g of outcomes) {
           const a = control.values.get(g.teams[0])!,
             b = control.values.get(g.teams[1])!,
@@ -111,15 +113,24 @@ export function historicalComparison(vintages: GitVintage[]) {
             cb = candidateRows.get(g.teams[1])!;
           if (a === b || ca.score === cb.score) continue;
           scored++;
-          if ((a > b ? g.teams[0] : g.teams[1]) === g.winner) correct++;
-          if ((ca.score > cb.score ? ca.id : cb.id) === g.winner)
-            candidateCorrect++;
+          const controlWinner = a > b ? g.teams[0] : g.teams[1],
+            candidateWinner = ca.score > cb.score ? ca.id : cb.id;
+          if (controlWinner !== candidateWinner) disagreements++;
+          if (controlWinner === g.winner) correct++;
+          if (candidateWinner === g.winner) candidateCorrect++;
+          if (candidateWinner === g.winner && controlWinner !== g.winner)
+            candidateOnly++;
+          if (controlWinner === g.winner && candidateWinner !== g.winner)
+            controlOnly++;
         }
         return {
           id: control.id,
           scored,
           correct,
           candidateCorrectOnSameGames: candidateCorrect,
+          candidateOnly,
+          controlOnly,
+          disagreements,
         };
       }),
       models: models.map(({ weights, snapshot }) => {
@@ -162,8 +173,7 @@ export function historicalComparison(vintages: GitVintage[]) {
     };
   });
   return {
-    label:
-      "Version-pinned 2025 out-of-sample résumé-order agreement with next seven-day FBS game results",
+    label: `Version-pinned ${[...new Set(vintages.map((v) => v.inputs.season))].join(", ")} out-of-sample résumé-order agreement with next seven-day FBS game results`,
     results,
     aggregate,
     controls: [
@@ -182,6 +192,9 @@ export function historicalComparison(vintages: GitVintage[]) {
           (n, r) => n + r.candidateCorrectOnSameGames,
           0,
         ),
+        candidateOnly: rs.reduce((n, r) => n + r.candidateOnly, 0),
+        controlOnly: rs.reduce((n, r) => n + r.controlOnly, 0),
+        disagreements: rs.reduce((n, r) => n + r.disagreements, 0),
       };
     }),
     selectionAccuracyValidated: false,
