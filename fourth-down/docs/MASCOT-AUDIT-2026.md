@@ -99,3 +99,9 @@ Review an entry when the school changes its mascot, the ESPN identity changes, o
 ## Release isolation
 
 Separate feature branch from released main. No changes to PR #19, alerts, rankings, polling, credentials, saved preferences or logos. Branch-specific Vercel Git deployment is disabled to honor the no-deploy instruction. Merge/deployment require approval.
+
+## October 26 production artwork follow-up
+
+Tennessee, Florida, Michigan, Montana State and Auburn production team APIs supplied valid ESPN school-logo PNGs (HTTP 200). Tennessee and Montana State logos decoded to 500×500 in Chromium desktop and iPhone-sized WebKit. ESPN mascot-name fields remained null. This PR supplies verified mascot names; it does not claim to supply missing character illustrations.
+
+A separate source-data fallback defect was reproduced on Montana State: the large `Unavailable` record text escaped the two-column card, producing 422px content on a 390px viewport. The isolated CSS fix bounds/wraps record labels and scales them on narrow screens, without clipping or hiding data. A new missing-data browser fixture passes 320/390/430/844px in Chromium and WebKit. These are browser simulations, not physical-iPhone confirmation. This fix remains outside PR #19 and is not deployed.
