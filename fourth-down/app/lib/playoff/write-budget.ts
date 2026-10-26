@@ -1,7 +1,7 @@
 type DailyUsage = {day:string; commands:number; complete:boolean};
 type BudgetReceipt = {
   observedAt:string; monthlyLimit:number; commandsUsed:number; daysRemaining:number;
-  storageUsedBytes:number; storageLimitBytes:number; dailyUsage:DailyUsage[];
+  storageUsedBytes:number; storageLimitBytes:number; dailyUsage:DailyUsage[]; visitorReadReserve?:number;
 };
 
 /** Offline admission plan only. Never spends credits or installs a production writer. */
@@ -9,7 +9,7 @@ export function planShadowWrites(receipt:BudgetReceipt,pairBytes:number,requeste
   const issues:string[]=[];
   const at=Date.parse(receipt.observedAt);
   if(!Number.isFinite(at)||[receipt.monthlyLimit,receipt.commandsUsed,receipt.daysRemaining,receipt.storageUsedBytes,
-    receipt.storageLimitBytes,pairBytes,requestedPairsPerDay,...receipt.dailyUsage.map(d=>d.commands)].some(n=>!Number.isSafeInteger(n)||n<0)||
+    receipt.storageLimitBytes,pairBytes,requestedPairsPerDay,receipt.visitorReadReserve??0,...receipt.dailyUsage.map(d=>d.commands)].some(n=>!Number.isSafeInteger(n)||n<0)||
     receipt.daysRemaining<1||receipt.daysRemaining>31||pairBytes<1||receipt.monthlyLimit<1||receipt.storageLimitBytes<1)
     throw Error('Invalid measured write-budget receipt');
   const dates=receipt.dailyUsage.map(d=>Date.parse(d.day+'T00:00:00Z'));
@@ -30,10 +30,12 @@ export function planShadowWrites(receipt:BudgetReceipt,pairBytes:number,requeste
     reservedBaseline+=byWeekday.get(weekday)??Math.max(0,...complete.map(d=>d.commands));
   }
   const readCommands=360*receipt.daysRemaining;
-  const available=Math.max(0,Math.floor(receipt.monthlyLimit*.8)-receipt.commandsUsed-reservedBaseline-readCommands);
-  // Five core operations were verified locally; reserve ten for bounded-index
-  // lookup, eviction/deletion and CAS retry overhead. Hosted billing still gates activation.
-  const commandsPerPair=10;
+  const visitorReads=receipt.visitorReadReserve??0;
+  if(receipt.visitorReadReserve===undefined)issues.push('Public-view cache-miss reads have not been reserved');
+  const available=Math.max(0,Math.floor(receipt.monthlyLimit*.8)-receipt.commandsUsed-reservedBaseline-readCommands-visitorReads);
+  // Bounded retention measured 13 operations before eviction and 16 with eviction.
+  // Reserve twenty for retries/accounting differences; hosted billing still gates activation.
+  const commandsPerPair=20;
   const overheadBytes=512; // conservative index allowance; allocator overhead remains a separate unmeasured gate
   const storageReserve=Math.max(0,Math.min(64*1024*1024,Math.floor(receipt.storageLimitBytes*.8)-receipt.storageUsedBytes));
   const maxPairs=Math.min(Math.floor(available/commandsPerPair),Math.floor(storageReserve/(pairBytes+overheadBytes)));
@@ -42,7 +44,7 @@ export function planShadowWrites(receipt:BudgetReceipt,pairBytes:number,requeste
   if(requested>maxPairs)issues.push('Requested retention/write rate exceeds command or storage headroom');
   issues.push('Production writer, retry billing, shared-account CPU and actual allocator overhead remain unmeasured');
   return {observedAt:receipt.observedAt,completeUsageDays:complete.length,weeklyPatternObserved:consecutive&&byWeekday.size===7,
-    existingCommandsReserved:reservedBaseline,periodicReadCommandsReserved:readCommands,commandsPerPair,
+    existingCommandsReserved:reservedBaseline,periodicReadCommandsReserved:readCommands,visitorReadCommandsReserved:visitorReads,commandsPerPair,
     maxPairsWithinEstimatedHeadroom:maxPairs,maxPairsPerDay:Math.floor(maxPairs/receipt.daysRemaining),
     requestedPairs:requested,storageReserveBytes:storageReserve,indexAllowancePerPairBytes:overheadBytes,
     issues,additionalQstashDeliveries:0,additionalSchedules:0,transportInstalled:false,productionActivationPermitted:false};

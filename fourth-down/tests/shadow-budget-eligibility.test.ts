@@ -4,9 +4,9 @@ import {planShadowWrites} from '../app/lib/playoff/write-budget.ts';
 import {applyEligibility,eligibilityCoverage,type EligibilityEvidence} from '../app/lib/playoff/eligibility.ts';
 const receipt={observedAt:'2026-10-26T16:00Z',monthlyLimit:500000,commandsUsed:60000,daysRemaining:6,storageUsedBytes:15000000,storageLimitBytes:250000000,
  dailyUsage:Array.from({length:7},(_,i)=>({day:'2026-10-'+String(19+i),commands:i===5?19000:8000,complete:true}))};
-test('write plan uses complete weekday observations, reserves polling reads and ten commands per pair including retention/retry reserve',()=>{
+test('write plan uses complete weekday observations, reserves polling reads and twenty commands per pair including retention/retry reserve',()=>{
  const p=planShadowWrites(receipt,27000,50);assert.equal(p.weeklyPatternObserved,true);assert.equal(p.completeUsageDays,7);
- assert.equal(p.periodicReadCommandsReserved,2160);assert.equal(p.commandsPerPair,10);assert.equal(p.productionActivationPermitted,false);assert.equal(p.transportInstalled,false);
+ assert.equal(p.periodicReadCommandsReserved,2160);assert.equal(p.commandsPerPair,20);assert.equal(p.productionActivationPermitted,false);assert.equal(p.transportInstalled,false);
  assert.ok(p.maxPairsWithinEstimatedHeadroom<=Math.floor(p.storageReserveBytes/(27000+512)));
 });
 test('partial days, missing weekends and stale observations cannot establish a sustainable production budget',()=>{
@@ -29,3 +29,5 @@ test('bowl-only and conference evidence never silently grant universal instituti
  assert.equal(eligibilityCoverage(teams,[{...row,observedAt:'2026-10-27T12:00Z'}],2026,at).rows[0].evidence.find(e=>e.scope==='bowl')!.status,'unresolved');
  assert.equal(applyEligibility(teams,[{...row,scope:'institutional'}],2026,at).teams[0].eligible,true);
 });
+
+test('public-view cache misses consume the same shared quota and cannot be treated as free',()=>{const noVisitors=planShadowWrites({...receipt,storageUsedBytes:0,visitorReadReserve:0},100,1);const visitors=planShadowWrites({...receipt,storageUsedBytes:0,visitorReadReserve:200000},100,1);assert.equal(visitors.visitorReadCommandsReserved,200000);assert.ok(visitors.maxPairsWithinEstimatedHeadroom<noVisitors.maxPairsWithinEstimatedHeadroom);assert.throws(()=>planShadowWrites({...receipt,visitorReadReserve:-1},100,1));});

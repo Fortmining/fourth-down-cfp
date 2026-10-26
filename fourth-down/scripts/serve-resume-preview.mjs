@@ -1,0 +1,5 @@
+// Loopback-only standalone preview. Never registers a service worker or touches push settings.
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';
+const root=process.env.SHADOW_PREVIEW;if(!root)throw Error('SHADOW_PREVIEW required');
+const port=Number(process.env.PORT||3013);if(!Number.isInteger(port)||port<1024||port>65535)throw Error('Invalid local port');
+http.createServer((request,response)=>{const route=new URL(request.url,'http://127.0.0.1').pathname;const file=route==='/'?'index.html':route==='/view.json'?'view.json':null;if(!file){response.writeHead(404);response.end('Not found');return;}response.writeHead(200,{'Content-Type':file.endsWith('.html')?'text/html; charset=utf-8':'application/json','Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Content-Security-Policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'none'; base-uri 'none'; frame-ancestors 'none'"});response.end(fs.readFileSync(path.join(root,file)));}).listen(port,'127.0.0.1',()=>console.log('Private résumé preview: http://127.0.0.1:'+port));

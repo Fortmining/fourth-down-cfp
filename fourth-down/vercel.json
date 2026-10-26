@@ -3,6 +3,7 @@
   "git": {
     "deploymentEnabled": {
       "feature/team-detail-pages": false,
+      "feature/verified-mascot-names": false,
       "dev/v0.8.6-live-outlook": false
     }
   }

@@ -1567,3 +1567,6 @@ body:has(dialog[open]){overflow:hidden}
 @media(max-width:600px){.teamPage .siteHeader{min-height:60px}.teamPage .siteHeader>a:not(.brand){display:none}.teamPage .teamToolbar label{font-size:12px}.teamPage .teamHero{margin-bottom:16px}}
 .teamOverview{display:flex;align-items:center;gap:12px;min-height:78px}.team>details>summary{min-height:44px;font-size:12px;color:var(--muted)}
 .teamSections{height:auto;min-height:54px}
+
+/* Missing source records must fit their card on narrow displays. */
+.teamRecordGrid strong{display:block;max-width:100%;overflow-wrap:anywhere;font-size:clamp(1.25rem,5vw,2.25rem)}
