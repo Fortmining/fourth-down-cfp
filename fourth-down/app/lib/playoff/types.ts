@@ -96,9 +96,10 @@ export type ModelRow = {
   }[];
   modelTie: boolean;
 };
+export type ModelVersion = 'resume-shadow-v1.1.0' | 'resume-shadow-v1.2.0';
 export type Snapshot = {
   schema: 1;
-  modelVersion: "resume-shadow-v1.1.0";
+  modelVersion: ModelVersion;
   rulesVersion: Inputs["rulesVersion"];
   shadow: true;
   mode: "confirmed" | "provisional";

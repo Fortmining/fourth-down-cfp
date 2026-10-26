@@ -17,6 +17,11 @@ def get(url, dest):
     if not dest.exists():
         with urllib.request.urlopen(url,timeout=25) as r: dest.write_bytes(r.read())
     return dest.read_bytes()
+version=os.environ.get('SHADOW_MODEL_VERSION','resume-shadow-v1.1.0')
+if version not in ('resume-shadow-v1.1.0','resume-shadow-v1.2.0'):raise ValueError('Unsupported model version')
+def valid_ranks(rows):
+    ordered=sorted(rows,key=lambda r:r['rank'])
+    return 25<=len(ordered)<=200 and len({r['id'] for r in ordered})==len(ordered) and all(isinstance(r['rank'],int) and 1<=r['rank']<=25 and (r['rank']==1 if i==0 else r['rank'] in (ordered[i-1]['rank'],i+1)) for i,r in enumerate(ordered))
 outputs = []; exclusions=[]
 for m in manifest:
     at = m['date']; epoch=dt(at); season=int(m.get('season',2025))
@@ -50,7 +55,7 @@ for m in manifest:
     url='https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons='+str(season)+'&weeks='+str(week)+'&seasontypes=2'
     poll_file=root/('poll-'+str(season)+'-week-'+str(week)+'.json');poll=json.loads(get(url,poll_file));editions=[]
     unsupported=[p.get('type') for p in poll.get('rankings',[]) if p.get('type') in ['ap','usa','cfp'] and len(p.get('ranks',[]))!=25]
-    if unsupported:
+    if unsupported and version=='resume-shadow-v1.1.0':
         exclusions.append({'sha':m['sha'],'date':at,'season':season,'reason':'Official tied/incomplete edition unsupported by frozen v1.1 anchor validator; entire vintage excluded, no ranked team dropped','pollTypes':unsupported})
         continue
     counts={tid:sum(g['state']=='post' and tid in g['teams'] for g in games) for tid in teams}
@@ -58,7 +63,7 @@ for m in manifest:
         if p.get('type') not in ['ap','usa','cfp']: continue
         if p['season']['year']!=season or dt(p['date'])>epoch-datetime.timedelta(hours=24): raise ValueError('Wrong season or poll too near cutoff to establish release')
         ranks=[{'id':str(x['team']['id']),'rank':x['current'],'previous':x.get('previous') or None,'record':x.get('recordSummary','')} for x in p['ranks']]
-        if len(ranks)!=25 or len({r['id'] for r in ranks})!=25 or any(r['id'] not in teams for r in ranks): raise ValueError('Incomplete historical edition')
+        if (not valid_ranks(ranks) if version=='resume-shadow-v1.2.0' else len(ranks)!=25 or len({r['id'] for r in ranks})!=25) or any(r['id'] not in teams for r in ranks): raise ValueError('Incomplete/invalid historical edition')
         for r in ranks:
             if r['record'] and sum(int(x) for x in r['record'].split('-'))>counts[r['id']]: raise ValueError('Publication record exceeds as-of ledger; possible future data')
         editions.append({'id':'ap' if p['type']=='ap' else 'coaches' if p['type']=='usa' else 'cfp','date':p['date'],'season':season,'ranks':ranks})

@@ -145,7 +145,7 @@ export class ShadowArchive {
     if (
       ![1, 2].includes(saved.schema) ||
       saved.id !== id ||
-      saved.modelVersion !== "resume-shadow-v1.1.0"
+      !['resume-shadow-v1.1.0','resume-shadow-v1.2.0'].includes(saved.modelVersion)
     )
       throw Error("Unsupported archive schema");
     const input = this.restoreInputs(saved.inputRef);
@@ -155,6 +155,7 @@ export class ShadowArchive {
       saved.weights,
       saved.mode === "provisional",
       saved.parentId,
+      saved.modelVersion,
     );
     if (snapshot.id !== id || snapshot.rulesVersion !== saved.rulesVersion)
       throw Error("Replay mismatch");

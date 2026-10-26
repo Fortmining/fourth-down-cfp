@@ -9,10 +9,12 @@ export function packSnapshotPair(confirmed: Snapshot, provisional: Snapshot) {
     provisional.mode !== "provisional" ||
     confirmed.inputHash !== provisional.inputHash ||
     hash(confirmed.weights) !== hash(provisional.weights)
+    || confirmed.modelVersion !== provisional.modelVersion
   )
     throw Error("Snapshot pair must share an input receipt");
   const value = {
     schema: 1,
+    ...(confirmed.modelVersion==='resume-shadow-v1.2.0'?{modelVersion:confirmed.modelVersion}:{}),
     inputs: confirmed.inputs,
     weights: confirmed.weights,
     confirmedId: confirmed.id,
@@ -36,8 +38,9 @@ export function replaySnapshotPair(encoded: string) {
     }).toString(),
   );
   if (value.schema !== 1) throw Error("Unsupported bundle schema");
-  const c = runShadow(value.inputs, value.weights),
-    p = runShadow(value.inputs, value.weights, true, value.provisionalParent);
+  const version=value.modelVersion??'resume-shadow-v1.1.0';
+  const c = runShadow(value.inputs, value.weights,false,null,version),
+    p = runShadow(value.inputs, value.weights, true, value.provisionalParent,version);
   if (c.id !== value.confirmedId || p.id !== value.provisionalId)
     throw Error("Bundle replay mismatch");
   return { confirmed: c, provisional: p };

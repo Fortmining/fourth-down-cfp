@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import { runShadow } from "../app/lib/playoff/engine.ts";
+import {conferenceQualificationAudit} from "../app/lib/playoff/conference-audit.ts";
 import {
   modelSensitivity,
   championshipContext,
@@ -28,6 +29,7 @@ const report = {
   analysisAt: new Date().toISOString(),
   sensitivity: modelSensitivity(inputs),
   championship: championshipContext(inputs),
+  conferenceQualification: conferenceQualificationAudit(inputs),
   bundle: {
     rawBytes: packed.rawBytes,
     compressedBytes: packed.compressedBytes,

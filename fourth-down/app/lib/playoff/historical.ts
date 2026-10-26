@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { candidates, runShadow } from "./engine.ts";
 import { validFinal } from "./ledger.ts";
 import { colleyReference } from "./colley-reference.ts";
-import type { Inputs } from "./types";
+import type { Inputs, ModelVersion } from "./types";
 export type GitVintage = {
   sha: string;
   blob: string;
@@ -43,7 +43,7 @@ export function verifyGitVintage(v: GitVintage, csvBytes: Uint8Array) {
     errors.push("Poll not established before archival cutoff");
   return { valid: errors.length === 0, errors };
 }
-export function historicalComparison(vintages: GitVintage[]) {
+export function historicalComparison(vintages: GitVintage[], modelVersion:ModelVersion='resume-shadow-v1.1.0') {
   const ordered = [...vintages].sort(
     (a, b) => Date.parse(a.date) - Date.parse(b.date),
   );
@@ -60,7 +60,7 @@ export function historicalComparison(vintages: GitVintage[]) {
     // Outcomes are read ONLY after every candidate is scored from the earlier vintage.
     const models = candidates.map((w) => ({
       weights: w,
-      snapshot: runShadow(v.inputs, w),
+      snapshot: runShadow(v.inputs, w,false,null,modelVersion),
     }));
     const candidateRows = new Map(
       models[0].snapshot.rows.map((r) => [r.id, r]),
@@ -173,6 +173,7 @@ export function historicalComparison(vintages: GitVintage[]) {
     };
   });
   return {
+    modelVersion,
     label: `Version-pinned ${[...new Set(vintages.map((v) => v.inputs.season))].join(", ")} out-of-sample résumé-order agreement with next seven-day FBS game results`,
     results,
     aggregate,

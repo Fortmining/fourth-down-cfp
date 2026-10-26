@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "feature/team-detail-pages": false,
+      "dev/v0.8.6-live-outlook": false
+    }
+  }
+}

@@ -19,7 +19,8 @@
     "test:records": "node scripts/current-records-browser-check.mjs",
     "shadow:session": "node --experimental-strip-types scripts/shadow-session.mjs",
     "shadow:historical": "python3 scripts/prepare-historical-shadow.py && node --experimental-strip-types scripts/historical-shadow.mjs",
-    "shadow:validate": "node --experimental-strip-types scripts/validate-shadow-phase3.mjs"
+    "shadow:validate": "node --experimental-strip-types scripts/validate-shadow-phase3.mjs",
+    "test:teams": "node scripts/team-pages-browser-check.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

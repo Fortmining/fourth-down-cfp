@@ -1,0 +1,22 @@
+[
+  {
+    "id": "84",
+    "season": 2026,
+    "status": "eligible",
+    "scope": "bowl",
+    "source": "https://iuhoosiers.com/news/2026/10/10/football-postgame-notes-at-nebraska",
+    "publishedAt": "2026-10-10T20:52:00Z",
+    "observedAt": "2026-10-26T16:43:03.429892+00:00",
+    "reason": "University explicitly announces 2026 bowl eligibility. This is not a separate conference-championship eligibility certification."
+  },
+  {
+    "id": "2636",
+    "season": 2026,
+    "status": "eligible",
+    "scope": "bowl",
+    "source": "https://goutsa.com/news/2026/10/22/utsa-set-for-saturday-night-matchup-at-tulane",
+    "publishedAt": null,
+    "observedAt": "2026-10-26T16:43:03.429892+00:00",
+    "reason": "Official October 22 news states 2026 bowl eligibility; internal matchup date conflicts with the page heading, so no exact publication time is inferred. No universal eligibility clearance is claimed."
+  }
+]

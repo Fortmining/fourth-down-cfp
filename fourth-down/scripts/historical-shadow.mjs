@@ -20,7 +20,7 @@ const vintages = metadata.map((m) => {
   if (!check.valid) throw Error(check.errors.join("; "));
   return v;
 });
-const report = historicalComparison(vintages);
+const report = historicalComparison(vintages,process.env.SHADOW_MODEL_VERSION||'resume-shadow-v1.1.0');
 fs.writeFileSync(
   path.join(root, "historical-validation.json"),
   JSON.stringify(report, null, 2),

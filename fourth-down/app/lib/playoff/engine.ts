@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { currentRecords, mergeLedger, validFinal } from "./ledger.ts";
-import type { Edition, Inputs, ModelRow, Snapshot, Weights } from "./types";
+import type { Edition, Inputs, ModelRow, Snapshot, Weights, ModelVersion } from "./types";
+import {validPublishedEdition} from './published-edition.ts';
 export const candidates: Weights[] = [
   { id: "candidate-35-35-10-20", W: 35, R: 35, S: 10, P: 20 },
   { id: "resume-first-40-40-10-10", W: 40, R: 40, S: 10, P: 10 },
@@ -37,7 +38,7 @@ export function hash(value: unknown) {
 }
 const mean = (a: number[]) =>
   a.length ? a.reduce((n, x) => n + x, 0) / a.length : null;
-function anchors(input: Inputs): {
+function anchors(input: Inputs, version: ModelVersion): {
   editions: Edition[];
   issues: string[];
 } {
@@ -63,13 +64,13 @@ function anchors(input: Inputs): {
   )
     issues.push("Published baseline older than eight days");
   for (const e of selected)
-    if (
+    if (version === 'resume-shadow-v1.2.0' ? !validPublishedEdition(e) : (
       e.ranks.length !== 25 ||
       new Set(e.ranks.map((t) => t.id)).size !== 25 ||
       new Set(e.ranks.map((t) => t.rank)).size !== 25 ||
       !e.ranks.every(
         (t) => Number.isInteger(t.rank) && t.rank >= 1 && t.rank <= 25,
-      )
+      ))
     )
       issues.push(`Invalid ${e.id} edition`);
   return { editions: selected, issues };
@@ -79,7 +80,9 @@ export function runShadow(
   weights: Weights = candidates[0],
   provisional = false,
   parentId: string | null = null,
+  modelVersion: ModelVersion = 'resume-shadow-v1.1.0',
 ): Snapshot {
+  if (!['resume-shadow-v1.1.0','resume-shadow-v1.2.0'].includes(modelVersion)) throw Error('Unsupported model version');
   if (
     [weights.W, weights.R, weights.S, weights.P].some(
       (n) => !Number.isFinite(n) || n < 0,
@@ -101,7 +104,7 @@ export function runShadow(
     issues.push(
       `Future participants unresolved in ${input.pendingGames.length} schedule entries`,
     );
-  const anchor = anchors(input);
+  const anchor = anchors(input,modelVersion);
   issues.push(...anchor.issues);
   const records = currentRecords(input);
   for (const t of input.teams)
@@ -336,7 +339,7 @@ export function runShadow(
   const semantic = {
     parentId,
     fieldReasons: [...new Set(fieldReasons)],
-    version: "resume-shadow-v1.1.0",
+    version: modelVersion,
     rules: input.rulesVersion,
     weights,
     mode: provisional ? "provisional" : "confirmed",
@@ -347,7 +350,7 @@ export function runShadow(
   };
   return {
     schema: 1,
-    modelVersion: "resume-shadow-v1.1.0",
+    modelVersion,
     rulesVersion: input.rulesVersion,
     shadow: true,
     mode: provisional ? "provisional" : "confirmed",
