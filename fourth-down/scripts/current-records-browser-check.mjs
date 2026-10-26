@@ -48,7 +48,7 @@ const feed = {
     {
       id: "401856731",
       name: "Tennessee at South Carolina",
-      date: "2026-10-24T19:30Z",
+      date: new Date(Date.now() - 2 * 3600000).toISOString(),
       status: "post",
       completed: true,
       providerStatus: "STATUS_FINAL",
