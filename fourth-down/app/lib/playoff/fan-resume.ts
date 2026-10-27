@@ -26,7 +26,13 @@ export function fanResume(current:Snapshot,previous?:Snapshot,now=new Date().toI
    return {gameId:g.id,date:g.date,opponentId,opponent:names.get(opponentId)??'Opponent name unavailable',opponentRecord:peer?.overall??null,conferenceGame:g.conferenceGame,officialRanks:view.officialEditions.flatMap(e=>{const rank=e.ranks.find(r=>r.id===opponentId);return rank?[{poll:e.id,rank:rank.rank,date:e.date}]:[]}),importance:g.conferenceGame?'A result also changes the conference record; championship effects remain conditional.':'A result changes the overall record and opponent-based resume evidence.'};
   }).sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
   const pending=(current.inputs.pendingGames??[]).filter(g=>g.knownTeamIds.includes(row.id)&&Date.parse(g.date)>at);
-  return {...row,strengths,weaknesses,remaining,pendingCount:pending.length,scheduleLabel:current.inputs.coverage.futureComplete?'Captured remaining schedule; opponents and times may change.':'Remaining schedule coverage is incomplete; these are known fixtures only.',remainingLabel:'Each confirmed result changes the resume. Opponent records provide context, not an estimate of playoff impact.'};
+  const old=previous?.rows.find(r=>r.id===row.id);
+  const labels={W:'Win rate',R:'Results against opponents',S:'Opponent-record strength',P:'Published-ranking input'} as const;
+  const drivers=view.comparison==='comparable'&&old?(['W','R','S','P'] as const).map(component=>({
+   component,label:labels[component],change:current.weights[component]*((row.components[component]??0)-(old.components[component]??0)),
+   availableBefore:old.components[component]!==null,availableNow:row.components[component]!==null,
+  })):[];
+  return {...row,strengths,weaknesses,drivers,remaining,pendingCount:pending.length,scheduleLabel:current.inputs.coverage.futureComplete?'Captured remaining schedule; opponents and times may change.':'Remaining schedule coverage is incomplete; these are known fixtures only.',remainingLabel:'Each confirmed result changes the resume. Opponent records provide context, not an estimate of playoff impact.'};
  });
  const selected:{id:string;label:string;context:string}[]=[];
  const add=(row:typeof rows[number]|undefined,label:string,context:string)=>{if(row&&!selected.some(s=>s.id===row.id))selected.push({id:row.id,label,context});};

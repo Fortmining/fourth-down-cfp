@@ -15,3 +15,14 @@ test('unverified complete records do not produce a confident win-rate summary',(
  const view=fanResume(score({...f.after,coverage:{complete:false,futureComplete:false,issues:['incomplete feed']}}),before,clock);
  assert.ok(view.rows.every(r=>r.overall===null&&r.movement===null));assert.ok(view.rows.every(r=>r.strengths.every(s=>!/Unbeaten|confirmed wins;/.test(s))));
 });
+
+test('measured resume drivers reconcile to the model components, not published poll arrows',()=>{
+ const view=fanResume(after,before,clock);
+ for(const row of view.rows){const old=before.rows.find(r=>r.id===row.id)!;const current=after.rows.find(r=>r.id===row.id)!;
+  assert.equal(row.drivers.length,4);assert.ok(Math.abs(row.drivers.reduce((n,d)=>n+d.change,0)-(row.scoreDelta??0))<0.00000101);
+  for(const d of row.drivers)assert.equal(d.change,after.weights[d.component]*((current.components[d.component]??0)-(old.components[d.component]??0)));
+  assert.ok(Math.abs(row.drivers.find(d=>d.component==='P')!.change-row.attribution!.pollAnchor)<1e-10);
+ }
+ assert.equal(view.season,2025);
+ const missing=fanResume(score({...f.after,coverage:{complete:false,issues:['partial capture']}}),before,clock);assert.ok(missing.rows.every(r=>r.drivers.length===0));
+});
