@@ -34,7 +34,7 @@ if mode=='fresh' then
  h.checkedAt=p.checkedAt;redis.call('SET',KEYS[4],cjson.encode(h),'EX',3024000)
  return {'fresh'}
 end
-if mode=='read' then return {'read',current,redis.sha1hex(current)} end
+if mode=='read' then return {'read',current,redis.sha1hex(current),redis.call('GET',KEYS[4]) or ''} end
 if redis.sha1hex(current)~=expected then return {'stale'} end
 local priorHead=redis.call('GET',KEYS[4]);local valid,nextHead=pcall(cjson.decode,head)
 if not valid or nextHead.protocol~=2 then return redis.error_reply('Invalid head') end
@@ -67,6 +67,10 @@ export class RedisResumeStore implements ResumeStore{
   const reply=await invoke('read');if(!Array.isArray(reply)||reply[0]!=='read')throw Error('Private shared quota/read unavailable');
   const raw=String(reply[1]),digest=String(reply[2]);if(createHash('sha1').update(raw).digest('hex')!==digest)throw Error('Private read receipt mismatch');
   let state=emptyPipelineState();if(raw){const d=JSON.parse(gunzipSync(Buffer.from(raw,'base64'),{maxOutputLength:pipelineLimits.stateBytes+1024}).toString());if(d.checksum!==hash(d.state)||d.state.schema!==1)throw Error('Private Redis state integrity failed');state=d.state;}
+  // A read after compact renewal must preserve its verified freshness, including
+  // bookkeeping/history transactions. A delayed read still carries its OLD head
+  // and cannot pass the commit's monotonic checkpoint guard.
+  if(reply[3]){const head=JSON.parse(String(reply[3]));if(head.protocol===2&&head.stateDigest===digest&&head.signature===state.sourceSignature&&head.status===state.status&&typeof head.checkedAt==='string'&&Number.isFinite(Date.parse(head.checkedAt))&&Date.parse(head.checkedAt)>=Date.parse(state.checkedAt??head.checkedAt))state.checkedAt=head.checkedAt;}
   const result=operation(state);if(result&&typeof (result as {then?:unknown}).then==='function')throw Error('Async callbacks forbidden');
   const json=JSON.stringify({checksum:hash(state),state});if(Buffer.byteLength(json)>pipelineLimits.stateBytes+1024)throw Error('Private Redis state cap exceeded');
   const value=gzipSync(json).toString('base64');
