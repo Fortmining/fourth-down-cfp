@@ -56,4 +56,19 @@ Three completed days (Sat–Mon) total roughly 44K commands. Extending that mix 
 
 A broad diagnostics history read (`historyLimit=2000`) returned HTTP 503. It was not repeated or treated as successful historical measurement. The normal small health read succeeded. No production fix is bundled into this UI review.
 
-**Recommendation:** review the UX, while keeping the engine private. Current baseline usage alone does not justify public activation. A separately isolated, bounded hosted engine benchmark is still required to measure incremental CPU, command billing, retries and visitor demand without touching notification keys or production behavior. This report does not claim that benchmark has occurred.
+**Recommendation:** review the UX, while keeping the engine private. Current baseline usage alone does not justify public activation. The protected CPU/payload benchmark below supplies one hosted measurement; hosted command billing, retries and visitor demand remain unverified. No production writer is installed.
+
+
+## Protected hosted CPU/payload benchmark completed
+
+Existing-project Preview deployment **`dpl_9RvAJVqUKqwUdAwPa2WFLLPCSoW9`**, source commit **`c8693d8fd3f9475e46a3feafc6b65d20e708cf15`**, Next.js, READY, build duration about **28.3 seconds**. URL: `https://fourth-down-1goclz0ib-fortmining.vercel.app`. API target `staging` is the Vercel Preview deployment; runtime confirmed `VERCEL_ENV=preview`, region `iad1`, Node `v24.21.0`. The production branch and production URL were not promoted or replaced.
+
+The project already enforces Vercel authentication on previews. An unauthenticated request was redirected to Vercel sign-in and did not return benchmark data. The existing authenticated browser session accessed the endpoint without creating a share link or changing protection. The endpoint returns 404 in Production and ordinary development; regression tests cover both. It imports no Redis, notification or scheduler module and processes only the bundled public-data research capture. Ten iterations are fixed, with a 30-second function duration bound; no caller-provided work size is accepted.
+
+At **2026-10-27T11:22:04.222Z**, one hosted invocation completed ten passes over **138 teams / 888 fixtures**, including confirmed/provisional model computation, fan-facing derivation, retention envelope and compression. Median process CPU **299.626ms**, max **436.516ms**, total **3,205.186ms**. Largest pair **26,736 bytes**; compressed fan view **49,730 bytes**. Fixture SHA256: `8e13546f36b61394b1a28a55d7c264d3bfb28b53ddd1aa17b36339163730230b`.
+
+No source requests, database commands, notifications or schedules were invoked. This is real hosted process-CPU/payload evidence, **not** ten independent cold starts, a provider invoice, hosted Redis write/retry billing, or a visitor-load test. Median × 10,800 checks is an illustrative **0.899 process-CPU hours/month**, before startup and other overhead. Earlier local figures are not substituted for this measurement. Retention/write costs remain separately constrained by the measured existing baseline.
+
+Validation: **305 tests pass**, lint/type checks and production build pass; Chromium desktop and iPhone-sized WebKit pass keyboard activation of representative cases, result/poll separation, remaining-game fallbacks, 320/390/430/1280px layouts and axe checks. No physical iPhone test is claimed. Duplicate generated `.next/types/* 2.ts` cache files recurred locally, were archived outside the repository, and clean checks passed without weakening source types or assertions.
+
+Public activation is still not recommended: assess this UI first, then validate bounded hosted write/retry billing and visitor/cache-miss demand against the notification reserve. No service upgrade or public projection approval is requested by this preview.
