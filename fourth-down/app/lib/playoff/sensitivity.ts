@@ -23,7 +23,7 @@ export function modelSensitivity(input: Inputs) {
       };
     }),
     label:
-      "Independent résumé position range across fixed testing models; not CFP selection likelihood",
+      "Independent resume position range across fixed testing models; not CFP selection likelihood",
     fieldWithheld: true,
   };
 }

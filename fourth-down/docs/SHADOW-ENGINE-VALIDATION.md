@@ -8,7 +8,7 @@ This is the first validation pass. See [the resumed development report](SHADOW-E
 
 - A season/team/game-ID data foundation, recursively parsed conference membership and a deduplicated regular-season ledger. Finals require completed state, valid scores and an unambiguous winner. Corrected game IDs replace prior outcomes; old observations cannot overwrite newer ones.
 - Canonical records computed from confirmed game IDs and reconciled against provider overall/conference totals. Separate provider-backed current-record joins for the development UI and independent outlook aliases, preserving `polls[].teams[].record`, ranks, prior ranks and publication dates. Aliases retain `publishedRecord` and their current-record observation time. Conflicting totals are withheld rather than guessed.
-- Versioned `resume-shadow-v1.1.0` calculations for the 35/35/10/20 testing candidate, résumé-first and poll-heavy variants, and four ±5-point perturbations. Confirmed and “if leads hold” scenarios are separate; no live assumptions modify real records.
+- Versioned `resume-shadow-v1.1.0` calculations for the 35/35/10/20 testing candidate, resume-first and poll-heavy variants, and four ±5-point perturbations. Confirmed and “if leads hold” scenarios are separate; no live assumptions modify real records.
 - A separate Colley-style, FBS-only results control. It is our recomputation, not the author’s published rankings and not a probability model.
 - Immutable, content-addressed local archives with exact input/model/rules versions. Observation metadata is separate from game facts, so a refreshed observation does not duplicate unchanged results. The archive enforces a 32 KiB snapshot limit, 64 MiB total limit and 768-snapshot cap. It stops new archival writes at a cap rather than silently rewrite history. No production Redis adapter is enabled.
 
@@ -44,9 +44,9 @@ Local feed check: 2091 ms cold versus 331 ms warm; cached record observation tim
 
 ## Model comparisons
 
-These are **top-12 résumé lists**, not a selected CFP field. Qualification is still withheld. Position differences below cover all 138 teams, not only the top 12.
+These are **top-12 resume lists**, not a selected CFP field. Qualification is still withheld. Position differences below cover all 138 teams, not only the top 12.
 
-| Configuration | New top-12 résumé entries vs candidate | Maximum position difference |
+| Configuration | New top-12 resume entries vs candidate | Maximum position difference |
 |---|---|---:|
 | candidate-35-35-10-20 | None | 0 |
 | resume-first-40-40-10-10 | James Madison Dukes | 8 |
@@ -57,7 +57,7 @@ These are **top-12 résumé lists**, not a selected CFP field. Qualification is 
 | sensitivity-R40-P15 | None | 4 |
 | Colley-style FBS-only control | Texas Longhorns, Alabama Crimson Tide, LSU Tigers | 33 |
 
-The résumé-first variant admits James Madison where the candidate does not; the poll-heavy variant admits Alabama instead of Wake Forest. Even five-point shifts change a top-12 entry. The separate matrix control differs further: it has no poll anchor and excludes FCS games. These comparisons demonstrate sensitivity, not which model is correct.
+The resume-first variant admits James Madison where the candidate does not; the poll-heavy variant admits Alabama instead of Wake Forest. Even five-point shifts change a top-12 entry. The separate matrix control differs further: it has no poll anchor and excludes FCS games. These comparisons demonstrate sensitivity, not which model is correct.
 The matrix control used 444 FBS-versus-FBS finals and explicitly excluded 122 FCS-involving games. Its largest linear-system residual was 7.11e-15. A small numerical residual validates the solve, not predictive accuracy. Canonical actual records still include FCS outcomes.
 
 Method reference: [Colley original method](https://www.colleyrankings.com/matrate.pdf).
@@ -66,7 +66,7 @@ Method reference: [Colley original method](https://www.colleyrankings.com/matrat
 
 Replayed **44** October 24 Eastern-date completed games in scheduled-start order, using revised currently captured inputs. This is a functional reconstruction, not the order in which finals were originally reported and not a leak-free historical prediction backtest. No pre-existing model history is invented.
 
-| Inserted result | Participant résumé change within reconstructed sequence | Other teams with score or position changes |
+| Inserted result | Participant resume change within reconstructed sequence | Other teams with score or position changes |
 |---|---|---:|
 | 401856731 | Tennessee Volunteers: 12 → 17 (-6.466 points); South Carolina Gamecocks: 80 → 64 (+5.062 points) | 34 |
 | 401856729 | Kentucky Wildcats: 11 → 11 (+0.765 points); Vanderbilt Commodores: 102 → 109 (-2.558 points) | 21 |
@@ -82,7 +82,7 @@ Activation blockers:
 
 - Complete, season-versioned ACC/Big Ten/Big 12/SEC championship/tiebreaker adapters have not been verified and implemented. The ACC changed its policy for unequal 2026 schedules. The available Big 12 page is labeled 2025 and refers to SportSource Analytics; that is not proof of a fully verified 2026 adapter. Proprietary metrics, unresolved draws and unavailable rules must remain unresolved, not replaced by a model ID sort.
 - Team eligibility is deliberately unknown until verified; no school is automatically declared ineligible from transition status. NCAA changed reclassifying teams’ bowl-participation rules effective in 2026, so an old blanket transition ban would be wrong. The remaining institutional requirements and CFP-specific treatment still need a sourced registry.
-- Championship-path forecasting is not activated. No title-game representative or champion is fabricated to make a twelve-team list. The field is withheld rather than treating the top twelve résumé scores as the playoff field.
+- Championship-path forecasting is not activated. No title-game representative or champion is fabricated to make a twelve-team list. The field is withheld rather than treating the top twelve resume scores as the playoff field.
 - Fourteen future fixtures still have unassigned participants. Remaining-schedule difficulty is unavailable rather than computed from a misleading partial opponent set.
 - Genuine historical, as-of input vintages and later committee outcomes are needed before claiming predictive validation or accepting a permanent weighting.
 

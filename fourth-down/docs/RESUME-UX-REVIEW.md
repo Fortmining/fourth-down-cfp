@@ -1,4 +1,4 @@
-# Résumé preview review — October 27, 2026
+# Resume preview review — October 27, 2026
 
 ## Review artifact and evidence
 
@@ -8,7 +8,7 @@ Private loopback preview: `http://127.0.0.1:3014/`. Generated with `scripts/resu
 
 The archived review compares October 5 and October 19, 2025 genuine input vintages using the previously versioned replay fixture. No future outcomes are copied into an earlier vintage. This is a retrospective test of a model developed later, not a forecast published in 2025. Representative cases are selected deterministically, not by changing weights for those teams:
 
-| Review case | Archived example | Record | Résumé order change |
+| Review case | Archived example | Record | Resume order change |
 |---|---|---|---|
 | Requested team | Tennessee | 5–2 | Same place, evidence updated |
 | Improving | Notre Dame | 5–2 | Up 28 |
@@ -16,19 +16,19 @@ The archived review compares October 5 and October 19, 2025 genuine input vintag
 | Conference race | Ohio State | 7–0 | Same place |
 | Bubble discussion example | Texas Tech | 6–1 | Down 2 |
 
-Improving/declining examples are the largest moves among the current top 35 in this replay. The bubble example is the first unselected team in testing résumé positions 10–18. This is a **UI discussion example**, not validated bubble membership. No projected selection or championship participation is asserted. The 2026 review shows Tennessee (6–2 overall, 3–2 conference), Miami (7–0), and Texas Tech (6–1). Use the evidence selector to see all five historical situations; the two seasons are never blended.
+Improving/declining examples are the largest moves among the current top 35 in this replay. The bubble example is the first unselected team in testing resume positions 10–18. This is a **UI discussion example**, not validated bubble membership. No projected selection or championship participation is asserted. The 2026 review shows Tennessee (6–2 overall, 3–2 conference), Miami (7–0), and Texas Tech (6–1). Use the evidence selector to see all five historical situations; the two seasons are never blended.
 
 ## Proposed wording and fan-facing method
 
 - **What helps:** confirmed wins and leading wins by the opponent-record comparison, with exact final scores and game links.
 - **What needs work:** confirmed losses, the loss to the lowest verified opponent-record index, multiple losses, and unavailable opponent evidence. A loss is not called an elimination.
-- **Why the résumé changed:** direct results, revisions, changed opponent records, published-poll effects, or relative order changes. An unchanged position can still have new results and a changed underlying résumé.
+- **Why the resume changed:** direct results, revisions, changed opponent records, published-poll effects, or relative order changes. An unchanged position can still have new results and a changed underlying resume.
 - **Remaining games:** known scheduled fixtures, opponent records, captured published ranks where available, and whether the result also changes the conference record. Dates are shown in Eastern time. The ledger does not preserve kickoff-time verification, so times are explicitly unverified rather than displaying midnight placeholders. Unassigned conditional slots and incomplete schedule coverage stay labeled.
 - **Conference record order, ties kept:** a comparison of conference win percentages, not an official resolved championship standing. Conflicting peer records withhold this comparison.
 - **Official AP / Coaches / CFP:** published positions and dates with official poll arrows separately labeled. These arrows never derive from a game result.
 - **Conditional scenarios:** rule-only conditions and separately labeled supported live assumptions. No named qualifiers, definitive bracket or numerical playoff probabilities.
 
-The testing résumé uses 35% overall record, 35% result credit, 10% opponent-record index and 20% published polls. The prior engine and weights are unchanged. The opponent index is `(wins + 1)/(games + 2)` excluding head-to-head results; it is not official SOS. It does not fully adjust for the opponents' own schedule strength. Leading win/loss comparisons therefore describe a reproducible limited method, not committee intent. Missing opponent evidence is not fabricated. Raw additive scores and score decomposition are absent from the primary team cards; detailed methods are expandable.
+The testing resume uses 35% overall record, 35% result credit, 10% opponent-record index and 20% published polls. The prior engine and weights are unchanged. The opponent index is `(wins + 1)/(games + 2)` excluding head-to-head results; it is not official SOS. It does not fully adjust for the opponents' own schedule strength. Leading win/loss comparisons therefore describe a reproducible limited method, not committee intent. Missing opponent evidence is not fabricated. Raw additive scores and score decomposition are absent from the primary team cards; detailed methods are expandable.
 
 The current-capture label becomes archived as it ages, and unsupported live assumptions disappear. Eligibility unknown remains unknown. No live provisional result replaces a confirmed record. Search, representative-case buttons, expandable result/schedule details and a Show all teams control limit unnecessary mobile scrolling.
 

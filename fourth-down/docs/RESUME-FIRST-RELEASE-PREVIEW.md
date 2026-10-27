@@ -1,4 +1,4 @@
-# Résumé-first release preview — Phase 6, October 26, 2026
+# Resume-first release preview — Phase 6, October 26, 2026
 
 ## State and release boundary
 
@@ -31,7 +31,7 @@ Proposed public facts and labels:
 - Leading wins by the independent opponent-record index, all confirmed losses, exact final scores and existing game/team links. An untracked opponent has no invented name or strength value.
 - An independent smoothed opponent-record index, not official strength of schedule. Formula: `(opponent wins + 1)/(opponent games + 2)`, excluding head-to-head results; untracked opponents are excluded from the index. Missing values remain unavailable. The testing model's explicit untracked-opponent result fallback is disclosed separately.
 - Conference win-percentage position with ties left tied, including supplied conference members; it is not a championship seed or qualification decision.
-- Published AP/Coaches/CFP positions, dates and provider-supplied prior-edition arrows, separate from independently calculated résumé movement.
+- Published AP/Coaches/CFP positions, dates and provider-supplied prior-edition arrows, separate from independently calculated resume movement.
 - Rule-only championship/playoff access conditions. No named automatic qualifiers, predicted championship participants, definitive field/bracket or numerical playoff probabilities.
 
 The 35/35/10/20 formula remains a **testing candidate**, not an approved public scoring formula. The UI has searchable/paged cards, expandable evidence, responsive layouts, explicit private-preview labels and an archived replay selector. Changing the UI selector does not change subscriptions or production data.
@@ -75,13 +75,13 @@ Recommended integration, **not installed**: reuse already-fresh source data afte
 
 ## Remaining decision and evidence gates
 
-This milestone is ready for review of a limited résumé-first UI and its explanation contract. Public formula/wording approval and a bounded hosted shadow pilot are separate from approving a definitive bracket. PR #19 remains draft and unmerged.
+This milestone is ready for review of a limited resume-first UI and its explanation contract. Public formula/wording approval and a bounded hosted shadow pilot are separate from approving a definitive bracket. PR #19 remains draft and unmerged.
 
 For the proposed factual fields, unverified Big Ten tie rules and broad institutional eligibility are handled by withholding qualification claims; they do not justify hiding actual records or inventing standings tiebreaks. Full 2026 Big Ten policy confirmation, remaining conference cases, eligibility evidence and stronger selection/seeding validation still block named qualifiers, a definitive projected field and bracket. Existing model comparisons do not establish that this testing formula is a better committee-selection forecast than published polls.
 
 ## October 27 continuation: universe-wide explanation audit
 
-The archived October 5 → October 19, 2025 replay was audited across all 136 teams. 131 changed résumé position. Every changed score or position had an explanation; every referenced result was confirmed as of the later capture, and direct-result explanations involved the named team. Poll/result attribution reconciled for every row. This establishes explanation coverage for this replay, not predictive accuracy or proof that every explanation is sufficient for public use.
+The archived October 5 → October 19, 2025 replay was audited across all 136 teams. 131 changed resume position. Every changed score or position had an explanation; every referenced result was confirmed as of the later capture, and direct-result explanations involved the named team. Poll/result attribution reconciled for every row. This establishes explanation coverage for this replay, not predictive accuracy or proof that every explanation is sufficient for public use.
 
 A private-display fallback was corrected: conference position is now withheld when any peer in that conference has conflicting records, an absent previously confirmed final, or invalid final evidence. A team's independently verified own record remains visible. Conference positions remain simple win-percentage comparisons, never championship tiebreakers.
 

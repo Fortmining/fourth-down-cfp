@@ -174,7 +174,7 @@ export function historicalComparison(vintages: GitVintage[], modelVersion:ModelV
   });
   return {
     modelVersion,
-    label: `Version-pinned ${[...new Set(vintages.map((v) => v.inputs.season))].join(", ")} out-of-sample résumé-order agreement with next seven-day FBS game results`,
+    label: `Version-pinned ${[...new Set(vintages.map((v) => v.inputs.season))].join(", ")} out-of-sample resume-order agreement with next seven-day FBS game results`,
     results,
     aggregate,
     controls: [
@@ -204,7 +204,7 @@ export function historicalComparison(vintages: GitVintage[], modelVersion:ModelV
       "Git commit metadata is archival evidence, not an ESPN first-publication receipt",
       "Historical published poll editions were retrieved later and conservatively lagged by at least 24 hours",
       "Incomplete input vintages are excluded from aggregate",
-      "Résumé ordering is not a calibrated game predictor or CFP selection forecast",
+      "Resume ordering is not a calibrated game predictor or CFP selection forecast",
       "Small, overlapping team samples; no weights were selected or tuned using these results",
     ],
   };

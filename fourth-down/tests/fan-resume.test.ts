@@ -5,7 +5,7 @@ const score=(input:any)=>runShadow(input,candidates[0],false,null,'resume-shadow
 test('fan evidence and remaining games reconcile to versioned archived inputs',()=>{
  const view=fanResume(after,before,clock);assert.ok(view.reviewTeams.some(t=>t.id==='2633'));assert.equal(view.reviewTeams.length,5);
  for(const row of view.rows){assert.ok(row.strengths.length);assert.ok(row.weaknesses.length);for(const game of row.remaining){const raw=after.inputs.games.find(g=>g.id===game.gameId)!;assert.ok(raw);assert.ok(Date.parse(raw.date)>Date.parse(after.at));assert.equal(raw.state,'pre');assert.ok(raw.teams.includes(row.id));assert.equal(raw.completed,false);} }
- assert.ok(view.reviewTeams.find(t=>t.label==='Improving résumé'));assert.ok(view.reviewTeams.find(t=>t.label==='Declining résumé'));assert.equal(view.projectedBracket,null);assert.equal(view.playoffProbabilities,null);
+ assert.ok(view.reviewTeams.find(t=>t.label==='Improving resume'));assert.ok(view.reviewTeams.find(t=>t.label==='Declining resume'));assert.equal(view.projectedBracket,null);assert.equal(view.playoffProbabilities,null);
 });
 test('missing future schedule is explicitly partial and never filled from a later vintage',()=>{
  const input={...f.before,games:f.before.games.filter((g:any)=>g.state!=='pre'),coverage:{...f.before.coverage,futureComplete:false}};

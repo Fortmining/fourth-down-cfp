@@ -1,4 +1,4 @@
-/** Official qualification dependencies are not extra résumé-model weights. */
+/** Official qualification dependencies are not extra resume-model weights. */
 export const qualificationDependencies = {
   "pac12-2026": ["specific-cfp-edition", "team-rating", "conference-draw"],
   "acc-2026": ["team-success", "conference-draw"],

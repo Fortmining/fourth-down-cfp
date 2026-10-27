@@ -1,4 +1,4 @@
-"""Build version-pinned 2024/2025 résumé inputs. No current-season data or postgame ratings.
+"""Build version-pinned 2024/2025 resume inputs. No current-season data or postgame ratings.
 SHADOW_HISTORY points outside the repository and contains historical-manifest.json.
 Git commit dates are archival evidence, not first ESPN publication timestamps.
 """

@@ -6,7 +6,7 @@ Audit date: October 25, 2026. Repository base: `5ce9b96ea5af765ef97f8490c3a50e37
 
 ## Recommendation
 
-Build a deterministic, résumé-based independent selection order, a separate CFP rules allocator, and a clearly separate “if current leads hold” live scenario. Keep current records and official polls in different datasets. Save meaningful, reproducible snapshots before presenting model movement.
+Build a deterministic, resume-based independent selection order, a separate CFP rules allocator, and a clearly separate “if current leads hold” live scenario. Keep current records and official polls in different datasets. Save meaningful, reproducible snapshots before presenting model movement.
 
 The weights below are a concrete proposal, not established football truth or an approved algorithm. Validate them in shadow mode and sensitivity tests before publishing a field. No playoff percentages, proprietary ESPN strength-of-record claims, or unofficial changes to published poll ranks.
 
@@ -75,7 +75,7 @@ The conference championship winner, not a current standings leader, supplies eac
 
 The ACC announced a **new 2026 policy**, including unequal conference schedules; a generic winning-percentage sort or old divisional policy is insufficient. Its current notice and policy are identified. The Big Ten’s 2026 page confirms two qualifying teams from conference play, with tiebreakers. The SEC’s dedicated tiebreaker entry point was identified but its embedded PDF text was unavailable through the text fetch. The Big 12’s available policy page explicitly says **2025** and includes an external analytic-rating step and coin toss. It is not sufficient evidence to claim the entire 2026 adapter is verified.
 
-**Implementation gate:** obtain and version the applicable complete 2026 Power Four tiebreaker policies before presenting a resolved projected field. If a rule needs an unavailable proprietary rating, an official draw or an unannounced decision, retain the tied candidate set and show field alternatives/unresolved qualification. Never replace an official tiebreaker with an arbitrary team ID or our model score. Six-conference title outcomes may change their résumés but are not themselves prerequisites for that group's CFP bid.
+**Implementation gate:** obtain and version the applicable complete 2026 Power Four tiebreaker policies before presenting a resolved projected field. If a rule needs an unavailable proprietary rating, an official draw or an unannounced decision, retain the tied candidate set and show field alternatives/unresolved qualification. Never replace an official tiebreaker with an arbitrary team ID or our model score. Six-conference title outcomes may change their resumes but are not themselves prerequisites for that group's CFP bid.
 
 Sources: [2026 ACC announcement](https://admin.theacc.com/news/2026/7/15/acc-announces-new-football-championship-tiebreaker-policy.aspx), [ACC policy](https://theacc.com/documents/2026/7/15/ACC_Football_Tiebreaker_Policy_Jully_2026.pdf), [2026 Big Ten championship](https://bigten.org/news/2026/8/19/championship-2026-discover-big-ten-football-championship-game-information.aspx), [SEC rule entry point](https://www.secsports.com/fbtiebreaker), [Big 12 page—2025 label](https://big12sports.com/sports/2024/9/6/FB_0906243427.aspx?path=football).
 
@@ -85,28 +85,28 @@ Sources: [2026 ACC announcement](https://admin.theacc.com/news/2026/7/15/acc-ann
 
 Evaluate the complete verified eligible FBS universe, not only ranked teams. Preserve FCS results in actual overall records, but do not assign FCS opponents invented FBS ratings.
 
-Proposed current-résumé score, on a 0–100 scale:
+Proposed current-resume score, on a 0–100 scale:
 
 `Score = 35 × W + 35 × R + 10 × S + 20 × P`
 
 | Factor | Definition | Weight / reason |
 |---|---|---|
 | Overall performance `W` | `(wins + 0.5 × ties) / completed games`, from confirmed results/current records | 35%; actual results should dominate reputation |
-| Opponent-adjusted résumé `R` | Result quality calculation below | 35%; credit strong wins, penalize weaker losses |
+| Opponent-adjusted resume `R` | Result quality calculation below | 35%; credit strong wins, penalize weaker losses |
 | Played-schedule strength `S` | Mean eligible FBS opponent winning fraction, excluding games against the evaluated team | 10%; distinguish schedules without using victory margin |
 | Published baseline `P` | CFP edition once available; before then 75% AP + 25% Coaches rank score | 20%; useful reference, insufficient to prevent results-driven movement |
 | Quality wins/losses | Included in `R`, with individual contribution explanations | No second bonus; avoids counting the same evidence a third time |
 | Head-to-head/common opponents | Selection-score tie resolution below; always shown | Not a universal override of an entire season |
 | Conference record/championship | Actual record + separate qualification adapter | No cross-conference win-percentage bonus |
-| Remaining difficulty | Mean remaining opponents’ current strength, with schedule coverage | 0% earned-résumé bonus; affects forward-path/championship scenarios, not credit for unplayed games |
+| Remaining difficulty | Mean remaining opponents’ current strength, with schedule coverage | 0% earned-resume bonus; affects forward-path/championship scenarios, not credit for unplayed games |
 
 For an FBS opponent, define `q = (opponent wins excluding our games + 1) / (opponent completed games excluding our games + 2)`. This is a disclosed neutral smoothing prior for the model only, not a fabricated win or loss in anyone’s displayed record. Confirmed ties count half. Excluding head-to-head results prevents directly rewarding a team for having given its opponent a loss.
 
-For each confirmed FBS game, contribution is `0.5 + 0.5q` for a win and `−(1 − 0.5q)` for a loss; a tie contributes zero. For a verified FCS game, proposal uses +0.25 for a win and −1 for a loss as an explicit policy, not an inferred FCS rating. `R = (mean contribution + 1) / 2`. `S` excludes FCS opponents; show FCS counts separately. Teams with no confirmed eligible FBS opponents do not receive a normal comparable SOS score; show insufficient résumé rather than fabricate one.
+For each confirmed FBS game, contribution is `0.5 + 0.5q` for a win and `−(1 − 0.5q)` for a loss; a tie contributes zero. For a verified FCS game, proposal uses +0.25 for a win and −1 for a loss as an explicit policy, not an inferred FCS rating. `R = (mean contribution + 1) / 2`. `S` excludes FCS opponents; show FCS counts separately. Teams with no confirmed eligible FBS opponents do not receive a normal comparable SOS score; show insufficient resume rather than fabricate one.
 
 `P(rank) = (26 − rank) / 25` for ranks 1–25; a team explicitly outside that published top 25 receives zero. A missing edition is not the same as unranked. If only AP or Coaches is available before the first CFP release, use the available poll and label the substitution. Once CFP is published, use CFP for `P`; AP/Coaches remain context rather than averaging away the committee baseline. Keep the last valid dated CFP edition when a newer one is temporarily unavailable; after eight days, flag an expired anchor and retain the last valid field as stale rather than silently substituting AP. Missing all baseline data prevents normal anchored publication.
 
-**Tradeoffs for approval:** these factors are correlated, and 35/35/10/20 is a proposed editorial weighting, not a calibrated imitation of committee voting. Wins and opponent quality can move every competitor’s schedule/résumé score; this captures indirect upset effects. Test weight sensitivity ±5 percentage points and compare reasonable alternatives before activation. Do not tune weights to force Tennessee or any named team into/out of the field. No margin-of-victory or injury adjustment is proposed without a separately reviewed source/model.
+**Tradeoffs for approval:** these factors are correlated, and 35/35/10/20 is a proposed editorial weighting, not a calibrated imitation of committee voting. Wins and opponent quality can move every competitor’s schedule/resume score; this captures indirect upset effects. Test weight sensitivity ±5 percentage points and compare reasonable alternatives before activation. Do not tune weights to force Tennessee or any named team into/out of the field. No margin-of-victory or injury adjustment is proposed without a separately reviewed source/model.
 
 ### Deterministic tie resolution
 
@@ -114,19 +114,19 @@ Compare unrounded component values at a specified fixed precision. For an exactl
 
 ### Projected field versus selection order
 
-1. Produce the full independent current-résumé selection order.
+1. Produce the full independent current-resume selection order.
 2. Identify actual Power Four champions when confirmed. Before confirmation, create explicit conditional championship scenarios.
-3. For a default forward path, project remaining regular-season winners using the **frozen current-résumé ordering for that run**. This is deterministic, not a probability or a claim future scores exist. Higher ordered team wins that scenario; exact model ties produce alternative branches rather than invented certainty. Apply verified conference standings and tiebreakers, then use that frozen order for the hypothetical title-game result. Do not feed hypothetical wins back into actual records or recursively re-rate until a desired result appears.
+3. For a default forward path, project remaining regular-season winners using the **frozen current-resume ordering for that run**. This is deterministic, not a probability or a claim future scores exist. Higher ordered team wins that scenario; exact model ties produce alternative branches rather than invented certainty. Apply verified conference standings and tiebreakers, then use that frozen order for the hypothetical title-game result. Do not feed hypothetical wins back into actual records or recursively re-rate until a desired result appears.
 4. Reserve Power Four places and the highest independent-ordered eligible six-conference team. Apply a separately labeled projected Notre Dame condition. Fill the remaining allocation by independent order, deduplicating teams.
 5. Seed selected teams in that order with out-of-top-12 qualifiers at the bottom; apply the published bracket rules. Selection rank, qualification reason and bracket seed are separate fields.
 
-This is a current-résumé selection projection with conditional championship paths, **not a calibrated end-of-season forecast**. Remaining schedule difficulty is visible and affects the conference path calculation; an easier unplayed schedule earns no résumé points. If a title path or eligibility is unresolved, show alternate occupants/ranges rather than silently claiming an exact 12-team field. A complete end-of-season performance model would be a separate reviewed extension.
+This is a current-resume selection projection with conditional championship paths, **not a calibrated end-of-season forecast**. Remaining schedule difficulty is visible and affects the conference path calculation; an easier unplayed schedule earns no resume points. If a title path or eligibility is unresolved, show alternate occupants/ranges rather than silently claiming an exact 12-team field. A complete end-of-season performance model would be a separate reviewed extension.
 
 ## 5. Confirmed and live provisional recalculation
 
 Maintain two model layers:
 
-- **Confirmed:** only verified completed games enter actual records and résumé scoring. A valid new final updates the ledger once by event ID, then recalculates all affected opponent strengths and the entire order/field.
+- **Confirmed:** only verified completed games enter actual records and resume scoring. A valid new final updates the ledger once by event ID, then recalculates all affected opponent strengths and the entire order/field.
 - **Live provisional:** a separate “if current leads hold” scenario adds each valid in-progress leader as a hypothetical winner. Recalculate the whole field, including teams not playing. Tied games have no assumed main outcome; show win/lose alternatives. No invented win probability, final result, clock, score or expected margin.
 
 Show period, clock, observed score and source age next to each scenario; first-quarter assumptions are visibly provisional. A score/leader/period change can trigger recomputation even if the resulting rank is unchanged. Do not manufacture movement just because a refresh occurred. A missing clock disables clock-sensitive labels, not known scores. Stale or implausible live data freezes/disables the live overlay; the confirmed layer remains available with its own timestamp.
@@ -196,8 +196,8 @@ Required fixtures: ranked win/loss after poll; multiple finals between editions;
 
 Approve or revise these before implementation:
 
-- Résumé-first 35/35/10/20 proposal and its disclosed FCS treatment; no probabilities.
-- Current-résumé selection order with separately conditional championship/field scenarios, rather than an unvalidated statistical end-of-season forecast.
+- Resume-first 35/35/10/20 proposal and its disclosed FCS treatment; no probabilities.
+- Current-resume selection order with separately conditional championship/field scenarios, rather than an unvalidated statistical end-of-season forecast.
 - “If leads hold” live overlay, never mixed into confirmed records.
 - Three separate movement baselines and bounded replay/history.
 - Rules/data completeness and free-tier gates; no arbitrary tiebreak fallback or spending increase.

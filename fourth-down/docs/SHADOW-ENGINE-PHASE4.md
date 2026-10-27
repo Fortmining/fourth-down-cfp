@@ -11,7 +11,7 @@ The engine remains private and unapproved for public activation. Released Team P
 
 ## Rules and remaining evidence
 
-Authoritative CFP format: https://collegefootballplayoff.com/sports/2024/5/29/12-team-format . Apply the four Power Four champion qualifications, the protected highest-ranked team from the other six leagues, Notre Dame protection where applicable, and rank-based seeding independently of résumé order. Do not substitute a universal Group-of-Six championship requirement.
+Authoritative CFP format: https://collegefootballplayoff.com/sports/2024/5/29/12-team-format . Apply the four Power Four champion qualifications, the protected highest-ranked team from the other six leagues, Notre Dame protection where applicable, and rank-based seeding independently of resume order. Do not substitute a universal Group-of-Six championship requirement.
 
 Pac-12 2026 procedure: https://pac-12.com/news/2026/9/3/pac-12-announces-commercial-and-operational-updates-ahead-of-its-2026-football-season-kickoff.aspx . External CFP/SportSource criteria are required only when the preceding tie criteria fail; missing values withhold the decision.
 

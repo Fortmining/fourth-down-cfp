@@ -15,14 +15,14 @@ Later work is recorded in [Phase 3](SHADOW-ENGINE-PHASE3.md); figures below desc
 
 ## Qualification and conference rules
 
-The CFP’s published 2026 format reserves Power Four champions, the highest-ranked six-conference team, and the specified Notre Dame protection before at-large allocation. The prior tested allocation/seeding mechanics remain shadow-only. Independent résumé positions are not committee rankings or an official bracket.
+The CFP’s published 2026 format reserves Power Four champions, the highest-ranked six-conference team, and the specified Notre Dame protection before at-large allocation. The prior tested allocation/seeding mechanics remain shadow-only. Independent resume positions are not committee rankings or an official bracket.
 
 | Area | Evidence and implementation | Still unresolved |
 |---|---|---|
 | CFP allocation/seeding | Published 2026 format; four byes, hosting pairs and protected/AQ allocation already tested | Future committee selection and future champions are not known |
 | ACC | Full July 2026 policy retrieved. Direct/multi-team results, official-metric gates, and non-transitive 8–1 / 7–1 / 7–2 cases tested against the conference VP’s recorded explanation | Mixed-schedule groups larger than two need additional authoritative reference cases; Team Success Ranking when required |
 | Big 12 | Complete updated PDF is open-ended from 2024 onward, unlike the stale summary labeled 2025. Common opponents, standings groups, schedule strength and eligible-win/metric gates implemented | Source-confirmed FCS/exempt-game win totals and official Team Rating Score where earlier criteria tie |
-| SEC | Current official page links the full policy and examples; multi-team restarts and ordering within tied common-opponent groups tested | Final official capped relative margin/draw when required; do not substitute résumé scores |
+| SEC | Current official page links the full policy and examples; multi-team restarts and ordering within tied common-opponent groups tested | Final official capped relative margin/draw when required; do not substitute resume scores |
 | Big Ten | 2026 championship page confirms top conference records. Full available procedure is 2024, including its sanctions language | Carry-forward use remains explicitly unverified for 2026; adapter returns no qualified participants |
 | Six other conferences | Championship slots identified. Their champions are not required for the highest-ranked G6 CFP automatic berth | Full conference-title forecasting/tiebreaker adapters are not implemented |
 
@@ -60,7 +60,7 @@ There are eight forecast windows. Two contain a missing archived final score (`4
 | Frozen model | Correct/scored | Agreement with next-game result |
 |---|---:|---:|
 | Candidate 35/35/10/20 | 199/287 | 69.3% |
-| Résumé-first 40/40/10/10 | 199/287 | 69.3% |
+| Resume-first 40/40/10/10 | 199/287 | 69.3% |
 | Poll-heavy 30/30/10/30 | 197/287 | 68.6% |
 | W30/P25 sensitivity | 197/287 | 68.6% |
 | W40/P15 sensitivity | 199/287 | 69.3% |
@@ -69,7 +69,7 @@ There are eight forecast windows. Two contain a missing archived final score (`4
 
 Controls use exactly matched non-tied game subsets: Colley 203/287 versus candidate 199/287; raw win percentage 180/250 versus candidate 179/250; published-poll anchor 60/74 versus candidate 60/74. Unranked-versus-unranked poll ties are not converted into arbitrary predictions.
 
-These are empirical résumé-order comparisons, **not playoff probabilities or validated CFP selection accuracy**. They do not support declaring the candidate best or adopting permanent weights. Git commit metadata is archival evidence, not a first ESPN publication receipt; historical polls were retrieved later. Repeated teams and a limited season prevent treating outcomes as independent validation of a final playoff field. Original 44-game reconstructed replays remain separately labeled and are not mixed into this aggregate.
+These are empirical resume-order comparisons, **not playoff probabilities or validated CFP selection accuracy**. They do not support declaring the candidate best or adopting permanent weights. Git commit metadata is archival evidence, not a first ESPN publication receipt; historical polls were retrieved later. Repeated teams and a limited season prevent treating outcomes as independent validation of a final playoff field. Original 44-game reconstructed replays remain separately labeled and are not mixed into this aggregate.
 
 Sources: [versioned data repository](https://github.com/sportsdataverse/cfbfastR-data), [example October 19 committed vintage](https://github.com/sportsdataverse/cfbfastR-data/commit/d51c9bdd3493d19b139cce3ea11965b167c56e26). All nine commit IDs, Git blob hashes, historical ESPN URLs, excluded columns and per-window results are recorded in the private validation artifacts. Scripts reproduce the preparation and comparison.
 
@@ -101,7 +101,7 @@ The private engine remains disconnected from production. Before connecting it: v
 
 **Not ready for public activation:** a definitive projected field, full conference adapters, eligibility coverage, validated proprietary-metric dependencies, full-season retention operations, actual production engine function profiling, or a reliable operational write budget. No live-game source event has occurred during this new private session, so synthetic live-transition tests are not presented as new real-world engine validation.
 
-The next production decision must distinguish a limited, explicitly provisional résumé outlook from a definitive projected field. This report does not recommend replacing the public placeholder or merging PR #19. The 35/35/10/20 formula remains a testing candidate. Public activation and any paid services still require explicit approval.
+The next production decision must distinguish a limited, explicitly provisional resume outlook from a definitive projected field. This report does not recommend replacing the public placeholder or merging PR #19. The 35/35/10/20 formula remains a testing candidate. Public activation and any paid services still require explicit approval.
 
 ## Final validation
 

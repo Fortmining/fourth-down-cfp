@@ -108,7 +108,7 @@ test("verified 2026 Big Ten top records resolve clear participants without claim
     ["current-full-policy-confirmation"],
   );
 });
-test("proprietary metrics are conditional qualification dependencies, not mandatory résumé weights", () => {
+test("proprietary metrics are conditional qualification dependencies, not mandatory resume weights", () => {
   assert.deepEqual(requiredEvidence("acc-2026", []).requiredNow, []);
   assert.deepEqual(
     requiredEvidence("acc-2026", [
