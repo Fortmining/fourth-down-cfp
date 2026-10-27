@@ -17,7 +17,7 @@ type Entry={id:string;semantic:string;at:string;encoded:string;sourceHashes:Reco
 type Counters={commands:number;mutations:number;ticks:number;updates:number;cacheMisses:number};
 export type PipelineState={schema:1;revision:number;season:number|null;sourceSignature:string|null;checkedAt:string|null;status:string;issues:string[];history:Entry[];view:View|null;cacheExpiresAt:number;day:string;month:string;daily:Counters;monthly:Counters};
 export type SharedResumeDisplay={schema:1;revision:number;sourceSignature:string|null;checkedAt:string|null;status:string;issues:string[];view:View|null;history:{id:string;at:string}[]};
-export type ResumeStore={readDisplay?:()=>Promise<SharedResumeDisplay|null>;transaction:<T>(operation:(state:PipelineState)=>T)=>Promise<T>};
+export type ResumeStore={renewVerifiedFreshness?:(signature:string,checkedAt:string)=>Promise<boolean>;readDisplay?:()=>Promise<SharedResumeDisplay|null>;transaction:<T>(operation:(state:PipelineState)=>T)=>Promise<T>};
 export const emptyPipelineState=():PipelineState=>({schema:1,revision:0,season:null,sourceSignature:null,checkedAt:null,status:'unavailable',issues:['No confirmed update available'],history:[],view:null,cacheExpiresAt:0,day:'',month:'',daily:{commands:0,mutations:0,ticks:0,updates:0,cacheMisses:0},monthly:{commands:0,mutations:0,ticks:0,updates:0,cacheMisses:0}});
 export class OperatingLimit extends Error{}
 function charge(s:PipelineState,now:number,kind:'tick'|'update'|'cache'){
@@ -69,19 +69,31 @@ export class ResumePipeline{
  private cache:{revision:number;from:number;until:number;value:unknown}|null=null;
  readonly store:ResumeStore;readonly source:ResumeSource;readonly elapsedNow:()=>number;
  constructor(store:ResumeStore,source:ResumeSource,elapsedNow=()=>performance.now()){this.store=store;this.source=source;this.elapsedNow=elapsedNow;}
- async tick(now=Date.now()){
+ /** Already-captured, fully validated input only. No fetch, timer or production hook. */
+ async ingest(capture:SourceCapture,now=Date.now()){
+  if(this.store.renewVerifiedFreshness){
+   try{validateCapture(capture,undefined,now);}catch{return this.tick(now,capture);}
+   try{
+    if(await this.store.renewVerifiedFreshness(confirmedResumeSignature(capture.inputs),capture.inputs.observedAt)){
+     this.cache=null;return {status:'unchanged',updated:false,compactFreshness:true};
+    }
+   }catch{this.cache=null;return {status:'freshness-unavailable',updated:false};} // No hidden retry after quota/network ambiguity.
+  }
+  return this.tick(now,capture);
+ }
+ async tick(now=Date.now(),captured?:SourceCapture){
   if(this.busy)return {status:'busy',updated:false};this.busy=true;const started=this.elapsedNow();let expectedRevision:number|null=null,candidateSignature:string|null=null;
   try{
    const base=await this.store.transaction(s=>{charge(s,now,'tick');return {revision:s.revision,prior:s.history.at(-1)?receiptInputs(s.history.at(-1)!):undefined};});
    expectedRevision=base.revision;
    let capture:SourceCapture;
-   try{const abort=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;try{capture=await Promise.race([this.source.read(abort.signal),new Promise<never>((_,reject)=>{timer=setTimeout(()=>{abort.abort();reject(new OperatingLimit('Source deadline exceeded'));},pipelineLimits.deadlineMs);})]);}finally{if(timer)clearTimeout(timer);abort.abort();}validateCapture(capture,base.prior,now);}catch(error){await this.store.transaction(s=>{if(s.revision===base.revision){s.status='withheld';s.issues=[String((error as Error).message)];s.cacheExpiresAt=0;}});this.cache=null;return {status:'withheld',updated:false};}
+   try{const abort=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;try{capture=await Promise.race([(captured?Promise.resolve(captured):this.source.read(abort.signal)),new Promise<never>((_,reject)=>{timer=setTimeout(()=>{abort.abort();reject(new OperatingLimit('Source deadline exceeded'));},pipelineLimits.deadlineMs);})]);}finally{if(timer)clearTimeout(timer);abort.abort();}validateCapture(capture,base.prior,now);}catch(error){await this.store.transaction(s=>{if(s.revision===base.revision){s.status='withheld';s.issues=[String((error as Error).message)];s.cacheExpiresAt=0;}});this.cache=null;return {status:'withheld',updated:false};}
    if(this.elapsedNow()-started>pipelineLimits.deadlineMs)throw new OperatingLimit('Private update deadline exceeded');
    candidateSignature=confirmedResumeSignature(capture.inputs);const input=confirmedInput(capture.inputs);input.editions=input.editions.map(e=>base.prior?.editions.find(old=>old.id===e.id&&old.date===e.date)??e);const identity=semantic(input);
    return await this.store.transaction(s=>{
     if(s.revision!==base.revision)return {status:'superseded',updated:false};
-    const head=s.history.at(-1);s.checkedAt=capture.receivedAt;
-    if(head?.semantic===identity){s.sourceSignature=confirmedResumeSignature(capture.inputs);s.status='ready';s.issues=[];if(this.cache&&this.cache.revision===s.revision&&(this.cache.value as {status:string}).status==='ready'){(this.cache.value as {checkedAt:string}).checkedAt=capture.receivedAt;this.cache.until=Math.min(now+pipelineLimits.cacheMs,Date.parse(capture.receivedAt)+pipelineLimits.sourceAgeMs);}else this.cache=null;return {status:'unchanged',updated:false,revision:s.revision};}
+    const head=s.history.at(-1);s.checkedAt=capture.inputs.observedAt;
+    if(head?.semantic===identity){s.sourceSignature=confirmedResumeSignature(capture.inputs);s.status='ready';s.issues=[];if(this.cache&&this.cache.revision===s.revision&&(this.cache.value as {status:string}).status==='ready'){(this.cache.value as {checkedAt:string}).checkedAt=capture.inputs.observedAt;this.cache.until=Math.min(now+pipelineLimits.cacheMs,Date.parse(capture.inputs.observedAt)+pipelineLimits.sourceAgeMs);}else this.cache=null;return {status:'unchanged',updated:false,revision:s.revision};}
     charge(s,now,'update');
     const current=runShadow(input,candidates[0],false,null,'resume-shadow-v1.2.0'),provisional=runShadow(input,candidates[0],true,current.id,current.modelVersion);
     const pair=packSnapshotPair(current,provisional),entry:Entry={id:'',semantic:identity,at:current.at,encoded:pair.encoded,sourceHashes:capture.sourceHashes,notes:capture.notes??[]};entry.id=hash({encoded:entry.encoded,sourceHashes:entry.sourceHashes,notes:entry.notes});

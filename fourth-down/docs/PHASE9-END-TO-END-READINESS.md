@@ -1,5 +1,7 @@
 # Phase 9 — private end-to-end integration and release readiness
 
+**Follow-up:** [Recovery and compact freshness protocol](PHASE9-RECOVERY-AND-FRESHNESS.md) supersedes this report’s three-key protocol and resource estimates. The old ~45K command scenario omitted recurring durable freshness work and is not an admission estimate. This report preserves the evidence from commit `4ba5895`; use the follow-up for current readiness.
+
 **Recommendation: NO-GO for public activation.** The source → confirmed evaluation → retained history → cached fan display flow now works in private offline replay. The new shared Redis protocol is implemented as an injected candidate, but has not run on hosted Redis or Vercel. That distinction matters: the earlier approved benchmark did not exercise this new protocol or dispatcher integration.
 
 **Validation:** 354 automated regression tests, lint, type checking and production build; final status is recorded in the PR report. Chromium, Firefox, desktop WebKit and iPhone-sized WebKit passed the private integration browser checks. All new Redis failures are injected simulations.

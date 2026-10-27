@@ -9,7 +9,7 @@ const original=JSON.parse(match[1]),key=process.env.RESUME_REPLAY_VIEW==='curren
 let replayClock=Date.now(),lastError='',lastRevision=0,loading=false,dirty=false;
 const load=()=>{if(fs.statSync(source).size>2*1024*1024)throw Error('Replay input exceeds cap');return JSON.parse(fs.readFileSync(source,'utf8'));};
 const pipeline=new ResumePipeline(new FileResumeStore(root),{read:async signal=>{if(signal.aborted)throw Error('Replay aborted');return load();}});
-async function ingest(){dirty=true;if(loading)return;loading=true;try{while(dirty){dirty=false;try{const c=load();const nextClock=Date.parse(c.receivedAt);if(!Number.isFinite(nextClock))throw Error('Invalid replay clock');replayClock=nextClock;const result=await pipeline.tick(replayClock);if('revision' in result)lastRevision=result.revision;lastError=result.updated||result.status==='unchanged'?'':result.status;}catch{lastError='Invalid replay source; refresh withheld';await pipeline.tick(replayClock);}}}finally{loading=false;}}
+async function ingest(){dirty=true;if(loading)return;loading=true;try{while(dirty){dirty=false;try{const c=load();const nextClock=Date.parse(c.receivedAt);if(!Number.isFinite(nextClock))throw Error('Invalid replay clock');replayClock=nextClock;const result=await pipeline.ingest(c,replayClock);if('revision' in result)lastRevision=result.revision;lastError=result.updated||result.status==='unchanged'?'':result.status;}catch{lastError='Invalid replay source; refresh withheld';await pipeline.tick(replayClock);}}}finally{loading=false;}}
 await ingest();
 const watcher=fs.watch(path.dirname(source),(_,file)=>{if(String(file)===path.basename(source))void ingest();});
 const server=http.createServer(async(req,res)=>{

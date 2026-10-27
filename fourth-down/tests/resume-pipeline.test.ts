@@ -79,7 +79,7 @@ test('hot-cache visitors are throttled without unbounded store calls or response
 });
 
 test('weekend operating assumptions expose unknown baselines and excessive demand rather than approving activation',async()=>{
- const {resumeOperatingPlan}=await import('../app/lib/playoff/resume-operating-plan.ts');const common={updatesPerWeek:70,wireBytesPerMiss:68020,cpuMsPerUpdate:323.325,cpuMsPerUnchangedTick:20,ledgerBytesPerEntry:26836,baselineCommandsPerMonth:null,baselineBandwidthBytesPerMonth:null,physicalStorageMeasured:false,completeUsageDays:5};const normal=resumeOperatingPlan({...common,cacheMissesPerDay:100}),heavy=resumeOperatingPlan({...common,cacheMissesPerDay:10000});assert.ok(normal.illustrativeCommandsPer30Days<100000);assert.ok(normal.issues.some(i=>i.includes('baseline')));assert.ok(heavy.illustrativeBandwidthBytes>10_000_000_000);assert.ok(heavy.issues.some(i=>i.includes('budget')));assert.equal(normal.productionActivationPermitted,false);
+ const {resumeOperatingPlan}=await import('../app/lib/playoff/resume-operating-plan.ts');const common={updatesPerWeek:70,wireBytesPerMiss:68020,cpuMsPerUpdate:323.325,cpuMsPerUnchangedTick:20,ledgerBytesPerEntry:26836,baselineCommandsPerMonth:null,baselineBandwidthBytesPerMonth:null,physicalStorageMeasured:false,completeUsageDays:5};const normal=resumeOperatingPlan({...common,cacheMissesPerDay:100}),heavy=resumeOperatingPlan({...common,cacheMissesPerDay:10000});assert.ok(normal.illustrativeCommandsPer30Days>100000);assert.equal(normal.freshnessCommandsPerDay,10080);assert.ok(normal.issues.some(i=>i.includes('monthly work budget')));assert.ok(normal.issues.some(i=>i.includes('baseline')));assert.ok(heavy.illustrativeBandwidthBytes>10_000_000_000);assert.ok(heavy.issues.some(i=>i.includes('budget')));assert.equal(normal.productionActivationPermitted,false);
 });
 
 test('display cannot leak a later snapshot through a hot cache to an earlier as-of clock',async()=>{
@@ -102,13 +102,13 @@ test('validated unchanged ticks renew the hot cache without model history or vis
  }finally{fs.rmSync(x.dir,{recursive:true,force:true});}
 });
 
-test('already-fetched unchanged feeds skip all model/store work; confirmed changes enter the private coordinator',async()=>{
- const {confirmedResumeHandoff,confirmedResumeSignature}=await import('../app/lib/playoff/resume-trigger.ts');const x=setup();try{const i=seed(),later=advance(i,epoch+240000);let calls=0;const original=x.pipeline.tick.bind(x.pipeline);x.pipeline.tick=async now=>{calls++;return original(now);};assert.equal((await confirmedResumeHandoff(x.pipeline,i,later,epoch+240000,{signature:confirmedResumeSignature(i),status:'ready'})).status,'no-confirmed-change');assert.equal(calls,0);const final=advance(i,epoch+240000,['101']);x.set(final);assert.equal((await confirmedResumeHandoff(x.pipeline,i,final,epoch+240000)).updated,true);assert.equal(calls,1);
+test('already-checked unchanged captures skip all model/store work; confirmed changes enter the private coordinator',async()=>{
+ const {confirmedResumeHandoff,confirmedResumeSignature}=await import('../app/lib/playoff/resume-trigger.ts');const x=setup();try{const i=seed(),later=advance(i,epoch+240000);let calls=0;const original=x.pipeline.tick.bind(x.pipeline);x.pipeline.tick=async now=>{calls++;return original(now);};assert.equal((await confirmedResumeHandoff(x.pipeline,i,later,epoch+240000,{signature:confirmedResumeSignature(i),status:'ready',checkedAt:iso(epoch+240000)})).status,'no-confirmed-change');assert.equal(calls,0);const final=advance(i,epoch+240000,['101']);x.set(final);assert.equal((await confirmedResumeHandoff(x.pipeline,i,final,epoch+240000)).updated,true);assert.equal(calls,1);
  }finally{fs.rmSync(x.dir,{recursive:true,force:true});}
 });
 
 test('existing fresh-feed handoff skips unchanged polls/live scores without a scheduler or extra source request',async()=>{
- const {verifiedFeedResumeGate}=await import('../app/lib/playoff/resume-trigger.ts');const trace={policy:'no-store',ok:true,responseReceivedAt:iso(epoch),ageSeconds:null};const feed={season:2026,updatedAt:iso(epoch),scoreboardAvailable:true,sourceFetch:{scoreboard:trace,rankings:trace},games:[],polls:[]};assert.equal(verifiedFeedResumeGate(feed,structuredClone(feed),epoch,true),'no-confirmed-change');const final={...feed,games:[{id:'101',date:iso(epoch-3600000),status:'post',providerStatus:'STATUS_FINAL',completed:true,teams:[{id:'1',score:'17'},{id:'2',score:'24'}]}]};assert.equal(verifiedFeedResumeGate(feed,final,epoch),'refresh');assert.equal(verifiedFeedResumeGate(feed,{...final,sourceFetch:{...feed.sourceFetch,scoreboard:{...trace,ageSeconds:120}}},epoch),'withheld');assert.equal(verifiedFeedResumeGate(feed,final,epoch+360001),'withheld');
+ const {verifiedFeedResumeGate}=await import('../app/lib/playoff/resume-trigger.ts');const trace={policy:'no-store',ok:true,responseReceivedAt:iso(epoch),ageSeconds:null};const feed={season:2026,updatedAt:iso(epoch),scoreboardAvailable:true,sourceFetch:{scoreboard:trace,rankings:trace},games:[],polls:[]};assert.equal(verifiedFeedResumeGate(feed,structuredClone(feed),epoch,true,iso(epoch)),'no-confirmed-change');const final={...feed,games:[{id:'101',date:iso(epoch-3600000),status:'post',providerStatus:'STATUS_FINAL',completed:true,teams:[{id:'1',score:'17'},{id:'2',score:'24'}]}]};assert.equal(verifiedFeedResumeGate(feed,final,epoch),'refresh');assert.equal(verifiedFeedResumeGate(feed,{...final,sourceFetch:{...feed.sourceFetch,scoreboard:{...trace,ageSeconds:120}}},epoch),'withheld');assert.equal(verifiedFeedResumeGate(feed,final,epoch+360001),'withheld');
 });
 
 test('historical views use the selected retained update and its actual predecessor, never an arbitrary fallback',async()=>{
@@ -117,7 +117,7 @@ test('historical views use the selected retained update and its actual predecess
 });
 
 test('a failed or interrupted engine update is retried even after the source feed stops changing',async()=>{
- const {confirmedResumeHandoff,confirmedResumeSignature}=await import('../app/lib/playoff/resume-trigger.ts');const x=setup();try{await x.pipeline.tick(epoch);const final=advance(seed(),epoch+240000,['101']);x.set(final);const old=confirmedResumeSignature(seed());assert.equal((await confirmedResumeHandoff(x.pipeline,final,final,epoch+240000,{signature:old,status:'ready'})).status,'updated');const ack=(await state(x.store)).sourceSignature;assert.equal((await confirmedResumeHandoff(x.pipeline,final,final,epoch+240000,{signature:ack,status:'ready'})).status,'no-confirmed-change');assert.equal((await state(x.store)).history.length,2);}finally{fs.rmSync(x.dir,{recursive:true,force:true});}
+ const {confirmedResumeHandoff,confirmedResumeSignature}=await import('../app/lib/playoff/resume-trigger.ts');const x=setup();try{await x.pipeline.tick(epoch);const final=advance(seed(),epoch+240000,['101']);x.set(final);const old=confirmedResumeSignature(seed());assert.equal((await confirmedResumeHandoff(x.pipeline,final,final,epoch+240000,{signature:old,status:'ready'})).status,'updated');const ack=(await state(x.store)).sourceSignature;assert.equal((await confirmedResumeHandoff(x.pipeline,final,final,epoch+240000,{signature:ack,status:'ready',checkedAt:iso(epoch+240000)})).status,'no-confirmed-change');assert.equal((await state(x.store)).history.length,2);}finally{fs.rmSync(x.dir,{recursive:true,force:true});}
 });
 test('embedded poll records can refresh without rewriting a published ranking snapshot or creating false movement',async()=>{
  const x=setup();try{await x.pipeline.tick(epoch);const i=advance(seed(),epoch+240000);i.editions[0].ranks[0].record='updated aggregate, not a new poll';x.set(i);assert.equal((await x.pipeline.tick(epoch+240000)).status,'unchanged');const d:any=await x.pipeline.display(epoch+240000);assert.equal(d.view.officialEditions[0].date,seed().editions[0].date);assert.equal((await state(x.store)).history.length,1);}finally{fs.rmSync(x.dir,{recursive:true,force:true});}
@@ -134,4 +134,47 @@ test('a stale worker CAS failure cannot mark a newer independently committed hea
 
 test('the captured complete 2026 universe reaches the same private pipeline with current Tennessee records',async()=>{
  const {benchmarkFixtureBase64}=await import('../app/lib/playoff/benchmark-fixture.ts');const {gunzipSync}=await import('node:zlib');const input=JSON.parse(gunzipSync(Buffer.from(benchmarkFixtureBase64,'base64')).toString());const x=setup();try{x.set(input);assert.equal((await x.pipeline.tick(Date.parse(input.observedAt))).status,'updated');const d:any=await x.pipeline.display(Date.parse(input.observedAt));assert.equal(d.view.season,2026);assert.equal(d.view.rows.length,138);const t=d.view.rows.find((r:any)=>r.id==='2633');assert.equal(t.overall,'6-2');assert.equal(t.conferenceRecord,'3-2');assert.equal(d.view.projectedBracket,null);assert.equal(d.view.playoffProbabilities,null);}finally{fs.rmSync(x.dir,{recursive:true,force:true});}
+});
+
+// Simulations: no new real events or production calls.
+test('inactive handoffs renew saved freshness without creating duplicate history',async()=>{
+ const {confirmedResumeHandoff}=await import('../app/lib/playoff/resume-trigger.ts');const x=setup();
+ try{await x.pipeline.tick(epoch);for(let n=1;n<=4;n++){
+  const at=epoch+n*240000,i=advance(seed(),at),checkpoint=await state(x.store);x.set(i);
+  assert.equal((await confirmedResumeHandoff(x.pipeline,i,i,at,{signature:checkpoint.sourceSignature,status:checkpoint.status,checkedAt:checkpoint.checkedAt})).status,'unchanged');
+  const d:any=await x.pipeline.display(at);assert.equal(d.status,'ready');assert.equal(d.checkedAt,iso(at));
+ }assert.equal((await state(x.store)).history.length,1);
+ }finally{fs.rmSync(x.dir,{recursive:true,force:true});}
+});
+test('missing, future or expired freshness proof cannot skip revalidation',async()=>{
+ const {confirmedResumeHandoff,confirmedResumeSignature}=await import('../app/lib/playoff/resume-trigger.ts');const x=setup();
+ try{await x.pipeline.tick(epoch);const i=advance(seed(),epoch+480000);x.set(i);
+ for(const checkedAt of [undefined,iso(epoch),iso(epoch+480001),'invalid']){
+  assert.equal((await confirmedResumeHandoff(x.pipeline,i,i,epoch+480000,{signature:confirmedResumeSignature(i),status:'ready',checkedAt})).status,'unchanged');
+ }assert.equal((await state(x.store)).history.length,1);
+ }finally{fs.rmSync(x.dir,{recursive:true,force:true});}
+});
+test('feed equality without a saved current freshness receipt cannot bypass the engine',async()=>{
+ const {verifiedFeedResumeGate}=await import('../app/lib/playoff/resume-trigger.ts');const trace={policy:'no-store',ok:true,responseReceivedAt:iso(epoch),ageSeconds:null};const feed={season:2026,updatedAt:iso(epoch),scoreboardAvailable:true,sourceFetch:{scoreboard:trace,rankings:trace},games:[],polls:[]};
+ for(const checkedAt of [undefined,iso(epoch-240000),iso(epoch+1)])assert.equal(verifiedFeedResumeGate(feed,feed,epoch,true,checkedAt),'refresh');
+});
+test('confirmed handoff identity includes schedule corrections and unresolved fixture evidence',async()=>{
+ const {confirmedResumeSignature}=await import('../app/lib/playoff/resume-trigger.ts');const a=seed(),b=structuredClone(a);b.games.at(-1)!.date='2026-10-28T12:00:00Z';assert.notEqual(confirmedResumeSignature(a),confirmedResumeSignature(b));
+ const c=structuredClone(a);c.pendingGames=[{id:'slot',name:'Verified championship slot',date:'2026-12-05T00:00:00Z',knownTeamIds:[],observedAt:c.observedAt,source:'Controlled fixture evidence'}];assert.notEqual(confirmedResumeSignature(a),confirmedResumeSignature(c));
+});
+
+test('operating admission includes inactive freshness ticks and retained archive transfer',async()=>{
+ const {resumeOperatingPlan}=await import('../app/lib/playoff/resume-operating-plan.ts');const o={updatesPerWeek:70,cacheMissesPerDay:100,wireBytesPerMiss:58260,cpuMsPerUpdate:323.325,cpuMsPerUnchangedTick:20,ledgerBytesPerEntry:26836,baselineCommandsPerMonth:null,baselineBandwidthBytesPerMonth:null,physicalStorageMeasured:false,completeUsageDays:5,compressedStateBytes:756628};
+ const plan=resumeOperatingPlan(o);assert.equal(plan.freshnessCommandsPerDay,10080);assert.ok(plan.peakDayCommands>5000);assert.ok(plan.illustrativeBandwidthBytes>30_000_000_000);assert.equal(plan.bandwidthIsLowerBound,false);assert.equal(plan.productionActivationPermitted,false);
+ const inactive=resumeOperatingPlan({...o,updatesPerWeek:0,cacheMissesPerDay:0});assert.equal(inactive.illustrativeCommandsPer30Days,302400);assert.ok(inactive.issues.some(i=>i.includes('daily candidate budget')));
+});
+
+test('compact freshness has a bounded candidate scenario and exposes excessive misses',async()=>{
+ const {resumeOperatingPlan}=await import('../app/lib/playoff/resume-operating-plan.ts');const o={updatesPerWeek:70,cacheMissesPerDay:50,wireBytesPerMiss:58260,cpuMsPerUpdate:323.325,cpuMsPerUnchangedTick:20,ledgerBytesPerEntry:26836,baselineCommandsPerMonth:null,baselineBandwidthBytesPerMonth:null,physicalStorageMeasured:false,completeUsageDays:5,compressedStateBytes:756628,freshnessProtocol:'compact' as const};const plan=resumeOperatingPlan(o);
+ assert.ok(plan.illustrativeCommandsPer30Days<100000);assert.ok(plan.illustrativeBandwidthBytes<2_000_000_000);assert.ok(plan.peakDayCommands<5000);assert.equal(plan.productionActivationPermitted,false);
+ assert.ok(resumeOperatingPlan({...o,cacheMissesPerDay:100}).illustrativeCommandsPer30Days>100000);
+});
+
+test('a delayed transport receipt cannot reset the age of older source observations',async()=>{
+ const x=setup();try{const c=capture(seed());c.receivedAt=iso(epoch+300000);const p=new ResumePipeline(x.store,{read:async()=>c},()=>0);assert.equal((await p.ingest(c,epoch+300000)).status,'updated');const d:any=await p.display(epoch+300000);assert.equal(d.checkedAt,iso(epoch));assert.equal((await p.display(epoch+360001) as any).status,'withheld');}finally{fs.rmSync(x.dir,{recursive:true,force:true});}
 });
