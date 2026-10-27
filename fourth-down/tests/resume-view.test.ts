@@ -24,3 +24,25 @@ test('controlled replay of a real ASU–Texas Tech final changes other teams wit
 test('historical replay never displays 2026 qualification rules as 2025 rules',()=>{const v=resumeView(after,before,clock);assert.match(v.championshipScenario.text,/Historical 2025/);assert.doesNotMatch(v.championshipScenario.text,/2026|Notre Dame/);});
 test('unverified prior anchors and conflicting current records do not create confident movement',()=>{const prior=runShadow({...fixture.before,editions:[]},candidates[0],false,null,'resume-shadow-v1.2.0');assert.equal(resumeView(after,prior,clock).comparison,'withheld');const id=fixture.after.teams[0].id;const conflicting=runShadow({...fixture.after,teams:fixture.after.teams.map((t:any)=>({...t,...(t.id===id?{reportedRecord:'99-0'}:{})}))},candidates[0],false,null,'resume-shadow-v1.2.0');const view=resumeView(conflicting,before,clock);assert.equal(view.rows.find(r=>r.id===id)!.overall,null);assert.ok(view.rows.every(r=>r.resumePosition===null&&r.movement===null));assert.throws(()=>resumeView({...after,inputHash:'tampered'},before,clock));});
 test('simulated fresh live scenario remains separate and stale/tied evidence cannot imply a winner',()=>{const g=fixture.after.games.find((g:any)=>g.teams.every((id:string)=>fixture.after.teams.some((t:any)=>t.id===id))&&validFinal(g,Date.parse(after.at)));const live={...g,state:'in',completed:false,winner:null,date:new Date(Date.parse(after.at)-3*3600000).toISOString(),period:4,clock:120,source:'simulated live-overlay regression; not a real live observation'};const input={...fixture.after,games:fixture.after.games.map((x:any)=>x.id===g.id?live:x)};const c=runShadow(input,candidates[0],false,null,'resume-shadow-v1.2.0');const v=resumeView(c,undefined,c.at);assert.ok(v.liveScenario);assert.equal(v.projectedBracket,null);const stored=hash(c);assert.equal(resumeView(c,undefined,new Date(Date.parse(c.at)+7*60000).toISOString()).liveScenario,null);assert.equal(hash(c),stored);const tied={...input,games:input.games.map((x:any)=>x.id===g.id?{...x,scores:[17,17]}:x)};const t=runShadow(tied,candidates[0],false,null,'resume-shadow-v1.2.0');assert.equal(resumeView(t,undefined,t.at).liveScenario,null);});
+
+
+test('full archived universe has evidence for every changed score or position',()=>{
+ const view=resumeView(after,before,clock);assert.equal(view.rows.length,136);
+ for(const row of view.rows){
+  if(row.movement!==0||Math.abs(row.scoreDelta??0)>0.000001)assert.ok(row.reasons.length,`${row.name}: unexplained change`);
+  for(const reason of row.reasons)for(const id of reason.gameIds){
+   const game=fixture.after.games.find((g:any)=>g.id===id&&validFinal(g,Date.parse(after.at)));
+   assert.ok(game,`${row.name}: explanation references unconfirmed result ${id}`);
+   if(reason.kind==='result')assert.ok(game.teams.includes(row.id));
+  }
+  assert.ok(row.attribution);assert.ok(Math.abs(row.attribution.resultAndLedger+row.attribution.pollAnchor-(row.scoreDelta??0))<1e-8);
+ }
+});
+test('conflicting conference peer records withhold comparative standing without hiding verified own record',()=>{
+ const team=fixture.after.teams.find((t:any)=>t.conference!=='18'&&fixture.after.teams.some((x:any)=>x.id!==t.id&&x.conference===t.conference));
+ const peer=fixture.after.teams.find((t:any)=>t.id!==team.id&&t.conference===team.conference);
+ const input={...fixture.after,teams:fixture.after.teams.map((t:any)=>t.id===peer.id?{...t,reportedRecord:'99-0'}:t)};
+ const view=resumeView(runShadow(input,candidates[0],false,null,'resume-shadow-v1.2.0'),before,clock);
+ const row=view.rows.find(r=>r.id===team.id)!;assert.ok(row.overall);assert.equal(row.conferencePosition,null);
+ assert.equal(view.rows.find(r=>r.id===peer.id)!.overall,null);
+});

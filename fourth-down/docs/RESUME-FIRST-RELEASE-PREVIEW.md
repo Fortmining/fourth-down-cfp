@@ -78,3 +78,11 @@ Recommended integration, **not installed**: reuse already-fresh source data afte
 This milestone is ready for review of a limited résumé-first UI and its explanation contract. Public formula/wording approval and a bounded hosted shadow pilot are separate from approving a definitive bracket. PR #19 remains draft and unmerged.
 
 For the proposed factual fields, unverified Big Ten tie rules and broad institutional eligibility are handled by withholding qualification claims; they do not justify hiding actual records or inventing standings tiebreaks. Full 2026 Big Ten policy confirmation, remaining conference cases, eligibility evidence and stronger selection/seeding validation still block named qualifiers, a definitive projected field and bracket. Existing model comparisons do not establish that this testing formula is a better committee-selection forecast than published polls.
+
+## October 27 continuation: universe-wide explanation audit
+
+The archived October 5 → October 19, 2025 replay was audited across all 136 teams. 131 changed résumé position. Every changed score or position had an explanation; every referenced result was confirmed as of the later capture, and direct-result explanations involved the named team. Poll/result attribution reconciled for every row. This establishes explanation coverage for this replay, not predictive accuracy or proof that every explanation is sufficient for public use.
+
+A private-display fallback was corrected: conference position is now withheld when any peer in that conference has conflicting records, an absent previously confirmed final, or invalid final evidence. A team's independently verified own record remains visible. Conference positions remain simple win-percentage comparisons, never championship tiebreakers.
+
+Validation: 300 regression tests pass; lint and type checking pass. No production integrations, schedules, credentials, preferences, model weights or public qualification claims changed. Hosted-budget admission and public UI/methodology approval remain separate gates.
