@@ -67,3 +67,11 @@ test('a full-state writer cannot regress a newer compact freshness checkpoint',a
 test('an ambiguous compact renewal is not followed by hidden full-state retries',async()=>{
  const {ResumePipeline}=await import('../app/lib/playoff/resume-pipeline.ts');const fs=await import('node:fs');const {gunzipSync}=await import('node:zlib');const {hash}=await import('../app/lib/playoff/engine.ts');const f=JSON.parse(gunzipSync(fs.readFileSync(new URL('./fixtures/resume-real-replay.json.gz',import.meta.url))).toString());let now=Date.parse(f.after.observedAt);const t=transport(100),s=new RedisResumeStore(t.redis,namespace,()=>now),p=new ResumePipeline(s,{read:async()=>{throw Error('No fetch');}},()=>0);const capture=(i:any)=>({inputs:i,receivedAt:i.observedAt,sourceHashes:{fixture:hash(i)}});await p.ingest(capture(f.after),now);t.lose();now+=240000;const i={...structuredClone(f.after),observedAt:new Date(now).toISOString()},before=t.calls.length;assert.equal((await p.ingest(capture(i),now)).status,'freshness-unavailable');assert.equal(t.calls.length-before,1);assert.equal((await s.readDisplay()).checkedAt,i.observedAt);
 });
+test('hosted JSON decoders returning nil successfully cannot be indexed as checkpoint objects',()=>{
+ // The hosted run proved cjson.decode('') can succeed with nil. Guard the value's
+ // type before every decoded field access; pcall success alone is insufficient.
+ assert.match(resumeTransactionScript,/type\(h\)~='table' or type\(p\)~='table' or h\.protocol/);
+ assert.match(resumeTransactionScript,/type\(nextHead\)~='table' or nextHead\.protocol/);
+ assert.match(resumeTransactionScript,/type\(m\)~='table' then return redis.error_reply\('Corrupt quota'\)/);
+ assert.match(resumeTransactionScript,/type\(prior\)~='table' then return redis.error_reply\('Corrupt head'\)/);
+});

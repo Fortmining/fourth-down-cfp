@@ -24,8 +24,8 @@ test('unchanged, later observations and live clocks never generate duplicate con
  const x=setup();try{await x.pipeline.tick(epoch);const i=advance(seed(),epoch+240000);for(const g of i.games)g.observedAt=i.observedAt;Object.assign(i.games.find(g=>g.id==='101')!,{state:'in',scores:[7,3],period:2,clock:40});x.set(i);assert.equal((await x.pipeline.tick(epoch+240000)).status,'unchanged');assert.equal((await state(x.store)).history.length,1);const restarted=new ResumePipeline(new FileResumeStore(x.dir),x.source);assert.equal((await restarted.tick(epoch+240000)).status,'unchanged');assert.equal((await state(x.store)).history.length,1);
  }finally{fs.rmSync(x.dir,{recursive:true,force:true});}
 });
-test('stale, delayed, missing-final and conflicting records preserve confirmed head and withhold movement',async()=>{
- const x=setup();try{await x.pipeline.tick(epoch);for(const mutate of [(i:Inputs)=>{i.observedAt=iso(epoch-600001);},(i:Inputs)=>{i.games.shift();},(i:Inputs)=>{i.teams[0].reportedRecord='99-0';},(i:Inputs)=>{i.coverage.complete=false;},(i:Inputs)=>{i.games[0].scores=[null,null];},(i:Inputs)=>{i.games.push(structuredClone(i.games[0]));}]){
+test('missing-final and conflicting records preserve confirmed head and withhold movement',async()=>{
+ const x=setup();try{await x.pipeline.tick(epoch);for(const mutate of [(i:Inputs)=>{i.games.shift();},(i:Inputs)=>{i.teams[0].reportedRecord='99-0';},(i:Inputs)=>{i.coverage.complete=false;},(i:Inputs)=>{i.games[0].scores=[null,null];},(i:Inputs)=>{i.games.push(structuredClone(i.games[0]));}]){
  const i=advance(seed(),epoch+240000);mutate(i);x.set(i);const r=await x.pipeline.tick(epoch+240000);assert.equal(r.updated,false);const d:any=await x.pipeline.display(epoch+240000);assert.equal(d.revision,1);assert.equal(d.status,'withheld');assert.ok(d.view.rows.every((r:any)=>r.movement===null));}
  x.set(advance(seed(),epoch+480000));assert.equal((await x.pipeline.tick(epoch+480000)).status,'unchanged');assert.equal((await x.pipeline.display(epoch+480000) as any).status,'ready');
  }finally{fs.rmSync(x.dir,{recursive:true,force:true});}
@@ -178,3 +178,5 @@ test('compact freshness has a bounded candidate scenario and exposes excessive m
 test('a delayed transport receipt cannot reset the age of older source observations',async()=>{
  const x=setup();try{const c=capture(seed());c.receivedAt=iso(epoch+300000);const p=new ResumePipeline(x.store,{read:async()=>c},()=>0);assert.equal((await p.ingest(c,epoch+300000)).status,'updated');const d:any=await p.display(epoch+300000);assert.equal(d.checkedAt,iso(epoch));assert.equal((await p.display(epoch+360001) as any).status,'withheld');}finally{fs.rmSync(x.dir,{recursive:true,force:true});}
 });
+
+test('an older observation cannot poison a newer head or renew its freshness',async()=>{const x=setup();try{await x.pipeline.tick(epoch);const old=seed();old.observedAt=iso(epoch-600001);x.set(old);assert.equal((await x.pipeline.tick(epoch+240000)).status,'superseded');const current:any=await x.pipeline.display(epoch+240000);assert.equal(current.status,'ready');assert.equal(current.checkedAt,iso(epoch));assert.equal((await state(x.store)).history.length,1);assert.equal((await x.pipeline.display(epoch+360001) as any).status,'withheld');}finally{fs.rmSync(x.dir,{recursive:true,force:true});}});

@@ -131,7 +131,20 @@ export function boundedIntegrationPort(budget:IntegrationTestBudget,transport:Pr
   budget.reserve(ticket(),{commands:1,mutations:0,reads:1,attempts:1,wireBytes:4096,recoveries:0},'cleanup');
   try{await transport('TTL',allowed[0]);return false;}catch(error){return (error as {authorizationDenied?:boolean}).authorizationDenied===true;}
  };
- return {port,cleanup,verifyExpired,verifyRevoked,measured};
+ const verifyIsolation=async()=>{
+  // Never probe an existing application key. This absent canary is outside all
+  // four approved key patterns; both direct and nested access must be denied.
+  const canary=`fd:{resume-isolation-canary-${budget.runId}}:never-created`;
+  const probes=[['GET',canary],['EVAL',`return redis.call('GET','${canary}')`,4,...allowed]] as (string|number)[][];
+  const allowedKeyResults=[];for(const key of allowed){budget.reserve(ticket(),{commands:1,mutations:0,reads:1,attempts:1,wireBytes:4096,recoveries:0},'setup');try{allowedKeyResults.push(await transport('TTL',key)===-2);}catch{allowedKeyResults.push(false);}}
+  if(!allowedKeyResults.every(Boolean))return {inScopeEmpty:false,directDenied:false,nestedDenied:false,safe:false};
+  const denied=[];for(let n=0;n<probes.length;n++){
+   budget.reserve(ticket(),{commands:n?2:1,mutations:n?1:0,reads:1,attempts:1,wireBytes:8192,recoveries:0},'setup');
+   try{await transport(...probes[n]);denied.push(false);}catch(error){denied.push((error as {authorizationDenied?:boolean}).authorizationDenied===true);}
+  }
+  return {inScopeEmpty:true,directDenied:denied[0],nestedDenied:denied[1],safe:denied.every(Boolean)};
+ };
+ return {port,cleanup,verifyExpired,verifyRevoked,verifyIsolation,measured};
 }
 
 /** Prepared, never invoked against a real endpoint during offline validation.
@@ -141,21 +154,23 @@ export function createPreparedIntegrationSupervisor(budget:IntegrationTestBudget
  check(url.protocol==='https:'&&url.hostname.endsWith('.upstash.io')&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash,'Isolated Upstash HTTPS endpoint required');
  check(typeof credential==='string'&&credential.length>0&&credential.length<=4096&&!/\s/.test(credential),'Explicit temporary credential required');
  check(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=8000,'Bounded attempt deadline required');
+ const network={requests:0,requestBytes:0,responseBytes:0,latenciesMs:[] as number[],timeouts:0,errors:[] as string[]};
  const transport:PrivateRedisPort=async(...command)=>{
+  const started=performance.now();network.requests++;network.requestBytes+=Buffer.byteLength(JSON.stringify(command));
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
    // Exactly one application-level HTTP attempt. Every caller retry must re-enter
    // the durable budget gate. Fetch redirect following is explicitly disabled.
    const response=await fetcher(url.origin,{method:'POST',headers:{Authorization:'Bearer '+credential,'Content-Type':'application/json'},body:JSON.stringify(command),redirect:'error',signal:controller.signal});
    if(response.status===401||response.status===403)throw Object.assign(Error('Authorization denied'),{authorizationDenied:true});
-   const mode=String(command[7]),cap=command[0]!=='EVAL'?8192:mode==='read'?integrationTestLimits.stateBytes+8192:mode==='view'?integrationTestLimits.displayBytes+8192:1024;
+   const mode=String(command[7]),cap=command[0]!=='EVAL'?1024:mode==='read'?integrationTestLimits.stateBytes+8192:mode==='view'?integrationTestLimits.displayBytes+8192:1024;
    const reader=response.body?.getReader();check(reader,'Response body unavailable');let size=0;const parts:Uint8Array[]=[];
-   while(true){const next=await reader.read();if(next.done)break;size+=next.value.length;if(size>cap){controller.abort();throw Error('Oversized response');}parts.push(next.value);}
+   while(true){const next=await reader.read();if(next.done)break;size+=next.value.length;network.responseBytes+=next.value.length;if(size>cap){controller.abort();throw Error('Oversized response');}parts.push(next.value);}
    let data:{result?:unknown;error?:unknown};try{data=JSON.parse(Buffer.concat(parts).toString());}catch{throw Error('Invalid isolated response');}
-   if(!response.ok||data.error){const denied=response.status===401||response.status===403||typeof data.error==='string'&&/WRONGPASS|NOPERM|unauthori[sz]ed/i.test(data.error);throw Object.assign(Error('Isolated request rejected'),{authorizationDenied:denied});}
+   if(!response.ok||data.error){if(network.errors.length<10)network.errors.push(String(data.error??response.status).replaceAll(credential,'[credential]').replace(/[A-Za-z0-9_+\/=.-]{80,}/g,'[opaque]').slice(0,500));const denied=response.status===401||response.status===403||typeof data.error==='string'&&/WRONGPASS|NOPERM|unauthori[sz]ed/i.test(data.error);throw Object.assign(Error('Isolated request rejected'),{authorizationDenied:denied});}
    return data.result;
   }catch(error){throw Object.assign(Error('Isolated transport unavailable; reservation retained'),{authorizationDenied:(error as {authorizationDenied?:boolean}).authorizationDenied===true});}
-  finally{clearTimeout(timer);}
+  finally{if(controller.signal.aborted)network.timeouts++;network.latenciesMs.push(performance.now()-started);clearTimeout(timer);}
  };
- return boundedIntegrationPort(budget,transport);
+ return {...boundedIntegrationPort(budget,transport),network};
 }

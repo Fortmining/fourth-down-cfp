@@ -81,6 +81,7 @@ export function gameFromEspn(
         b.conference,
         String(e.id),
       ),
+    ...(e.timeValid===false||c.timeValid===false||/TBD|TBA/i.test(status.type.detail||'')?{kickoffTbd:true}:e.timeValid===true||c.timeValid===true?{kickoffTbd:false}:{}),
     period: Number.isInteger(status.period) ? status.period : null,
     clock:
       typeof status.clock === "number" && Number.isFinite(status.clock)

@@ -16,6 +16,7 @@ export type GameRevision = {
   scores: [number | null, number | null];
   winner: string | null;
   conferenceGame: boolean;
+  kickoffTbd?: boolean;
   period: number | null;
   clock: number | null;
   observedAt: string;

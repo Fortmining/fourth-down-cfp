@@ -12,7 +12,7 @@ local mode,expected,value,day,month,display,head=ARGV[1],ARGV[2],ARGV[3],ARGV[4]
 if (mode~='read' and mode~='view' and mode~='commit' and mode~='fresh') or #day~=10 or #month~=7 or #value>8389632 or #display>2097152 or #head>4096 then return redis.error_reply('Invalid transaction') end
 local commandCost=mode=='commit' and 9 or ((mode=='view' or mode=='fresh') and 7 or 5);local mutationCost=mode=='commit' and 4 or (mode=='fresh' and 2 or 1)
 local rawMeter=redis.call('GET',KEYS[2]);local meter={day=day,month=month,dc=0,dm=0,mc=0,mm=0,db=0,mb=0,dv=0}
-if rawMeter then local ok,m=pcall(cjson.decode,rawMeter);if not ok then return redis.error_reply('Corrupt quota') end;meter=m end
+if rawMeter then local ok,m=pcall(cjson.decode,rawMeter);if not ok or type(m)~='table' then return redis.error_reply('Corrupt quota') end;meter=m end
 if day<meter.day or month<meter.month then return redis.error_reply('Quota clock regressed') end
 if meter.day~=day then meter.day=day;meter.dc=0;meter.dm=0;meter.db=0;meter.dv=0 end
 if meter.month~=month then meter.month=month;meter.mc=0;meter.mm=0;meter.mb=0 end
@@ -28,7 +28,7 @@ redis.call('SET',KEYS[2],cjson.encode(meter),'EX',3024000)
 if mode=='view' then return {'read',current,redis.sha1hex(current),redis.sha1hex(redis.call('GET',KEYS[1]) or ''),redis.call('GET',KEYS[4]) or ''} end
 if mode=='fresh' then
  local ok,h=pcall(cjson.decode,current);local valid,p=pcall(cjson.decode,head)
- if not ok or not valid or h.protocol~=2 or h.status~='ready' or h.signature~=p.signature or type(h.checkedAt)~='string' or type(p.checkedAt)~='string' or p.checkedAt<h.checkedAt then return {'refresh-required'} end
+ if not ok or not valid or type(h)~='table' or type(p)~='table' or h.protocol~=2 or h.status~='ready' or h.signature~=p.signature or type(h.checkedAt)~='string' or type(p.checkedAt)~='string' or p.checkedAt<h.checkedAt then return {'refresh-required'} end
  local actual=redis.sha1hex(redis.call('GET',KEYS[1]) or '')
  if h.stateDigest~=actual or redis.call('EXISTS',KEYS[3])~=1 then return {'refresh-required'} end
  h.checkedAt=p.checkedAt;redis.call('SET',KEYS[4],cjson.encode(h),'EX',3024000)
@@ -37,8 +37,8 @@ end
 if mode=='read' then return {'read',current,redis.sha1hex(current),redis.call('GET',KEYS[4]) or ''} end
 if redis.sha1hex(current)~=expected then return {'stale'} end
 local priorHead=redis.call('GET',KEYS[4]);local valid,nextHead=pcall(cjson.decode,head)
-if not valid or nextHead.protocol~=2 then return redis.error_reply('Invalid head') end
-if priorHead then local ok,prior=pcall(cjson.decode,priorHead);if not ok then return redis.error_reply('Corrupt head') end;if type(prior.checkedAt)=='string' and (type(nextHead.checkedAt)~='string' or nextHead.checkedAt<prior.checkedAt) then return {'stale'} end end
+if not valid or type(nextHead)~='table' or nextHead.protocol~=2 then return redis.error_reply('Invalid head') end
+if priorHead then local ok,prior=pcall(cjson.decode,priorHead);if not ok or type(prior)~='table' then return redis.error_reply('Corrupt head') end;if type(prior.checkedAt)=='string' and (type(nextHead.checkedAt)~='string' or nextHead.checkedAt<prior.checkedAt) then return {'stale'} end end
 redis.call('SET',KEYS[1],value,'EX',3024000)
 redis.call('SET',KEYS[3],display,'EX',3024000)
 redis.call('SET',KEYS[4],head,'EX',3024000)

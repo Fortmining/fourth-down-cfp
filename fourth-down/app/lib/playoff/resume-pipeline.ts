@@ -81,13 +81,14 @@ export class ResumePipeline{
   }
   return this.tick(now,capture);
  }
+ async confirmedInputs(){return this.store.transaction(s=>s.history.at(-1)?structuredClone(receiptInputs(s.history.at(-1)!)):null);}
  async tick(now=Date.now(),captured?:SourceCapture){
   if(this.busy)return {status:'busy',updated:false};this.busy=true;const started=this.elapsedNow();let expectedRevision:number|null=null,candidateSignature:string|null=null;
   try{
-   const base=await this.store.transaction(s=>{charge(s,now,'tick');return {revision:s.revision,prior:s.history.at(-1)?receiptInputs(s.history.at(-1)!):undefined};});
+   const base=await this.store.transaction(s=>{charge(s,now,'tick');return {revision:s.revision,checkedAt:s.checkedAt,prior:s.history.at(-1)?receiptInputs(s.history.at(-1)!):undefined};});
    expectedRevision=base.revision;
    let capture:SourceCapture;
-   try{const abort=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;try{capture=await Promise.race([(captured?Promise.resolve(captured):this.source.read(abort.signal)),new Promise<never>((_,reject)=>{timer=setTimeout(()=>{abort.abort();reject(new OperatingLimit('Source deadline exceeded'));},pipelineLimits.deadlineMs);})]);}finally{if(timer)clearTimeout(timer);abort.abort();}validateCapture(capture,base.prior,now);}catch(error){await this.store.transaction(s=>{if(s.revision===base.revision){s.status='withheld';s.issues=[String((error as Error).message)];s.cacheExpiresAt=0;}});this.cache=null;return {status:'withheld',updated:false};}
+   try{const abort=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;try{capture=await Promise.race([(captured?Promise.resolve(captured):this.source.read(abort.signal)),new Promise<never>((_,reject)=>{timer=setTimeout(()=>{abort.abort();reject(new OperatingLimit('Source deadline exceeded'));},pipelineLimits.deadlineMs);})]);}finally{if(timer)clearTimeout(timer);abort.abort();}if(base.checkedAt&&Date.parse(capture.inputs.observedAt)<Date.parse(base.checkedAt))return {status:'superseded',updated:false};validateCapture(capture,base.prior,now);}catch(error){await this.store.transaction(s=>{if(s.revision===base.revision){s.status='withheld';s.issues=[String((error as Error).message)];s.cacheExpiresAt=0;}});this.cache=null;return {status:'withheld',updated:false};}
    if(this.elapsedNow()-started>pipelineLimits.deadlineMs)throw new OperatingLimit('Private update deadline exceeded');
    candidateSignature=confirmedResumeSignature(capture.inputs);const input=confirmedInput(capture.inputs);input.editions=input.editions.map(e=>base.prior?.editions.find(old=>old.id===e.id&&old.date===e.date)??e);const identity=semantic(input);
    return await this.store.transaction(s=>{

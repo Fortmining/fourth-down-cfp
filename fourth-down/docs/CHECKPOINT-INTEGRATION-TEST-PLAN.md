@@ -1,6 +1,6 @@
 # Protected checkpoint integration — preparation and approval plan
 
-**Prepared only. No deployment, credential provisioning, hosted Redis access, production configuration or polling change is authorized or performed.** Continue from `80adcee` in draft PR #19. Public Resume and Movers & Losers remain NO-GO.
+**One supervised run was separately approved and consumed. It failed closed; cleanup and revocation are verified. See [hosted results](HOSTED-CHECKPOINT-RESULTS.md). No further hosted run is authorized. No deployment, public activation, production configuration or polling change occurred.** Continue from `80adcee` in draft PR #19. Public Resume and Movers & Losers remain NO-GO.
 
 ## Recommended topology: one credentialed supervisor, no Redis credentials in Preview
 
