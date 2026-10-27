@@ -1,4 +1,6 @@
-# Limited Resume release: NO-GO pending hosted operating evidence
+# Limited Resume release: NO-GO pending end-to-end operating evidence
+
+Update: the single approved protected benchmark has now completed and been cleaned up. See [actual hosted results and remaining release gates](PROTECTED-BENCHMARK-RESULTS.md). The assessment below preserves the earlier pre-benchmark evidence and proposed workload; its 400-snapshot plan was superseded by [the safety revision](BENCHMARK-SAFETY-REVISION.md).
 
 Decision date: October 27, 2026. Scope: Team Resumes and Movers & Losers only. No definitive bracket, named playoff field or numerical playoff probabilities.
 
