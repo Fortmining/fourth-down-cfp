@@ -42,3 +42,9 @@ test('alert checks refresh current official rankings but retain caching for hist
 test('public live route cannot opt visitors into the internal fresh-alert mode through query parameters',async()=>{
  const exports={},calls=[];vm.runInNewContext(ts.transpileModule(fs.readFileSync('app/api/live/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports,require:()=>({loadLiveFeed:async options=>{calls.push(options);return 'cached';}})});assert.equal(await exports.GET(new Request('https://test/api/live?forAlerts=true')),'cached');assert.equal(calls[0],undefined);
 });
+
+test('optional resume capture reuses verified alert source without extra fetches or public payload changes',async()=>{
+ const h=cacheHarness(),sink={};const result=await h.load({forAlerts:true,resumeCapture:sink});assert.equal(sink.batch.scoreboard.events[0].status.type.state,'post');assert.equal(sink.batch.trace.policy,'no-store');assert.equal(h.calls.length,2);assert.equal(result.body.resumeCapture,undefined);
+ const website=cacheHarness(),webSink={batch:'old'};await website.load({resumeCapture:webSink});assert.equal(webSink.batch,undefined);assert.equal(website.calls.length,2);await Promise.allSettled(Object.values(website.work.pendingRevalidates||{}));
+ const failed={batch:'old'};await loader(async url=>{if(url.includes('scoreboard'))throw Error('outage');return {ok:true,json:async()=>({rankings:[]})};})({forAlerts:true,resumeCapture:failed});assert.equal(failed.batch,undefined);
+});

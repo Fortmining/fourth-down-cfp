@@ -3,7 +3,8 @@
   "git": {
     "deploymentEnabled": {
       "feature/team-detail-pages": false,
-      "feature/verified-mascot-names": false
+      "feature/verified-mascot-names": false,
+      "release/2026-confirmed-resumes": false
     }
   }
 }
