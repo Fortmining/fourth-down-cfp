@@ -1,6 +1,6 @@
 # Protected checkpoint integration — preparation and approval plan
 
-**One supervised run was separately approved and consumed. It failed closed; cleanup and revocation are verified. See [hosted results](HOSTED-CHECKPOINT-RESULTS.md). No further hosted run is authorized. No deployment, public activation, production configuration or polling change occurred.** Continue from `80adcee` in draft PR #19. Public Resume and Movers & Losers remain NO-GO.
+**The original run failed closed; the separately approved focused retest of `d0f9108` passed. Both runs are consumed and cleaned up, with temporary access revoked. See [focused retest](FOCUSED-REDIS-RETEST.md) and [original result](HOSTED-CHECKPOINT-RESULTS.md). No further hosted run, deployment or public activation is authorized.**
 
 ## Recommended topology: one credentialed supervisor, no Redis credentials in Preview
 

@@ -1,3 +1,4 @@
+import type {CapturedResumeBatch} from './playoff/current-resume-producer';
 import { NextResponse } from "next/server";
 import { collectPolls, defaultPoll } from "./rankings";
 import {loadCurrentRecords} from "./cached-current-records";
@@ -20,7 +21,10 @@ async function get(path: string, fresh = false, trace?: SourceFetchTrace) {
   return value;
 }
 // Only internal dispatch opts in; public requests cannot disable website caching.
-export async function loadLiveFeed({forAlerts=false}:{forAlerts?:boolean} = {}) {
+export async function loadLiveFeed({forAlerts=false,resumeCapture}:{forAlerts?:boolean;resumeCapture?:{batch?:CapturedResumeBatch}} = {}) {
+  // Opt-in in-process capture only. No production caller enables this yet; it
+  // adds no requests, callback, async work or field to the public response.
+  if(resumeCapture)delete resumeCapture.batch;
   const sourceFetch=forAlerts?{scoreboard:{policy:'no-store',requestStartedAt:new Date().toISOString(),ok:false} as SourceFetchTrace,rankings:{policy:'no-store',requestStartedAt:new Date().toISOString(),ok:false} as SourceFetchTrace}:undefined;
   const [scores, rankings] = await Promise.allSettled([
     get("scoreboard?groups=80&limit=150",forAlerts,sourceFetch?.scoreboard),
@@ -35,6 +39,10 @@ export async function loadLiveFeed({forAlerts=false}:{forAlerts?:boolean} = {}) 
       { status: 503 },
     );
   const s = scores.status === "fulfilled" ? scores.value : null;
+  if(forAlerts&&resumeCapture&&s&&sourceFetch?.scoreboard.ok&&sourceFetch.scoreboard.bodyParsedAt&&(sourceFetch.scoreboard.ageSeconds??0)<=30){
+    const ranked=rankings.status==='fulfilled'&&sourceFetch.rankings.ok&&(sourceFetch.rankings.ageSeconds??0)<=30;
+    resumeCapture.batch={scoreboard:s,...(ranked?{rankings:rankings.value}:{}),observedAt:new Date().toISOString(),trace:{policy:'no-store',ok:true,receivedAt:sourceFetch.scoreboard.bodyParsedAt,ageSeconds:sourceFetch.scoreboard.ageSeconds}};
+  }
   const polls =
     rankings.status === "fulfilled" ? rankings.value.rankings || [] : [];
   const season = s?.season?.year || polls[0]?.season?.year || null;
