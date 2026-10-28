@@ -24,3 +24,15 @@ No scoring/ingestion API, notification implementation, service worker, polling s
 Run `npm test`, `npm run lint`, `npm run typecheck`, and a production build with the existing Resume Center release flags. `scripts/navigation-browser-check.mjs` accepts `TEST_FEED_FILE` and `TEST_RESUME_FILE` captured source snapshots for reproducible desktop Chromium / iPhone-sized WebKit UI tests. Controlled fixtures are UI simulations, not new real delivery or game-result evidence.
 
 `scripts/navigation-hosted-check.mjs` uses existing short-lived Vercel authentication scoped to the Preview origin, checks deployment protection and read-only current data, and never enables or sends notifications. It does not prove physical-iPhone PWA delivery or new real final-to-movement processing; those backends are unchanged.
+
+## Review evidence (October 28, 2026)
+
+Application commit: `db7dda5`. Protected Preview: https://fourth-down-j4uksft8p-fortmining.vercel.app (existing Vercel Authentication; deployment `dpl_9z1BH1PkiRxfN9vxaYvUc7waL3bH`). PR #25 is separate from PR #19. Follow-up test/documentation commits do not change the deployed application.
+
+- Full automated suite: 303 passed, zero failures. Production build, type checks and lint passed.
+- Captured-source Chromium desktop and iPhone-sized WebKit: dedicated routes, five mobile tabs, old notification links, official poll query selection, offline recovery, unchanged favorite preferences, temporary-follow persistence, saved appearance, unsaved-change guards, mobile widths 320/390/430/844 and automated WCAG checks passed.
+- Protected hosted checks use current public data rather than simulated events. Unauthenticated access remains redirected to login. Team schedules, team/game navigation and the existing Resume Center remain available.
+- WebKit can emit native access-control diagnostics for canceled navigation or Vercel-toolbar requests. The harness excludes a diagnostic only when its exact resource matches a recorded canceled/aborted request; all other script errors still fail. The final local mobile run had no such diagnostics; the hosted run recorded one matching cancellation. This does not establish a general browser permission failure.
+- The confirmed resume packet still has its first baseline; the meaningful no-movement state is expected. No fabricated movers, test pushes, or source results were added.
+
+Physical iPhone PWA / VoiceOver review remains manual. No real notification-delivery assertion is made by these UI checks. No production deployment or merge has occurred.
