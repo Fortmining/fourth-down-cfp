@@ -1,0 +1,41 @@
+# Limited 2026 confirmed Resume release
+
+## Product scope and activation
+
+`/resumes` presents compact Team Resumes, explained Movers & Losers, supporting wins/losses, remaining games and separately dated official polls. Movement explicitly counts resume positions. The existing 35/35/10/20 experimental model is unchanged. No definitive field, bracket, playoff probability, championship qualification guarantee or live leader assumption is exposed. Conference win-rate position is labeled as an unbroken comparison, not an official championship standing.
+
+The release is disabled by default. Activation requires approved server value `FOURTH_DOWN_RESUME_RELEASE=confirmed-2026-v1` and build value `NEXT_PUBLIC_FOURTH_DOWN_RESUMES=true`. Neither has been configured in production. Home and More supply links; the five existing mobile tabs stay unchanged. PR19 remains draft/unmerged; only this isolated release branch is a merge candidate. Its automatic Git deployments are disabled to prevent an unapproved Preview.
+
+## Automatic result path
+
+The existing four-minute dispatch fetches its existing fresh ESPN sources. An optional in-process sink captures the raw verified scoreboard and available rankings, without another source request. After notifications, heartbeat and diagnostics have finished, a gated publisher checks confirmed-result/publication/schedule identity against metadata in the same existing last-check write. Unchanged/live-score-only checks do not invoke the model or add Redis commands. They do not renew the evidence date.
+
+Changed captures merge into the saved complete 2026 ledger. Historical published polls remain immutable; scores and conference records reconcile through confirmed games. Model/CAS/checkpoint/history/display logic reuses the previously tested engine and hosted Redis protocol. It recalculates the tracked field and retains the previous confirmed comparison. Stale, incomplete, conflicting, corrupt or quota-limited captures are withheld. If the source rolls past a missed result and complete coverage cannot be established, publishing stops conservatively; no aggregate or result is invented.
+
+The optional task starts only within 30 seconds of dispatch start; transport has an aggregate 12-second abort budget and per-request deadline. It has no transparent retry after ambiguous commits. Failed identical inputs back off; after three failures the next attempt is delayed 30 minutes. New confirmed identities bypass that backoff. Resume failure is isolated from push results. Existing notification cadence, credentials and subscriptions are untouched. This bounded addition can lengthen dispatch completion after alerts; it does not run before their delivery processing.
+
+## Cached display and limits
+
+Visitors read only the integrity-checked materialized packet, never full history or model calculations. The public adapter uses a five-minute shared data-cache interval and invalidates its tag after writes; private/canary defaults remain 60 seconds. Normal post-write propagation and the visible browser's one-minute refresh determine display delay; five minutes is a fallback cache interval, not a zero-delay promise. Failed/negative reads are cached to prevent per-visitor Redis retry storms. Multiple cold-worker/region fills remain possible.
+
+The public page deliberately shows **latest confirmed update** with the original date, rather than claiming six-minute live freshness. Previously verified dated movement remains useful during a failed refresh; a warning identifies pending reconciliation where storage recorded it. A scheduler failure before storage cannot annotate that packet, so its visible date remains the freshness evidence. Do not mistake load time for source verification. Initial unavailable storage shows an empty state, not the archived seed as live data.
+
+Existing store ceilings: 5,000 reserved commands/2,500 mutations per UTC day; 100,000/50,000 per month; 300 successful display misses/day; 250MB/day and 2GB/month transfer reservations. Retention is at most32 checkpoints,4MiB packed history,8MiB serialized state; individual stored values also have script caps, and four keys expire after35 days. Quota checks themselves still incur provider command overhead, including denied attempts; these are application reservations, not an account-wide billing guarantee. Negative caching bounds recurring failure attempts under ordinary traffic. Other production consumers share the account and are not charged by this meter.
+
+Normal changed-result publishing reserves approximately40 nested commands and12 mutations; first initialization up to49/16. A cached-display miss reserves7 commands/1 mutation. At one region with continuous traffic, five-minute expiry means288 baseline misses/day; writes can add invalidation misses and cold workers can amplify them. The300/day guard can therefore withhold newer displays on a busy day; it does not raise service spending or conceal degraded freshness. Already loaded dated evidence stays visible. Unchanged scheduler frames add zero model Redis calls. The source gate and caps protect notifications from unlimited new background work.
+
+Illustrative small launch:500 visits on each of8 football days/month,10 minutes per visit, one read/minute: about44,000 API requests plus4,000 page requests; at641,507 uncompressed bytes/packet, approximately28.2GB API body traffic/month before asset/protocol overhead. Shared-cache reuse reduces Redis work but not every function invocation or response byte. This is a planning assumption, not measured visitor traffic, compressed transfer or a hard global traffic controller. Broad launch beyond a small test audience requires reviewing actual account usage; no paid plan is authorized.
+
+## Evidence and remaining boundaries
+
+The corrected protected canary passed concurrency consistency, two-stage movement/history, duplicate/stale replay, negative caching, cache refresh, invalidation and desktop/iPhone-sized Chromium WCAG checks. It made39 requests,19,415,040 reserved response bytes, zero Redis/source/notification calls and was removed with provider404. The separately passed hosted Redis test established actual hosted checkpoint persistence/decoding/recovery/read behavior; it was not repeated. See CORRECTED-CANARY-RESULTS.md.
+
+Canary replay/cache fills sampled0.79–1.97 seconds of process CPU. Vercel billed CPU/cache units were unavailable; these samples do not measure the production updater or guarantee a CPU ceiling. At2 seconds/update,60 updates/day for30 days would be about1 CPU-hour/month, but that is an estimate and excludes request/other app CPU. Provider account headroom at the canary admitted that test only. Prior hosted Redis dashboard was about62K/500K commands,32MB/250MB storage,967MB/10GB bandwidth,$0, rounded and shared with production; it is not fresh release admission evidence.
+
+No new hosted combined feed→Redis→public route deployment was authorized. Local release tests connect this path with injected source/storage. Real 2026 final-to-public-movement observation remains a post-activation check; no synthetic test counts as real event confirmation. Physical iPhone behavior and billed CPU remain unverified. AP tied-rank notification issue21 is excluded.
+
+## Approval and safe rollout
+
+Final approval must cover merging the isolated release PR, an existing-project production deployment, the two release flags and initialization of only the new fixed resume namespace using the existing verified feed. No credential, service, schedule or subscription changes are required. Before public link activation, verify a valid current2026 packet initialized and source/record reconciliation succeeded; stop public activation if it has not. Confirm notifications/scores/preferences and the four-minute check after the authorized production change. Roll back by disabling the release flags; keep dated evidence and notification keys intact.
+
+Recommendation: GO for a limited, explicitly experimental confirmed-results release after final tests and the guarded initialization check, not an unlimited traffic launch or validated CFP selection model. Production activation still requires the user's approval.

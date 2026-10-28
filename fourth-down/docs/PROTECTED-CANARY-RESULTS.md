@@ -1,3 +1,5 @@
+> Superseded for release readiness by [the corrected successful canary](CORRECTED-CANARY-RESULTS.md). This first-run failure evidence is retained unchanged below.
+
 # Protected cache canary — stopped, removed, not a pass
 
 The single approved Preview was created from `9e46767` in the existing Fourth Down project, using Vercel Authentication and deployment-only canary/blank credential overrides. No production alias, project setting, schedule, user preference, subscription or service plan was changed. No second deployment was created.

@@ -551,7 +551,7 @@ export default function Page() {
             )}
           </section>
           {data?.recordObservedAt&&<p className="context">Current records: latest available ESPN totals · observed {new Date(data.recordObservedAt).toLocaleString(undefined,{timeZoneName:"short"})}. Official ranks and poll movement retain their publication dates. {data.recordStatus}</p>}
-          <ModelStatus/><div id="outlook" className="sectionNav" aria-label="Tracker views">
+          <ModelStatus/>{process.env.NEXT_PUBLIC_FOURTH_DOWN_RESUMES==='true'&&<p className="context"><a href="/resumes">Team Resumes & Movers — see what changed after final results →</a></p>}<div id="outlook" className="sectionNav" aria-label="Tracker views">
             {[
               ["outlook", "Playoff outlook"],
               ["bracket", "12-team bracket"],
@@ -879,7 +879,7 @@ export default function Page() {
               </div>
             )}
           </section>
-          <Following games={data?.games||[]} currentRecords={data?.currentRecords}/><MoreSettings games={data?.games||[]} teams={[...new Map([...(data?.games.flatMap(g=>g.teams)||[]), ...(data?.rankings.map(t=>({id:t.teamId,name:t.name}))||[])].map(t=>[t.id,{id:t.id,name:t.name}])).values()]} />
+          <Following games={data?.games||[]} currentRecords={data?.currentRecords}/><MoreSettings resumesAvailable={process.env.NEXT_PUBLIC_FOURTH_DOWN_RESUMES==='true'} games={data?.games||[]} teams={[...new Map([...(data?.games.flatMap(g=>g.teams)||[]), ...(data?.rankings.map(t=>({id:t.teamId,name:t.name}))||[])].map(t=>[t.id,{id:t.id,name:t.name}])).values()]} />
           <section id="method" className="method">
             <div>
               <div className="eyebrow">TRANSPARENCY FIRST</div>
