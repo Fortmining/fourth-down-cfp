@@ -1,0 +1,3 @@
+import {releasedResumesEnabled} from '../../lib/playoff/confirmed-release';import {latestReleasedResumes} from '../../lib/playoff/resume-production';
+export const dynamic='force-dynamic';export const maxDuration=15;
+export async function GET(request:Request){const headers={'Cache-Control':'no-store','X-Robots-Tag':'noindex'};if(!releasedResumesEnabled())return new Response('Not found',{status:404,headers});if(new URL(request.url).search)return new Response('Unsupported query',{status:400,headers});try{const packet=await latestReleasedResumes();return Response.json(packet??{status:'unavailable',view:null},{status:packet?200:503,headers});}catch{return Response.json({status:'unavailable',view:null},{status:503,headers});}}

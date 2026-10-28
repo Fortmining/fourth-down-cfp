@@ -32,7 +32,8 @@ export async function GET(request:Request) {
   webpush.setVapidDetails(process.env.VAPID_SUBJECT!,process.env.VAPID_PUBLIC_KEY!,process.env.VAPID_PRIVATE_KEY!);
   stage='background-tests';const backgroundTests=await deliverBackgroundTests();
   stage='fetch-feed';
-  const response=await loadLiveFeed({forAlerts:true});if(!response.ok)throw Error('Feed unavailable');
+  const resumeCapture=process.env.FOURTH_DOWN_RESUME_RELEASE==='confirmed-2026-v1'?{} as {batch?:import('../../../lib/playoff/current-resume-producer').CapturedResumeBatch}:undefined;
+  const response=await loadLiveFeed({forAlerts:true,...(resumeCapture?{resumeCapture}:{})});if(!response.ok)throw Error('Feed unavailable');
   const feed=await response.json() as AlertFeed;
   const previous=await redis('GET','fd:v05:baseline');
   const prior=previous?JSON.parse(previous) as AlertFeed:null;const observedAt=Date.now();
@@ -155,7 +156,9 @@ export async function GET(request:Request) {
   await redis('SET','fd:v05:baseline',JSON.stringify(feed),'EX',60*60*24*14);
   await redis('SET','fd:v05:heartbeat',String(Date.now()),'EX',420);
   await schedulerAudit({kind:'run-completed',...context,sent,failed,events:events.length,scanned,durationMs:Date.now()-startedAt});
-  await redis('SET','fd:v05:last-check',JSON.stringify({at:new Date().toISOString(),runId,sent,failed,backgroundTests,events:events.length,diagnosticsHealthy:auditHealthy}),'EX',86400);
+  let resumeSync:unknown;
+  if(resumeCapture){try{const {publishReleasedResumes}=await import('../../../lib/playoff/resume-production');resumeSync=await publishReleasedResumes(resumeCapture.batch,precedingCheck?JSON.parse(precedingCheck).resumeSync:undefined,startedAt);}catch{resumeSync={status:'failed',at:Date.now()};}}
+  await redis('SET','fd:v05:last-check',JSON.stringify({at:new Date().toISOString(),runId,sent,failed,backgroundTests,events:events.length,diagnosticsHealthy:auditHealthy,...(resumeCapture?{resumeSync}:{})}),'EX',86400);
   return json({sent,failed,backgroundTests,events:events.length,baseline:!previous},failed||backgroundTests.failed?502:200);
  }catch{await schedulerAudit({kind:'run-failed',stage,durationMs:Date.now()-startedAt});return json({error:'Background check did not complete. No unverified alerts were issued.'},503);}
  finally{if(locked)try{await redis('EVAL',"if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end",1,lock,owner);}catch{}}

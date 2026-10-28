@@ -1,0 +1,83 @@
+[
+  {
+    "sha": "cdaa30230f7eaac10909f35fe3658e48327dc05f",
+    "date": "2025-10-05T10:42:30Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "0f53dd8a381c5261f154df58637f064ebd014fb8",
+    "bytes": 828039,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/cdaa30230f7eaac10909f35fe3658e48327dc05f/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/28c7914fdc8bf11c96ce78b552119757bf63751d"
+  },
+  {
+    "sha": "d51c9bdd3493d19b139cce3ea11965b167c56e26",
+    "date": "2025-10-19T07:18:16Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "765bbb28ce9407a7bdec6d2ae1b1c1d25681b9c9",
+    "bytes": 836992,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/d51c9bdd3493d19b139cce3ea11965b167c56e26/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/71eca7e735ec518989d0f4e84a152be73c532d6f"
+  },
+  {
+    "sha": "f862fedee1d3618bc4df1ec4418d670599aa2645",
+    "date": "2025-10-26T07:19:57Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "3a81345bc9fb5f8ddbaf911517b945694ad639b9",
+    "bytes": 841230,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/f862fedee1d3618bc4df1ec4418d670599aa2645/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/70ae8e95fca62d1fe53ee3ad154c7d5730896b28"
+  },
+  {
+    "sha": "b92eea78508a0b2317f3a3d44df9b5eb0aec623f",
+    "date": "2025-11-02T07:25:07Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "6e272f754f16d09a001998ccdb0d9afc0ebc3c9d",
+    "bytes": 846187,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/b92eea78508a0b2317f3a3d44df9b5eb0aec623f/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/acc425347f77fb864b5bf875effee53af57cde81"
+  },
+  {
+    "sha": "69329be4c9ef50b7f5ed8684ca83552d6dbd3c5e",
+    "date": "2025-11-09T09:35:13Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "ccc213af2d53cdbaeaeb6f4e9de855c3a894023f",
+    "bytes": 851174,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/69329be4c9ef50b7f5ed8684ca83552d6dbd3c5e/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/d5916d8714a0cee67216e7f811f97533885dd89b"
+  },
+  {
+    "sha": "153e1ec9bbd4ac327bc633b1f449ddfaeea00e12",
+    "date": "2025-11-16T07:29:18Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "89228aa4490343abfc3f9fcb945b8f72013f58cc",
+    "bytes": 858299,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/153e1ec9bbd4ac327bc633b1f449ddfaeea00e12/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/a52f2be3d4e9640e0131171e9070068df45fe1d2"
+  },
+  {
+    "sha": "a2c12415745f70dcbd3ec2811eca5e491d25b1d2",
+    "date": "2025-11-23T07:34:52Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "ffe8be938c7b1b4a8ad40652e9997e9bcaeecb84",
+    "bytes": 866410,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/a2c12415745f70dcbd3ec2811eca5e491d25b1d2/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/fbbc553e54fd674ce5c39290ae33fec5e3c5008f"
+  },
+  {
+    "sha": "6675267af3dc0fd24c1ef0076a0b462fe667a32b",
+    "date": "2025-11-30T07:37:29Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "3f1e9d7634c2a92735b3938f8e6aa87d333a6408",
+    "bytes": 876556,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/6675267af3dc0fd24c1ef0076a0b462fe667a32b/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/613139688919a58932b41782bcfed9f69d395f18"
+  },
+  {
+    "sha": "553653a5ff8d77a34e77370358b4beb36f0c5a31",
+    "date": "2025-12-06T17:16:34Z",
+    "path": "schedules/csv/cfb_schedules_2025.csv",
+    "blob": "59e89b11642ad8d12012f926458d72e01eb827f7",
+    "bytes": 884085,
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/553653a5ff8d77a34e77370358b4beb36f0c5a31/schedules/csv/cfb_schedules_2025.csv",
+    "treeUrl": "https://api.github.com/repos/sportsdataverse/cfbfastR-data/git/trees/2cbea0db1beeb68ed9fea9fa6f0bda5f728d04ba"
+  }
+]
