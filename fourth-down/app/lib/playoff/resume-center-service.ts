@@ -5,8 +5,8 @@ import {ResumePipeline,type ResumeStore,type SharedResumeDisplay} from './resume
  * this module provisions nothing and reads no credentials or production settings. */
 export class ResumeCenterService{
  readonly pipeline:ResumePipeline;readonly producer:CurrentResumeProducer|null;
- constructor(store:ResumeStore,seed?:Inputs){
-  this.pipeline=new ResumePipeline(store,{read:async()=>{throw Error('Only an existing verified source capture may update resumes');}});
+ constructor(store:ResumeStore,seed?:Inputs,elapsedNow=()=>performance.now()){
+  this.pipeline=new ResumePipeline(store,{read:async()=>{throw Error('Only an existing verified source capture may update resumes');}},elapsedNow);
   this.producer=seed?new CurrentResumeProducer(this.pipeline,seed):null;
  }
  acceptConfirmedSource(batch:CapturedResumeBatch,now=Date.now()){if(!this.producer)throw Error('Display-only service cannot ingest sources');return this.producer.accept(batch,now);}
