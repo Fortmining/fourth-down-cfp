@@ -56,3 +56,10 @@ async function appendPrivateAudit(key:string,entry:Record<string,unknown>,limit:
  try{await redis('LPUSH',key,JSON.stringify({at:new Date().toISOString(),...entry}));await redis('LTRIM',key,0,limit-1);await redis('EXPIRE',key,60*60*24*30);return true;}
  catch{console.warn('Notification audit write unavailable',JSON.stringify({kind:entry.kind,runId:entry.runId,gameId:entry.gameId,decision:entry.decision}));return false;}
 }
+
+// Opt-in independent publisher. Existing notification redis() remains unchanged.
+export async function redisWithSignal(signal:AbortSignal,...command:(string|number)[]){
+ const base=storageUrl();if(signal.aborted||!base||!base.startsWith('https://')||!storageToken())throw Error('Storage unavailable');
+ const r=await fetch(base,{method:'POST',headers:{Authorization:`Bearer ${storageToken()}`,'Content-Type':'application/json'},body:JSON.stringify(command),cache:'no-store',signal:AbortSignal.any([signal,AbortSignal.timeout(5000)])});
+ if(!r.ok)throw Error('Storage unavailable');const data=await r.json();if(data.error)throw Error('Storage unavailable');return data.result;
+}

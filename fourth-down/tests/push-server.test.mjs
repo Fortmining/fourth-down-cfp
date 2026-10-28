@@ -13,7 +13,7 @@ import * as gameAlerts from '../app/lib/game-alerts.ts';
 import * as recovery from '../app/lib/kickoff-recovery.ts';
 const require=createRequire(import.meta.url);
 const env={UPSTASH_REDIS_REST_URL:'https://test-redis.invalid',UPSTASH_REDIS_REST_TOKEN:'test-only',VAPID_PUBLIC_KEY:'test',VAPID_PRIVATE_KEY:'test',VAPID_SUBJECT:'https://fourth-down-cfp.vercel.app',CRON_SECRET:'test-secret'};
-function harness() {
+function harness({resumePublisher,releaseEnabled=false}={}) {
  let sendError=null,auditError=false,feedError=false;const news=[];
  const values=new Map(),hashes=new Map(),lists=new Map();const sent=[];
  let feed={season:2026,updatedAt:new Date().toISOString(),games:[],polls:[]};
@@ -43,7 +43,7 @@ function harness() {
  }
  function load(path,mapping={}){
   const exports={};const source=ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
-  vm.runInNewContext(source,{exports,process:{env:{...env}},Buffer,URL,Request,Response,AbortSignal,Date,console,
+  vm.runInNewContext(source,{exports,process:{env:{...env,...(releaseEnabled?{FOURTH_DOWN_RESUME_RELEASE:"confirmed-2026-v1"}:{})}},Buffer,URL,Request,Response,AbortSignal,Date,console,
    fetch:async(_url,options)=>json({result:command(JSON.parse(options.body))}),
    require:name=>mapping[name]??(name.includes('ranking-recovery')?rankingRecovery:name.includes('outlook-snapshots')?outlook:name.includes('notification-history')?history:name.includes('lib/pulse')?pulse:name.includes('game-alerts')?gameAlerts:name.includes('kickoff-recovery')?recovery:name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
   return exports;
@@ -54,7 +54,7 @@ function harness() {
  const subscription=load('app/api/alerts/subscription/route.ts');
  const config=load('app/api/alerts/config/route.ts');
  const kickoffDiagnostics=load('app/lib/kickoff-diagnostics.ts');
- const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../../lib/live-feed':{loadLiveFeed:async options=>{assert.equal(options?.forAlerts,true);return feedError?json({error:'Fixture outage'},{status:503}):json(feed);}},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}});
+ const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/playoff/resume-production':{publishReleasedResumes:async(...args)=>resumePublisher(...args)},'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../../lib/live-feed':{loadLiveFeed:async options=>{assert.equal(options?.forAlerts,true);if(options.resumeCapture)options.resumeCapture.batch={controlled:true};return feedError?json({error:'Fixture outage'},{status:503}):json(feed);}},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}});
  const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}};
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
@@ -410,4 +410,13 @@ test('desktop push endpoint families use isolated capabilities and deleting desk
  assert.equal((await h.subscription.POST(request({action:'create',subscription:endpoint,preferences:p}))).status,409);
  assert.equal((await h.subscription.POST(request({action:'delete',id:phone.id,token:desktop.token}))).status,403);
  assert.equal((await h.subscription.POST(request({action:'delete',id:desktop.id,token:desktop.token}))).status,200);assert.equal(JSON.stringify((await h.store.loadSubscription(phone.id)).preferences.favorites),JSON.stringify(p.favorites));
+});
+
+test('optional confirmed resume publishing runs after favorite final delivery and failure cannot break notifications',async()=>{
+ let h,calls=0;h=harness({releaseEnabled:true,resumePublisher:async(batch,previous,startedAt)=>{calls++;assert.equal(batch.controlled,true);assert.equal(typeof startedAt,'number');if(calls===2){assert.equal(h.sent.length,1);throw Error('Isolated resume timeout');}return {status:'accepted',lastAcceptedAt:Date.now()};}});
+ const date=new Date(Date.now()-3600000).toISOString(),game={id:'resume-safe',name:'Favorite at Rival',date,status:'in',providerStatus:'STATUS_IN_PROGRESS',completed:false,teams:[{id:'1',name:'Favorite',score:'7'},{id:'2',name:'Rival',score:'0'}]};
+ h.setFeed({season:2026,updatedAt:new Date().toISOString(),games:[game],polls:[]});assert.equal((await run(h)).status,200);
+ const preferences=alerts.defaultAlertPreferences();preferences.favorites=[{id:'1',name:'Favorite'}];preferences.myTeams={enabled:true,kickoff:true,final:true};await h.subscription.POST(request({action:'create',subscription:endpoint,preferences}));
+ h.setFeed({season:2026,updatedAt:new Date().toISOString(),games:[{...game,status:'post',providerStatus:'STATUS_FINAL',completed:true,teams:[{...game.teams[0],score:'28',winner:true},game.teams[1]]}],polls:[]});
+ assert.equal((await run(h)).status,200);assert.equal(calls,2);assert.equal(h.sent.length,1);assert.equal(h.sent[0].payload.id,'game:resume-safe:final');assert.equal(JSON.parse(h.values.get('fd:v05:last-check')).resumeSync.status,'failed');
 });
