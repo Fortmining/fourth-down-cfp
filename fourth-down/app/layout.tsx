@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   title: "Fourth Down | The College Football Playoff Picture",
   description:
-    "Follow the road to twelve with live college football scores, transparent poll-based outlook tiers, team movement, and a 12-team bracket preview.",
+    "Follow the road to twelve with live college football scores, official rankings, team schedules, and explained independent resume movement.",
   openGraph: {
     title: "Fourth Down · The road to twelve.",
     description: "Live scores. Poll movement. A clearer playoff picture.",

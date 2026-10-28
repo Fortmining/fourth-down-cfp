@@ -26,7 +26,7 @@ export default function ResumeCenter({canary=false,confirmed=false}:{canary?:boo
    {data?.checkedAt&&<p className="teamFreshness">{canary?'Replay source timestamp:':saved?'Saved evidence captured:':'Last source check:'} {date(data.checkedAt)}{view&&` · Last confirmed change: ${date(view.at)}`}</p>}
    {data?.pendingSourceReconciliation&&<p role="status" className="teamWarning">Newer source data is pending reconciliation. This is the last confirmed update.</p>}
    {error&&<p role="alert" className="teamWarning">{error}</p>}
-   {!view&&<section><h2>Waiting for a verified 2026 update</h2><p>The current-season source must be connected before a resume can be shown. No archived season is substituted.</p><a href="/#scores">Browse current games →</a></section>}
+   {!view&&<section><h2>Waiting for a verified 2026 update</h2><p>The current-season source must be connected before a resume can be shown. No archived season is substituted.</p><a href="/games">Browse current games →</a></section>}
    {view&&<>
     <section aria-labelledby="movers-title"><h2 id="movers-title">Movers & Losers</h2><p className="teamFreshness">{view.previousAt?`Since the confirmed update on ${date(view.previousAt)}`:'The first confirmed update establishes a baseline.'}</p>
      <div className="resumeMovers">{movers.map(row=><a key={row.id} href={`#resume-${row.id}`} onClick={()=>{setSearch(row.name);setVisibleCount(12);}} className="resumeMover"><b>{row.name}</b><strong>{row.movement!>0?'↑':'↓'} {Math.abs(row.movement!)} resume positions</strong><span>{row.movement!<0&&row.scoreDelta!>0?'Improved, but other teams gained more.':row.reasons.find(reason=>reason.kind!=='poll')?.text||'Independent order changed; see the supporting evidence.'}</span></a>)}</div>

@@ -1,0 +1,8 @@
+"use client";
+import {useEffect,useState,type ReactNode} from 'react';
+import TrackerNavigation from './TrackerNavigation';import {readAppearance} from '../lib/appearance';import './fan-experience.css';
+export default function AppFrame({title,eyebrow='FOURTH DOWN',description,children}:{title:string;eyebrow?:string;description?:string;children:ReactNode}){
+ const [appearance,setAppearance]=useState('light'),[theme,setTheme]=useState('stadium');
+ useEffect(()=>{const read=()=>{setAppearance(readAppearance());try{const t=localStorage.getItem('fourth-down-theme');setTheme(['stadium','turf','prime'].includes(t||'')?t!:'stadium');}catch{}};read();window.addEventListener('storage',read);window.addEventListener('fourth-down-display-changed',read);return()=>{window.removeEventListener('storage',read);window.removeEventListener('fourth-down-display-changed',read);};},[]);
+ return <div className="shell fanApp" data-appearance={appearance} data-theme={theme}><a className="skip" href="#main-content">Skip to content</a><div className="siteHeader"><a className="brand" href="/"><span className="mark">4<span>TH</span></span> FOURTH DOWN</a><TrackerNavigation/><div className="mobileQuickLinks"><a href="/rankings">Rankings</a><a href="/resumes">Resumes</a></div></div><main id="main-content"><div className="pageHeading"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1>{description&&<p>{description}</p>}</div>{children}</main><footer className="fanFooter"><a className="brand" href="/">FOURTH DOWN</a><p>Independent college football. Official polls, clearly separated from experimental resume analysis.</p><div><a href="/about">How Fourth Down works</a><a href="/settings">Settings</a></div></footer><TrackerNavigation mobile/></div>;
+}
