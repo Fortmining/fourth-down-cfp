@@ -1,6 +1,6 @@
-# One protected Resume cache canary — preparation only
+# Protected Resume cache canary — original run consumed
 
-Continue from `570de2a` in draft PR #19. No deployment or new credentials are authorized by preparation approval. The successful hosted Redis checkpoint test will not be repeated.
+The separately approved Preview from `9e46767` stopped on a strict cache-fill identity assertion and was removed with404 verification. It is not a canary pass. See [results and correction](PROTECTED-CANARY-RESULTS.md). No further deployment is authorized. The successful Redis checkpoint test is not repeated.
 
 ## Deployment scope to approve
 
@@ -40,7 +40,7 @@ These are enforceable limits on the controlled test load, not a claim that clien
 1. Confirm exact deployment/project/Preview identity, fresh plan headroom and protection without changing settings. A protected login/denial cannot count as a successful app response.
 2. Reuse the captured 2026 ledger and existing model. The first scheduled matchup involving a captured current Top 25 team receives a fixed synthetic 28–14 final, explicitly labeled controlled replay. No team-specific tuning, invented live event or probability claim.
 3. Run the existing current-season producer/service through baseline, confirmed-result update, duplicate update, two retained checkpoints and stale-source withholding. The per-cache-fill temporary file store is deleted in finally. This tests the replay path; it is not a new distributed-persistence or real-event verification claim.
-4. Exercise the ACTUAL Next shared-cache adapter: cold/warm reads, a four-request warm burst, separately keyed before/after packets, negative caching, 60-second expiry/refresh, and final tag invalidation. Stable fill IDs demonstrate observed hits. Source-read logs distinguish fills from visitor calls.
+4. Exercise the ACTUAL Next shared-cache adapter: cold/warm reads, a four-request warm burst, separately keyed before/after packets, negative caching, 60-second expiry/refresh, and final tag invalidation. Compare snapshot/input identities and resume facts across reads. Fill IDs measure observed reuse and amplification, not an assumed immediate global cache identity. Source-read logs distinguish fills from visitor calls.
 5. Show the existing Team Resumes/Movers UI on desktop and iPhone-sized Chromium; check explained movement, labels, mobile overflow and automated accessibility. Follow actions and automatic polling are disabled only in canary mode. Existing production browser evidence is reused rather than repeating unrelated tests.
 6. Capture bounded receipts, request IDs, actual response bytes, cache-fill IDs, local/handler timings and available Vercel execution/CPU/cache metrics. The response's process CPU is NOT Vercel billing. If CPU or cache billing units are unavailable, report that explicitly; do not call them verified or extrapolate unlimited capacity.
 7. Invalidate only the three run-specific tags, remove only this Preview deployment after evidence is saved, and verify the expired/private gates. No production data, preferences, subscription, poll, credential or four-minute schedule changes.
@@ -53,7 +53,7 @@ Immediately prepare the small public candidate: 2026 Team Resumes, explained Mov
 
 If current/live freshness or the sustainable write budget remains blocked, the largest independently releasable slice is latest CONFIRMED 2026 resumes and explained movement, clearly timestamped and not presented as a live projection. Preserve the existing live freshness gate; use explicit saved-confirmed evidence rather than falsely renewing old inputs. Ask for final production approval only once that chosen scope's essential checks pass.
 
-**Exact next approval:** create, test and remove ONE protected Preview under these limits, using existing Vercel authentication and deployment-only nonsecret/blank safety overrides. No new credentials, Redis run, production deployment, merge or public activation is included.
+**Any corrected repeat requires NEW separate approval:** create, test and remove ONE protected Preview under these limits, using existing Vercel authentication and deployment-only nonsecret/blank safety overrides. No new credentials, Redis run, production deployment, merge or public activation is included.
 
 ## Local evidence
 

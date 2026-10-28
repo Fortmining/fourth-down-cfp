@@ -27,3 +27,13 @@ export async function buildCanaryResume(stage:'before'|'after'){
  if(Buffer.byteLength(JSON.stringify(result))>canaryLimits.cachePacketBytes)throw Error('Canary packet byte cap: '+Buffer.byteLength(JSON.stringify(result)));return result;
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 }
+/** Cache fill IDs are diagnostics, not model identity. Different workers may fill
+ * the same deterministic packet. Measure that amplification; never accept
+ * differing records/rankings/movement just because each request returned 200. */
+export function assessCanaryWarmReads(packets:any[]){
+ if(packets.length<2)throw Error('At least two observed cache reads required');
+ const semantic=(p:any)=>{const v=p?.view;if(!v||!Array.isArray(v.rows)||typeof v.modelVersion!=='string'||!/^[a-f0-9]{64}$/.test(v.snapshotId??'')||!/^[a-f0-9]{64}$/.test(v.sourceInputHash??'')||typeof p.canary?.cacheFillId!=='string')throw Error('Canary identity evidence missing');return JSON.stringify({at:v.at,modelVersion:v.modelVersion,snapshotId:v.snapshotId,sourceInputHash:v.sourceInputHash,officialEditions:v.officialEditions,rows:v.rows});};
+ const identity=semantic(packets[0]);if(packets.some(p=>semantic(p)!==identity))throw Error('Cached resume data diverged across workers');
+ const distinctFills=new Set(packets.map(p=>p.canary.cacheFillId)).size;
+ return {requests:packets.length,distinctFills,observedReuse:distinctFills<packets.length,globalSingleFill:distinctFills===1};
+}
