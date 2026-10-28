@@ -1,8 +1,9 @@
 "use client";
+import Link from 'next/link';
 import {useEffect,useMemo,useState} from 'react';
-import {ArrowUpRight,ArrowDownRight,ArrowRight,Radio,Search} from 'lucide-react';
-import Following,{FollowButton} from './Following';import MoreSettings from './MoreSettings';
-import AppFrame from './AppFrame';import {useLiveFeed} from './useTrackerData';
+import {ArrowUpRight,ArrowDownRight} from 'lucide-react';
+import Following from './Following';import MoreSettings from './MoreSettings';
+import AppFrame from './AppFrame';import {useLiveFeed,useResumePacket} from './useTrackerData';import GamesExplorer from './GamesExplorer';import FavoriteTeams from './FavoriteTeams';
 import {displayRecord} from '../lib/playoff/record-view';import {movement,type Ranked} from '../lib/model';import {comparisonRows,type SourceId} from '../lib/rankings';
 function publicationDate(value: string, short = false) {
   return new Date(value).toLocaleDateString(undefined, {
@@ -62,15 +63,14 @@ function Change({ t }: { t: Ranked }) {
 }
 
 export default function TrackerViews({view}:{view:'games'|'rankings'|'following'|'settings'}){
- const {data,error,busy,refresh}=useLiveFeed();const [filter,setFilter]=useState('all'),[top25,setTop25]=useState(false),[query,setQuery]=useState(''),[chosenSource,setChosenSource]=useState<SourceId|null>(null),[rankingView,setRankingView]=useState('list');
+ const {data,error,busy,refresh}=useLiveFeed();const [chosenSource,setChosenSource]=useState<SourceId|null>(null),[rankingView,setRankingView]=useState('list');
  useEffect(()=>{const requested=new URLSearchParams(location.search).get('ranking');if(requested==='ap'||requested==='coaches'||requested==='cfp')setChosenSource(requested);},[]);
+ const {packet}=useResumePacket(view==='games'||view==='following');
  const selectedPoll=data?.polls.find(p=>p.id===(chosenSource??data.defaultRankingSource));
  const comparisons=useMemo(()=>comparisonRows(data?.polls||[]),[data]);
- const games=useMemo(()=>(data?.games||[]).filter(g=>(filter==='all'||g.status===filter)&&(!top25||g.teams.some(t=>(t.rank&&t.rank<=25)||data?.rankings.some(r=>r.teamId===t.id)))&&g.teams.some(t=>t.name.toLowerCase().includes(query.toLowerCase()))).sort((a,b)=>Number(b.status==='in')-Number(a.status==='in')||Date.parse(a.date)-Date.parse(b.date)),[data,filter,top25,query]);
- const live=data?.games.filter(g=>g.status==='in').length||0;
  const recordFor=(t:{record:string;teamId?:string;id?:string})=>data?.currentRecords?displayRecord(t.teamId??t.id??'',data.currentRecords):t.record;
  const titles={games:'Every game. One place.',rankings:'The official polls.',following:'Your game day.',settings:'Make it yours.'};
- return <AppFrame title={titles[view]} eyebrow={view==='following'?'FOLLOWING':view.toUpperCase()} description={{games:'Live scores, kickoff times and the full scoreboard.',rankings:'AP, Coaches and CFP editions, exactly as published.',following:'Your temporary follows, separate from permanent favorites.',settings:'Notifications, favorites and the way Fourth Down looks.'}[view]}>
+ return <AppFrame title={titles[view]} eyebrow={view==='following'?'FOLLOWING':view.toUpperCase()} description={{games:'Live scores, kickoff times and the full scoreboard.',rankings:'AP, Coaches and CFP editions, exactly as published.',following:'Your favorites and temporary Watchlist, together for game day.',settings:'Notifications, favorites and the way Fourth Down looks.'}[view]}>
  <div className="pageFeedStatus"><span role="status">{busy?'Refreshing…':data?`Updated ${new Date(data.updatedAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`:'Feed unavailable'}</span><button onClick={refresh} disabled={busy}>Refresh</button></div>{error&&<p className="teamWarning" role="status">{error} Last available data stays visible.</p>}
  {view==='rankings'&&<>          <section
             className="publishedRankings"
@@ -94,17 +94,7 @@ export default function TrackerViews({view}:{view:'games'|'rankings'|'following'
               to fill another poll’s column.
             </p>
             <div className="rankingControls">
-              <label>
-                Ranking source
-                <select
-                  value={chosenSource ?? data?.defaultRankingSource ?? "ap"}
-                  onChange={(e) => setChosenSource(e.target.value as SourceId)}
-                >
-                  <option value="ap">AP Top 25</option>
-                  <option value="coaches">AFCA Coaches Poll</option>
-                  <option value="cfp">CFP committee rankings</option>
-                </select>
-              </label>
+              <div className="scopeTabs" role="group" aria-label="Official poll">{(['ap','coaches','cfp'] as const).map(id=><button key={id} aria-pressed={(chosenSource??data?.defaultRankingSource??'ap')===id} onClick={()=>setChosenSource(id)}>{id==='ap'?'AP':id==='coaches'?'Coaches':'CFP'}</button>)}</div>
               <div className="filters" aria-label="Ranking display">
                 {[
                   ["list", "Rankings"],
@@ -175,9 +165,9 @@ export default function TrackerViews({view}:{view:'games'|'rankings'|'following'
                     {selectedPoll.teams.map((t) => (
                       <li key={t.teamId}>
                         <span className="rank">{t.rank}</span>
-                        <a href={`/team/${t.teamId}`} aria-label={`${t.name} team page`}><Logo src={t.logo} /></a>
+                        <Link prefetch={false} href={`/team/${t.teamId}`} aria-label={`${t.name} team page`}><Logo src={t.logo} /></Link>
                         <span className="teamIdentity">
-                          <b><a href={`/team/${t.teamId}`}>{t.name}</a></b>
+                          <b><Link prefetch={false} href={`/team/${t.teamId}`}>{t.name}</Link></b>
                           <small>
                             {t.conference} · {recordFor(t) || "Current record unavailable"}
                           </small>
@@ -233,7 +223,7 @@ export default function TrackerViews({view}:{view:'games'|'rankings'|'following'
                         <tr key={row.team.teamId}>
                           <th scope="row">
                             <span>
-                              <a className="teamProfileLink" href={`/team/${row.team.teamId}`}><Logo src={row.team.logo} />{row.team.name}</a>
+                              <Link prefetch={false} className="teamProfileLink" href={`/team/${row.team.teamId}`}><Logo src={row.team.logo} />{row.team.name}</Link>
                             </span>
                           </th>
                           {data.polls.map((p) => (
@@ -259,148 +249,8 @@ export default function TrackerViews({view}:{view:'games'|'rankings'|'following'
           </section>
           {data?.recordObservedAt&&<p className="context">Current records: latest available ESPN totals · observed {new Date(data.recordObservedAt).toLocaleString(undefined,{timeZoneName:"short"})}. Official ranks and poll movement retain their publication dates. {data.recordStatus}</p>}
 </>}
- {view==='games'&&<>          <section id="scores" className="scores">
-            <div className="intro">
-              <div>
-                <div className="eyebrow">GAME DAY CENTER</div>
-                <h2>Every result matters.</h2>
-              </div>
-              <span className="liveBadge">
-                <Radio size={14} /> {live} LIVE
-              </span>
-            </div>
-            <div className="scoreTools">
-              <div className="filters" aria-label="Game status">
-                {[
-                  ["all", "All games"],
-                  ["in", "Live"],
-                  ["pre", "Upcoming"],
-                  ["post", "Final"],
-                ].map(([v, l]) => (
-                  <button
-                    key={v}
-                    aria-pressed={filter === v}
-                    className={filter === v ? "active" : ""}
-                    onClick={() => setFilter(v)}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-              <label className="top25">
-                <input
-                  type="checkbox"
-                  checked={top25}
-                  onChange={(e) => setTop25(e.target.checked)}
-                />{" "}
-                Top 25 only
-              </label>
-              <label className="search">
-                <Search size={15} />
-                <input
-                  aria-label="Search games by team"
-                  placeholder="Find a team…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </label>
-            </div>
-            <p className="scoreNote">
-              {data?.scoreboardDate ? `Scoreboard window: ${data.scoreboardDate}. ` : "Current scoreboard plus the next two ESPN schedule periods. "}{games.length} matching games · dates and kickoff times
-              shown in your local time. Top 25 uses supplied game ranks or the
-              published input poll.
-            </p>
-            <div className="scoreGrid">
-              {games.map((g) => (
-                <article
-                  className={"game " + (g.status === "in" ? "liveGame" : "")}
-                  key={g.id}
-                >
-                  <div className="gameTop">
-                    <b>
-                      {g.status === "in" && <><span className="dot" /> LIVE · </>}
-                      {g.status === "pre"
-                        ? g.kickoffTbd ? "Kickoff time TBD" : new Date(g.date).toLocaleTimeString([], {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            timeZoneName: "short",
-                          })
-                        : g.detail}
-                    </b>
-                    <span>
-                      {new Date(g.date).toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  {[...g.teams]
-                    .sort(
-                      (a, b) =>
-                        Number(a.homeAway === "home") -
-                        Number(b.homeAway === "home"),
-                    )
-                    .map((t) => (
-                      <div
-                        className={"gameTeam " + (t.winner ? "winner" : "")}
-                        key={t.id}
-                      >
-                        <a href={`/team/${t.id}`} aria-label={`${t.name} team page`}><Logo src={t.logo} /></a>
-                        <div>
-                          <b>
-                            {t.rank && (
-                              <small className="pollRank">{t.rank} </small>
-                            )}
-                            <a href={`/team/${t.id}`}>{t.name}</a>
-                          </b>
-                          <small>
-                            {recordFor(t) || "Current record unavailable"} ·{" "}
-                            {t.homeAway === "home" ? "Home" : "Away"}
-                          </small>
-                        </div>
-                        <strong>
-                          {g.status === "pre" ? "—" : (t.score ?? "—")}
-                        </strong>
-                      </div>
-                    ))}
-                  <FollowButton kind="game" id={g.id} name={g.name} games={data?.games||[]}/><div className="gameBottom">
-                    {g.broadcast || "Broadcast not provided"}
-                    <a
-                      href={`/game/${encodeURIComponent(g.id)}`}
-                      aria-label={`Details for ${g.name}`}
-                    >
-                      Game details <ArrowUpRight size={13} />
-                    </a>
-                  </div>
-                </article>
-              ))}
-            </div>
-            {!games.length && (
-              <div className="empty">
-                {!data && busy
-                  ? "Loading the scoreboard…"
-                  : error && !data
-                    ? "The scoreboard could not be loaded. Try refreshing."
-                    : data?.warnings?.some((w) => w.startsWith("Scores"))
-                    ? "Scores are temporarily unavailable. Try refreshing."
-                    : "No games match these filters in the current scoreboard window."}
-                {(filter !== "all" || top25 || query) && (
-                  <button
-                    onClick={() => {
-                      setFilter("all");
-                      setTop25(false);
-                      setQuery("");
-                    }}
-                  >
-                    Clear filters <ArrowRight size={14} />
-                  </button>
-                )}
-              </div>
-            )}
-          </section>
-</>}
- {view==='following'&&<><Following games={data?.games||[]} currentRecords={data?.currentRecords}/><details className="manageAll"><summary>Manage all temporary follows</summary><Following games={data?.games||[]} manage/></details><a className="routeLink" href="/settings#alerts">Favorite teams & notification settings →</a></>}
+ {view==='games'&&<GamesExplorer feed={data} packet={packet} busy={busy}/>}
+ {view==='following'&&<><FavoriteTeams feed={data} packet={packet}/><Following games={data?.games||[]} currentRecords={data?.currentRecords}/><Link prefetch={false} className="routeLink" href="/settings#alerts">Notification preferences →</Link></>}
  {view==='settings'&&<MoreSettings games={data?.games||[]} resumesAvailable={process.env.NEXT_PUBLIC_FOURTH_DOWN_RESUMES==='true'} teams={[...new Map([...(data?.games.flatMap(g=>g.teams)||[]),...(data?.rankings.map(t=>({id:t.teamId,name:t.name}))||[])].map(t=>[t.id,{id:t.id,name:t.name}])).values()]}/>}
  </AppFrame>;
 }

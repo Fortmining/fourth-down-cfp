@@ -1,0 +1,3 @@
+'use client';
+import {useEffect,useState} from 'react';import {readPreferences,CHANGED} from '../lib/following-client';import {defaultAlertPreferences} from '../lib/alerts';
+export default function useFanPreferences(){const [preferences,setPreferences]=useState(defaultAlertPreferences),[ready,setReady]=useState(false);useEffect(()=>{const read=()=>{setPreferences(readPreferences());setReady(true);};read();window.addEventListener(CHANGED,read);window.addEventListener('storage',read);return()=>{window.removeEventListener(CHANGED,read);window.removeEventListener('storage',read);};},[]);return {preferences,ready};}

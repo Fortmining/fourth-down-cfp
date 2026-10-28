@@ -3,15 +3,15 @@
 UI-only reorganization from production a885792. Draft engine PR #19 stays untouched.
 
 - `/`: three featured live/upcoming games, permanent-favorite shortcuts, official poll context, up to four explained resume movers, three relevant games and team search.
-- `/games`: existing scoreboard, filters, game links and follow dialogs.
+- `/games`: AP Top 25 by default; Following, Conference and All FBS filters, calendar week/date selection, grouped statuses and 12-game progressive loading. Existing source window, game links and follow dialogs remain.
 - `/rankings`: existing published AP/Coaches/CFP editions, comparison and poll movement.
 - `/playoffs`: Road to the Twelve, published poll context, confirmed experimental resumes and games to watch. No bracket or probability.
 - `/resumes`: existing confirmed Resume Center, unchanged calculations.
-- `/following`: existing Watchlist and temporary follow management.
+- `/following`: permanent-favorite cards alongside the separate temporary Watchlist; existing follow/unfollow behavior. Retry is visible only for a pending, recorded retryable delivery-save failure.
 - `/settings`: existing notification preferences/history/installation plus saved appearance choices.
 - `/more`: compact directory; `/about`: methodology and source limitations.
 
-Mobile: Home / Games / Playoffs / Following / More. Rankings and Resumes also have header shortcuts on phones. Desktop has all seven destinations. Existing root hash and ranking-query notification links redirect to their new destinations. Normal anchor navigation preserves existing unsaved-notification guards.
+Mobile: Home / Games / Playoffs / Following / More. Rankings and Resumes also have header shortcuts on phones. Desktop has all seven destinations. Existing root hash and ranking-query notification links redirect to their new destinations. Client-side links preserve existing unsaved-notification guards; explicit Browser Back tests verify Continue Editing and Discard in Chromium and WebKit.
 
 ## Protected Preview isolation
 
@@ -36,3 +36,13 @@ Application commit: `db7dda5`. Protected Preview: https://fourth-down-j4uksft8p-
 - The confirmed resume packet still has its first baseline; the meaningful no-movement state is expected. No fabricated movers, test pushes, or source results were added.
 
 Physical iPhone PWA / VoiceOver review remains manual. No real notification-delivery assertion is made by these UI checks. No production deployment or merge has occurred.
+
+## Final UI refinement
+
+The Playoff Race, Team Resumes and Movers & Losers share client-side navigation; `/resumes` remains shareable and has Back to Playoffs. Search and Show More state survive return navigation in session storage. Cards show supplied ESPN artwork, a source-logo color accent, confirmed records, a comparable strongest win, watch point and next test, with dated poll/evidence details expandable. No resume inputs or calculations change. Missing win-comparison evidence is labeled rather than ranked.
+
+The existing cached `/api/live` and `/api/resumes` feeds are joined for display metadata, at the existing visible-page minute cadence. There are no per-team profile lookups or speculative link-prefetch bursts. Conference metadata is not guessed, and available calendar weeks are not represented as a complete season feed; full-season schedules remain on Team Pages. Installation guides are collapsed by device, and redundant Settings shortcuts are removed.
+
+Final local validation: 310 regression tests passed; production build, lint and type checking passed. Focused Chromium and iPhone-sized WebKit checks cover all four Games filters, live/upcoming/final grouping, date/week selection, pagination, local restoration, favorites/follows separation, resume search and 12/24-card loading, source artwork, client-navigation document identity, normal Back, unsaved-setting safeguards, genuine retry visibility, responsive widths and automated accessibility. Controlled schedules and retry failures in these tests are simulations, not newly observed game or delivery events.
+
+Updated hosted Preview screenshots/results are kept in the task outputs. Production, PR19, service workers, notification processing, source ingestion, Redis and schedules are unchanged. Preview hosting/development overlays are inspected, not disabled through production settings.
