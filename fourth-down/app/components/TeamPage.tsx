@@ -1,6 +1,8 @@
 "use client";
 import {useEffect,useState} from 'react';
 import TrackerNavigation from './TrackerNavigation';
+import {NEWS_PILOT_UI} from '../lib/news-pulse';
+import {NewsPulsePanel} from './NewsPulse';
 import {FollowButton} from './Following';
 import {readAppearance,saveAppearance,type Appearance} from '../lib/appearance';
 import {normalizePreferences} from '../lib/alerts';
@@ -63,6 +65,7 @@ export default function TeamPage({id}:{id:string}) {
      <h3>Completed games</h3>{completed.map(g=><ScheduleCard key={g.id} game={g} teamId={id}/>)}{!completed.length&&<p>No verified completed games available.</p>}
     </section>
     <section id="stats" aria-labelledby="stats-heading"><h2 id="stats-heading">Team statistics</h2><p>2026 regular season{data.statisticsGames!==null&&data.statisticsGames!==undefined?` · ${data.statisticsGames} games in ESPN statistics`:''}. Statistics can lag behind confirmed game results.</p><div className="teamStatsGrid">{data.stats.map(s=><article key={s.id}><h3>{s.label}</h3><strong>{s.value??'Unavailable'}</strong><p>{s.espnRank?`ESPN rank: ${s.espnRank}`:'ESPN rank unavailable'}</p><small>{s.basis}</small></article>)}</div><details><summary>Statistics sources & ranking scope</summary><p>Values and ranks are supplied by ESPN. Its statistics feed does not identify the FBS/FCS ranking scope; those ranks are shown as ESPN ranks only. Verified FBS national and conference statistical ranks are unavailable. No ranks or missing statistics are estimated.</p><p>Defensive sacks, tackles and interceptions are season totals. Points and yards per game are explicitly supplied averages.</p></details></section>
+    {NEWS_PILOT_UI&&<NewsPulsePanel teamId={id}/>}
     <details className="teamSources"><summary>Data sources & freshness</summary><p>Assembled {new Date(data.observedAt).toLocaleString(undefined,{timeZoneName:'short'})}. Refreshes every minute while visible. ESPN updates may be delayed. Overview and schedules cache for up to one minute; statistics for five minutes. Website responses can serve the previous minute while refreshing. These are retrieval/assembly timestamps, not ESPN publication times.</p><ul>{data.sources.map(s=><li key={s.url}><a href={s.url} target="_blank" rel="noreferrer">ESPN {s.label} ↗</a></li>)}</ul></details>
    </>}
   </main><footer><a href="/">Back to Fourth Down</a><p>Independent, unofficial tracker. ESPN data may be delayed or revised.</p></footer><TrackerNavigation mobile detail/>
