@@ -9,3 +9,12 @@ Source-card destinations remain the publisher-verified Tennessee Athletics YouTu
 Preview browser storage is separate from production. For You starts empty unless favorites/follows exist on that Preview origin. Use the Tennessee Team Page's Add Favorite for review, or /pulse?team=2633 to inspect team samples without changing any favorite. Pulse notification plans save on that Preview browser only; no subscription is created or changed.
 
 Validation: focused gate tests cover approved Preview, unapproved Preview, local development and unconditional production rejection. Local optimized Preview-mode build verifies rewrites before the single hosted deployment. Hosted Chromium/desktop and WebKit/iPhone checks exercise real hosted fixture responses, without browser mocking of APIs, and block external network requests. Unauthenticated access must redirect to Vercel Authentication. Existing short-lived origin-scoped Vercel authentication is used for checks; no bypass credential is created or logged.
+
+## Hosted review results
+
+Protected URL: https://fourth-down-iejqzsptp-fortmining.vercel.app
+Deployment: dpl_5raovVFvAipt4JaETTY99DKEMzX4; build commit ed407e486374da855186b24e582bf73a1a97026d. One hosted deployment created.
+
+All23 focused tests, lint, type checking and optimized Preview-mode build passed. Seven local API isolation checks passed. Hosted Chromium desktop and iPhone-sized WebKit passed Home, Pulse, Team Pages, More/Settings, filters, attribution/destination validation, separate saved preference drafts, navigation/Back, and loaded-state accessibility. Mobile widths320/390/430 passed. Unauthenticated requests redirect302 to Vercel Authentication. Both blocked notification-write probes returned403. The production deployment and protection settings remain unchanged. No publisher API, Redis ingestion or notification delivery was connected.
+
+Predeployment query-based rewrites were corrected to explicit path parameters after local validation exposed missing query values. Hosted tests also needed to wait for Team Pulse data, rather than asserting immediately after its heading rendered. That test wait and documentation are a follow-up only; the hosted application code is unchanged and no redeployment is needed. Physical iPhone/VoiceOver, actual publisher content/playability and real delivery are not verified.

@@ -12,9 +12,9 @@ NEXT_PUBLIC_FOURTH_DOWN_NEWS_PILOT=true FOURTH_DOWN_NEWS_PILOT=fixtures npm run 
 
 Open `/pulse`, Home, or `/team/2633`. For You reads existing browser-local favorites and unexpired team/game follows without writing them. A Tennessee favorite shows the sample team cards. Around College Football shows the explicitly marked national scenarios. The fixture feed has a fixed October30 scenario time, never a fabricated current publisher timestamp. Existing saved favorite/follow data does not have to be changed to browse national samples.
 
-The public UI flag is off by default. Home/Team/navigation integrations appear only with that local build flag. `/api/news-pulse` returns no content by default; fixture mode requires development, the explicit server flag, and absence of VERCEL. Production builds and Vercel cannot serve the fixture packet even if the fixture flag is supplied. The endpoint has no network adapter, credential, Redis call, scheduler, delivery queue or sender. This makes the permission boundary enforceable rather than assuming a working RSS endpoint permits public redistribution.
+The public UI flag is off by default. Home/Team/navigation integrations appear only with that local build flag. `/api/news-pulse` returns no content by default; fixture mode requires development, the explicit server flag, and absence of VERCEL. Production Vercel deployments cannot serve the fixture packet even if flags are supplied. A separately approved protected Preview can use the isolated protected-preview-v1 mode described in PROTECTED-PULSE-PREVIEW.md. The endpoint has no network adapter, credential, Redis call, scheduler, delivery queue or sender. This makes the permission boundary enforceable rather than assuming a working RSS endpoint permits public redistribution.
 
-`vercel.json` disables automatic Git deployment for feature/pulse-feed-pilot. No Preview, merge, production change or infrastructure provision is authorized.
+`vercel.json` disables automatic Git deployment for feature/pulse-feed-pilot. One protected review Preview is separately approved; merge, public release, production changes and new infrastructure remain unauthorized.
 
 ## What works offline
 
