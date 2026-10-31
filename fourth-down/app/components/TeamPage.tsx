@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState} from 'react';
+import NewsReviewNotice from './NewsReviewNotice';
 import TrackerNavigation from './TrackerNavigation';
 import {NEWS_PILOT_UI} from '../lib/news-pulse';
 import {NewsPulsePanel} from './NewsPulse';
@@ -43,7 +44,7 @@ export default function TeamPage({id}:{id:string}) {
  const next=upcoming.find(g=>g.status==='in')||upcoming.find(g=>g.status==='pre'&&Date.parse(g.date)>=Date.now());
  return <div className="shell detailShell teamPage" data-appearance={appearance} data-theme={theme}>
   <a className="skip" href="#detail">Skip to team</a><div className="siteHeader"><a className="brand" href="/">FOURTH DOWN</a><TrackerNavigation detail/></div>
-  <main id="detail"><div className="teamToolbar"><button onClick={()=>history.length>1?history.back():location.assign('/')}>← Back</button><button disabled={busy} onClick={()=>setRevision(v=>v+1)}>{busy?'Refreshing…':'Refresh team'}</button>
+  <main id="detail"><NewsReviewNotice/><div className="teamToolbar"><button onClick={()=>history.length>1?history.back():location.assign('/')}>← Back</button><button disabled={busy} onClick={()=>setRevision(v=>v+1)}>{busy?'Refreshing…':'Refresh team'}</button>
    <label>Appearance<select aria-label="Appearance" value={appearance} onChange={e=>{const a=e.target.value as Appearance;setAppearance(a);saveAppearance(a);}}><option value="light">Light</option><option value="dark">Dark</option></select></label>
    <label>Colorway<select aria-label="Colorway" value={theme} onChange={e=>{setTheme(e.target.value);try{localStorage.setItem('fourth-down-theme',e.target.value);}catch{}}}><option value="stadium">Stadium Gold</option><option value="turf">Turf Electric</option><option value="prime">Prime Time</option></select></label></div>
    <header className="teamHero">{data?.logo&&<img src={data.logo} width="88" height="88" alt=""/>}<div><p className="eyebrow">2026 TEAM CENTER</p><h1>{data?.name||(busy?'Loading team…':'Team unavailable')}</h1><p>{data?.conference||'Conference unavailable'}{data?.nickname&&` · ${data.nickname}`}</p></div></header>

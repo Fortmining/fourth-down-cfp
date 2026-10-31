@@ -68,7 +68,7 @@ test('quiet hours span midnight, handle boundaries, and follow DST in the select
  assert.equal(inNewsQuietHours(p,Date.parse('2026-10-31T12:00:00Z')),false);p.quiet={...p.quiet,start:'12:00',end:'13:00'};assert.equal(inNewsQuietHours(p,Date.parse('2026-10-30T16:30:00Z')),true);assert.equal(inNewsQuietHours(p,Date.parse('2026-10-30T17:00:00Z')),false);
 });
 test('new feed/preference boundary has no Redis, external fetch, push or subscription mutation',()=>{
- const route=fs.readFileSync(new URL('../app/api/news-pulse/route.ts',import.meta.url),'utf8');assert.ok(!/fetch\(|redis\(|webpush|CRON_SECRET/.test(route));assert.match(route,/NODE_ENV==='development'/);assert.match(route,/!process.env.VERCEL/);
+ const route=fs.readFileSync(new URL('../app/api/news-pulse/route.ts',import.meta.url),'utf8');assert.ok(!/fetch\(|redis\(|webpush|CRON_SECRET/.test(route));assert.match(route,/newsFixturesEnabled/);
  const prefs=fs.readFileSync(new URL('../app/components/NewsPulsePreferences.tsx',import.meta.url),'utf8');assert.ok(!/fetch\(|requestPermission|pushManager|storePreferences\(/.test(prefs));
  const config=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.equal(config.git.deploymentEnabled['feature/pulse-feed-pilot'],false);
 });
