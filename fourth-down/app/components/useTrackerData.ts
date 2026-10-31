@@ -1,10 +1,11 @@
 "use client";
 import {useCallback,useEffect,useRef,useState} from 'react';
+import {subscribeLiveRefresh} from '../lib/live-refresh';
 import type {Feed} from '../lib/tracker-types';import type {SharedResumeDisplay} from '../lib/playoff/resume-pipeline';
 export function useLiveFeed(enabled=true){
  const [data,setData]=useState<Feed|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(true);const active=useRef<AbortController|null>(null);
- const refresh=useCallback(async()=>{if(!enabled||active.current||document.querySelector('dialog[open],[role=dialog]'))return;const control=new AbortController();active.current=control;setBusy(true);try{const r=await fetch('/api/live',{cache:'no-store',signal:AbortSignal.any([control.signal,AbortSignal.timeout(15000)])});if(!r.ok)throw Error();const next:Feed=await r.json();if(!Array.isArray(next.games)||!Array.isArray(next.polls)||!Array.isArray(next.rankings)||!next.updatedAt)throw Error();if(!control.signal.aborted){setData(next);setError('');}}catch{if(!control.signal.aborted)setError('The latest scores could not be loaded. Try again shortly.');}finally{if(active.current===control){active.current=null;setBusy(false);}}},[enabled]);
- useEffect(()=>{if(!enabled)return;void refresh();const timer=setInterval(()=>{if(!document.hidden)void refresh();},60000);return()=>{clearInterval(timer);active.current?.abort();active.current=null;};},[refresh,enabled]);return {data,error,busy,refresh};
+ const refresh=useCallback(async()=>{if(!enabled||active.current)return;const control=new AbortController();active.current=control;setBusy(true);try{const r=await fetch('/api/live',{cache:'no-store',signal:AbortSignal.any([control.signal,AbortSignal.timeout(15000)])});if(!r.ok)throw Error();const next:Feed=await r.json();if(!Array.isArray(next.games)||!Array.isArray(next.polls)||!Array.isArray(next.rankings)||!next.updatedAt)throw Error();if(!control.signal.aborted){setData(next);setError('');}}catch{if(!control.signal.aborted)setError('The latest scores could not be loaded. Try again shortly.');}finally{if(active.current===control){active.current=null;setBusy(false);}}},[enabled]);
+ useEffect(()=>{if(!enabled)return;void refresh();const unsubscribe=subscribeLiveRefresh(refresh);return()=>{unsubscribe();active.current?.abort();active.current=null;};},[refresh,enabled]);return {data,error,busy,refresh};
 }
 export function useResumePacket(enabled=true){
  const [packet,setPacket]=useState<SharedResumeDisplay|null>(null),[error,setError]=useState(false);
