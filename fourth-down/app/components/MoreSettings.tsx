@@ -1,4 +1,6 @@
 "use client";
+import {NEWS_PILOT_UI} from '../lib/news-pulse';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import {type WatchGame} from './Following';
 import AppearanceControls from './AppearanceControls';
@@ -21,7 +23,7 @@ export default function MoreSettings({teams}:{resumesAvailable?:boolean;teams:{i
  return <section id="more" className="moreSettings" aria-labelledby="more-heading">
   <div className="intro"><div><div className="eyebrow">FOURTH DOWN · YOUR SETTINGS</div><h2 id="more-heading">Your settings</h2></div><span className="badge">MADE FOR GAME DAY</span></div>
   <nav className="settingsJumpLinks" aria-label="Settings sections"><a href="#alerts">Notifications</a><a href="#notification-history">History</a><a href="#install">Install</a></nav>
-  <AppearanceControls/><AlertSettings teams={teams}/><NotificationInbox/>
+  {NEWS_PILOT_UI&&<p><Link prefetch={false} href="/pulse#news-preferences-title">Pulse news & highlights · separate draft choices, delivery OFF →</Link></p>}<AppearanceControls/><AlertSettings teams={teams}/><NotificationInbox/>
   <section id="install" className="installGuide" aria-labelledby="install-heading">
    <div className="intro"><div><div className="eyebrow">TAKE THE PLAYOFF PICTURE WITH YOU</div><h2 id="install-heading">Get the App</h2></div><span className="badge">FREE · NO APP STORE REQUIRED</span></div>
    <p className="context">Add Fourth Down to your Home Screen or desktop. It is the same live tracker, with your settings saved in the browser or installed app you use. Scores and rankings need an internet connection.</p>
