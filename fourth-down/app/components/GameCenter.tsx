@@ -47,8 +47,15 @@ export default function GameCenter({ id, fallbackGame }: {
     const source = game || fallbackGame;
     const teams = [...(source?.teams || data?.teams || [])].sort((a, b) => ('homeAway' in a && a.homeAway === 'away' ? -1 : 'homeAway' in a && a.homeAway === 'home' ? 1 : 0) - ('homeAway' in b && b.homeAway === 'away' ? -1 : 'homeAway' in b && b.homeAway === 'home' ? 1 : 0));
     const plays = data?.drives.flatMap(d => d.plays) || [];
-    const play = plays.find(p => p.id === selected) || plays.filter(p => p.trace).at(-1);
+    const play = plays.find(p => p.id === selected) || plays.filter(p => p.animation || p.trace).at(-1);
     const branding = data?.branding || { kind: 'unknown', teamName: null, logo: null, color: null } as FieldBranding;
+
+    const replay = Boolean(selected);
+    const replaySpot=play?.endPosition!==null&&play?.endPosition!==undefined?{teamId:play.endTeamId||play.teamId,yardsToEndzone:play.endPosition}:play?.trace&&play.end!==null?{teamId:play.teamId,yardsToEndzone:play.end}:null;
+    const spot=replay||source?.status==='post'?replaySpot:data?.ballPosition||null;
+    const markerTeam=data?.teams.find(t=>t.id===spot?.teamId);
+    const marker=spot?.teamId?{...spot,teamId:spot.teamId,logo:markerTeam?.logo||null,name:markerTeam?.name||'Possession',firstDown:!replay&&source?.status==='in'?data?.ballPosition?.firstDown??null:null,label:replay||source?.status==='post'?'Replay possession':'Possession'}:null;
+    const drive=!replay?data?.currentDrive:null;
     return <section className="gameCenter gcCast" aria-label="Gamecast">
     <h2 className="gcSrOnly">Gamecast</h2>
     <div className="gcBroadcast">
@@ -58,7 +65,7 @@ export default function GameCenter({ id, fallbackGame }: {
     <summary aria-label="About this field and game data">ⓘ</summary>
     <div>
     <strong>About this Gamecast</strong>
-    <p>Schematic field with verified home-team branding where available, not actual stadium artwork. Spots are relative to the offense. Straight tracers connect reported start and end spots; they are not tracked ball flight.</p>
+    <p>Schematic field with verified home-team branding where available, not actual stadium artwork. Spots are relative to the offense. Ground tracers connect reported spots. Aerial arcs are illustrative, never tracked flight: pass endpoints include the full play, kicks use reported kick distance, and successful scoring kicks target the goal plane. Returns and touchbacks are separate post-play spots. The field keeps a fixed team orientation.</p>
     <p>{data?.situation?.basis === 'last-play' ? 'Situation is from the last reported play.' : 'ESPN data may be delayed or corrected.'} Updates every minute while visible and when you return.</p>
     <p>{observedAt ? `Checked ${new Date(observedAt).toLocaleTimeString(undefined, { timeZoneName: 'short' })}` : 'Check time unavailable'}</p>
     <a href={`https://www.espn.com/college-football/game/_/gameId/${id}`}>ESPN game coverage ↗</a>
@@ -79,7 +86,7 @@ export default function GameCenter({ id, fallbackGame }: {
     <div className="gcSituation">{data?.situation?.downDistance || (source?.status === 'post' ? 'Full time' : source?.status === 'pre' ? 'Kickoff ahead' : 'Waiting for the next update')}{data?.situation?.basis === 'last-play' && <small>Last reported play</small>}</div>
     </div>{error && <p className="gcNotice" role="status">{error}</p>}<div className="gcFieldStage">
     <div className="gcFieldPlane">
-    <Field play={play} branding={branding}/>
+    <Field play={play} branding={branding} marker={marker} referenceTeamId={data?.homeTeamId||data?.teams[0]?.id||null}/>
     </div>
     <div className="gcFieldLegend">
     <span>
@@ -89,15 +96,14 @@ export default function GameCenter({ id, fallbackGame }: {
     <b>{branding.kind === 'home' ? branding.teamName : branding.kind === 'neutral' ? 'Neutral field' : 'Fourth Down'}</b>
     </div>
     </div>
-    <div className="gcSelected">
+    <div className="gcSelected"><div className="gcDriveCard"><div><span>{replay?'SELECTED PLAY':drive?'CURRENT DRIVE':source?.status==='post'?'GAME COMPLETE':'DRIVE UPDATE'}</span><b>{replay?play?.downDistance||'Reported play':data?.situation?.downDistance||'Down & distance unavailable'}</b></div>{drive?<div className="gcDriveNumbers">{drive.plays!==null&&<span><b>{drive.plays}</b> plays</span>}{drive.yards!==null&&<span><b>{drive.yards}</b> yards</span>}{drive.elapsed&&<span><b>{drive.elapsed}</b> elapsed</span>}</div>:null}{drive?.description&&<p>{drive.description}</p>}</div>
     <div className="gcPlayMeta">
     <span>{selected ? 'REPLAY' : 'LATEST PLOTTED PLAY'}{play ? ` · Q${play.period ?? '—'} ${play.clock}` : ''}</span>{selected && <button onClick={() => setSelected(null)}>Latest play</button>}</div>{play ? <>
         <div className="gcPlayHeadline">
-        <strong className={play.yards !== null && play.yards < 0 ? 'gcLoss' : ''}>{play.yards === null ? '—' : `${play.yards > 0 ? '+' : ''}${play.yards}`}<small>YDS</small>
-        </strong>
+        <Yardage play={play}/>
         <b>{play.downDistance || 'Reported play'}</b>
         </div>
-        <p>{play.text}</p>{!play.trace && <small>Verified position data unavailable for this play.</small>}</> : <p>{data ? 'Play positions will appear when verified spots are available.' : 'Loading game details…'}</p>}</div>
+        <p>{play.text}</p>{play.animation&&play.animation.kind!=='rush'&&play.animation.kind!=='ground'&&<small className="gcIllustration">Illustrative {play.animation.kind.replaceAll('-',' ')} path{play.animation.result?` · ${play.animation.result}`:''}</small>}{!play.trace && !play.animation && <small>Verified position data unavailable for this play.</small>}</> : <p>{data ? 'Play positions will appear when verified spots are available.' : 'Loading game details…'}</p>}</div>
     <div className="gcTabs" role="tablist" aria-label="Game details">{tabs.map((t, i) => <button key={t} id={`gc-tab-${i}`} role="tab" aria-selected={tab === i} aria-controls="gc-panel" tabIndex={tab === i ? 0 : -1} onClick={() => setTab(i)} onKeyDown={e => { let next = tab; if (e.key === 'ArrowRight')
             next = (tab + 1) % 4;
         else if (e.key === 'ArrowLeft')
@@ -117,8 +123,7 @@ export default function GameCenter({ id, fallbackGame }: {
                 <b>On the field</b>
                 <small>{p.downDistance || 'Selected play'}</small>
                 </> : p.text}</span>
-            <strong className={p.yards !== null && p.yards < 0 ? 'gcLoss' : ''}>{p.yards === null ? '—' : `${p.yards > 0 ? '+' : ''}${p.yards}`}<small>YDS</small>
-            </strong>
+            <Yardage play={p}/>
             </button>
             </li>)}</ol> : <Empty text="Play-by-play will appear when the source provides it."/>)}
  {tab === 1 && (data?.drives.length ? <div className="gcDrives">{data.drives.slice().reverse().map(d => <article key={d.id}>
@@ -157,14 +162,22 @@ export default function GameCenter({ id, fallbackGame }: {
 function Empty({ text }: {
     text: string;
 }) { return <p className="gcEmpty">{text}</p>; }
-function Field({ play, branding }: {
+type FieldMarker={teamId:string;yardsToEndzone:number;logo:string|null;name:string;firstDown:number|null;label:string};
+function Field({ play, branding,marker,referenceTeamId }: {
     play?: FieldPlay;
     branding: FieldBranding;
+    marker:FieldMarker|null;referenceTeamId:string|null;
 }) {
-    const x = (n: number) => 110 - n;
+    const x = (n: number,teamId=play?.teamId) => teamId&&referenceTeamId&&teamId!==referenceTeamId?10+n:110-n;
     const trace = play?.trace && play.start !== null && play.end !== null;
     const gain = (play?.yards || 0) >= 0;
-    return <svg viewBox="0 0 120 54" role="img" aria-label={play ? `Schematic field positions for selected play. ${play.trace ? 'Reported start and end spots.' : 'Position data unavailable.'}` : 'Football field. Awaiting verified play positions.'}>
+    const motion=play?.animation||(play?.animation===undefined&&trace&&play?{from:play.start!,to:play.end!,teamId:play.teamId!,kind:'ground'}:null);
+    const aerial=motion&&motion.kind!=='rush'&&motion.kind!=='ground';
+    const path=motion?`M ${x(motion.from,motion.teamId)} 27 ${aerial?`Q ${(x(motion.from,motion.teamId)+x(motion.to,motion.teamId))/2} 4 ${x(motion.to,motion.teamId)} 27`:`L ${x(motion.to,motion.teamId)} 27`}`:'';
+    const restingX=marker?x(marker.yardsToEndzone,marker.teamId):null;
+    const lineX=marker?.label==='Possession'?restingX:play?.start!==null&&play?.start!==undefined?x(play.start):null;
+    const targetX=marker?.firstDown!==null&&marker?.firstDown!==undefined?x(marker.firstDown,marker.teamId):play?.firstDown!==null&&play?.firstDown!==undefined?x(play.firstDown):null;
+    return <svg viewBox="-5 -4 130 62" role="img" aria-label={play ? `Schematic field positions for selected play. ${play.animation ? 'Illustrative play path, not tracked ball flight.' : play.trace ? 'Reported start and end spots.' : 'Position data unavailable.'}` : 'Football field. Awaiting verified play positions.'}>
     <defs>
     <linearGradient id="gcTurf" x2="0" y2="1">
     <stop stopColor="#237c4e"/>
@@ -181,16 +194,16 @@ function Field({ play, branding }: {
     <g stroke="#fff" strokeWidth=".25" opacity=".8">{Array.from({ length: 11 }, (_, i) => <line key={i} x1={10 + i * 10} x2={10 + i * 10} y1="0" y2="54"/>)}{Array.from({ length: 101 }, (_, i) => <g key={i}>{[1, 22, 31, 52].map(y => <line key={y} x1={10 + i} x2={10 + i} y1={y} y2={y + 1}/>)}</g>)}</g>{[10, 20, 30, 40, 50, 40, 30, 20, 10].map((n, i) => <g key={i} fill="#fff" opacity=".8" fontSize="3" fontWeight="700">
         <text x={20 + i * 10} y="9" textAnchor="middle">{n}</text>
         <text x={20 + i * 10} y="47" textAnchor="middle" transform={`rotate(180 ${20 + i * 10} 46)`}>{n}</text>
-        </g>)}{branding.logo ? <image href={branding.logo} x="53" y="20" width="14" height="14" opacity=".65"/> : <text x="60" y="29" textAnchor="middle" fontSize="4" fontWeight="900" fill="white" opacity=".35">4TH DOWN</text>}{play?.start !== null && play?.start !== undefined && <line x1={x(play.start)} x2={x(play.start)} y1="0" y2="54" stroke="#67c8ff" strokeWidth=".65"/>}{play?.firstDown !== null && play?.firstDown !== undefined && <line x1={x(play.firstDown)} x2={x(play.firstDown)} y1="0" y2="54" stroke="#ffdb4c" strokeWidth=".8"/>}{trace && play && <g key={play.id}>
-        <path className="gcTracer" pathLength="1" d={`M ${x(play.start!)} 27 L ${x(play.end!)} 27`} stroke={gain ? '#b6ff6b' : '#ff927f'} strokeWidth="2" strokeLinecap="round"/>
-        <circle cx={x(play.start!)} cy="27" r="1" fill="white"/>
-        <g className="gcBall" filter="url(#gcBallShadow)">
-        <animateTransform attributeName="transform" type="translate" from={`${x(play.start!)} 27`} to={`${x(play.end!)} 27`} dur=".85s" fill="freeze"/>
-        <ellipse rx="3" ry="1.8" fill="#a95126" stroke="#fff0d6" strokeWidth=".4"/>
-        <path d="M -1.2 0 H 1.2 M -.7 -.6 V .6 M 0 -.6 V .6 M .7 -.6 V .6" stroke="white" strokeWidth=".25"/>
-        </g>
-        <g className="gcStaticBall" transform={`translate(${x(play.end!)} 27)`}>
-        <ellipse rx="3" ry="1.8" fill="#a95126" stroke="white" strokeWidth=".4"/>
-        </g>
-        </g>}</svg>;
+        </g>)}{branding.logo ? <image href={branding.logo} x="53" y="20" width="14" height="14" opacity=".65"/> : <text x="60" y="29" textAnchor="middle" fontSize="4" fontWeight="900" fill="white" opacity=".35">4TH DOWN</text>}{lineX!==null&&<line className="gcScrimmage" x1={lineX} x2={lineX} y1="0" y2="54" stroke="#67c8ff" strokeWidth=".65"/>}{targetX!==null&&<line className="gcFirstDown" x1={targetX} x2={targetX} y1="0" y2="54" stroke="#ffdb4c" strokeWidth=".8"/>}{[0,120].map((gx,i)=><g key={gx} className="gcGoalpost" aria-hidden="true" stroke="#ffdc57" strokeWidth=".7" fill="none"><path d={`M ${gx} 30 V 20 M ${gx-2.8} 20 H ${gx+2.8} M ${gx-2.8} 20 V 11 M ${gx+2.8} 20 V 11`}/><path d={`M ${gx} 30 L ${gx+(i?-1:1)} 32`} stroke="#fff" strokeWidth=".3" opacity=".5"/></g>)}
+    {motion&&play&&<g key={`motion-${play.id}`}><path className={`gcTracer ${aerial?'gcAerialTracer':''}`} pathLength="1" d={path} stroke={aerial?'#a8e8ff':gain?'#b6ff6b':'#ff927f'} strokeWidth={aerial?'1':'2'} strokeLinecap="round" fill="none"/>
+    <circle cx={x(motion.from,motion.teamId)} cy="27" r=".8" fill="white"/>
+    <g className="gcBall" filter="url(#gcBallShadow)"><animateMotion path={path} dur="1.15s" fill="freeze"/><Football/></g></g>}
+    {restingX!==null&&<g key={`rest-${play?.id||'spot'}`} className="gcStaticBall gcRestBall" style={{transform:`translate(${restingX}px,27px)`}}><Football/></g>}
+    {marker&&restingX!==null&&<g className="gcPossessionMarker" style={{transform:`translate(${restingX}px,27px)`}} role="img" aria-label={`${marker.label}: ${marker.name}, ${marker.yardsToEndzone} yards to opponent goal`}>
+    <path d="M -3.4 -12 H 3.4 V -5 L 0 -2.8 L -3.4 -5 Z" fill="#fff" stroke="#edb82e" strokeWidth=".5"/>
+    {marker.logo?<image href={marker.logo} x="-2.7" y="-11.4" width="5.4" height="5.4"/>:<text x="0" y="-7.5" fontSize="2.2" textAnchor="middle" fill="#14243b">{marker.name.slice(0,2).toUpperCase()}</text>}
+    </g>}</svg>;
 }
+function Football(){return <><ellipse rx="3" ry="1.8" fill="#a95126" stroke="#fff0d6" strokeWidth=".4"/><path d="M -1.2 0 H 1.2 M -.7 -.6 V .6 M 0 -.6 V .6 M .7 -.6 V .6" stroke="white" strokeWidth=".25"/></>;}
+
+function Yardage({play}:{play:FieldPlay}){const a=play.animation,kick=!!a&&['punt','kickoff','field-goal','extra-point'].includes(a.kind),distance=a&&(a.kind==='punt'||a.kind==='kickoff')?a.from-a.to:play.yards;return <strong className={distance!==null&&distance<0?'gcLoss':''}>{distance===null?a?.result?.toUpperCase()||'—':`${!kick&&distance>0?'+':''}${distance}`}<small>{distance===null&&a?.result?'RESULT':kick?'KICK YDS':'YDS'}</small></strong>;}
