@@ -1,9 +1,10 @@
 /** ESPN summary adapter. Coordinates are offense-relative yards to goal, never ball tracking. */
 type Raw = Record<string, any>;
-export type FieldPlay = {id:string; text:string; clock:string; period:number|null; teamId:string|null; start:number|null; end:number|null; yards:number|null; downDistance:string|null; firstDown:number|null; trace:boolean};
+export type PlayAnimation={kind:'pass'|'rush'|'punt'|'kickoff'|'field-goal'|'extra-point'|'ground';from:number;to:number;teamId:string;basis:'reported-spots'|'reported-kick-distance'|'confirmed-scoring-kick';result:string|null};
+export type FieldPlay = {id:string; text:string; clock:string; period:number|null; teamId:string|null; start:number|null; end:number|null; yards:number|null; downDistance:string|null; firstDown:number|null; trace:boolean;animation?:PlayAnimation|null;endTeamId?:string|null;endPosition?:number|null};
 export type GameSituation = {downDistance:string|null;possessionTeamId:string|null;basis:'provider'|'last-play'};
 export type FieldBranding = {kind:'home'|'neutral'|'unknown';teamName:string|null;logo:string|null;color:string|null};
-export type GameCenterData = {situation:GameSituation|null;branding:FieldBranding;neutral:boolean|null; venue:string|null; homeTeamId:string|null; teams:{id:string;name:string;score:string;logo:string|null}[]; drives:{id:string;team:string;result:string;description:string;plays:FieldPlay[]}[]; teamStats:{teamId:string;name:string;stats:{label:string;value:string}[]}[]; playerStats:{teamId:string;groups:{name:string;labels:string[];players:{name:string;values:string[]}[]}[]}[]};
+export type GameCenterData = {ballPosition?:{teamId:string;yardsToEndzone:number;firstDown:number|null;basis:'provider'|'last-play'}|null;currentDrive?:{id:string;teamId:string;description:string;plays:number|null;yards:number|null;elapsed:string|null}|null;situation:GameSituation|null;branding:FieldBranding;neutral:boolean|null; venue:string|null; homeTeamId:string|null; teams:{id:string;name:string;score:string;logo:string|null}[]; drives:{id:string;team:string;result:string;description:string;plays:FieldPlay[]}[]; teamStats:{teamId:string;name:string;stats:{label:string;value:string}[]}[]; playerStats:{teamId:string;groups:{name:string;labels:string[];players:{name:string;values:string[]}[]}[]}[]};
 const list=(v:unknown):any[]=>Array.isArray(v)?v:[];
 const rows=(v:unknown):Raw[]=>list(v).filter(x=>x!==null&&typeof x==='object');
 const id=(v:unknown):string|null=>/^[1-9]\d{0,11}$/.test(String(v))?String(v):null;
@@ -24,8 +25,29 @@ export function normalizeFieldPlay(p:Raw):FieldPlay|null {
  const trace=consistent&&start!==null&&end!==null&&sameTeam&&p.isTurnover!==true&&p.isPenalty!==true&&!!str(p.type?.text)&&!administrative(p);
  return {id:p.id,text:str(p.text),clock:str(p.clock?.displayValue),period:Number.isInteger(p.period?.number)?p.period.number:null,teamId,start,end,
  yards:typeof p.statYardage==='number'&&Number.isFinite(p.statYardage)?p.statYardage:null,downDistance:downText(p.start),
+ animation:normalizePlayAnimation(p,trace,start,end,teamId),endTeamId:id(p.end?.team?.id),endPosition:Number.isInteger(p.end?.down)&&p.end.down>=1&&p.end.down<=4?end:null,
  firstDown:!administrative(p)&&start!==null&&distance!==null?Math.max(0,start-distance):null,trace};
 }
+
+/** Arcs are decorative. Only reported spots/distances or a confirmed goal-plane crossing supply endpoints. */
+function normalizePlayAnimation(p:Raw,trace:boolean,start:number|null,end:number|null,teamId:string|null):PlayAnimation|null {
+ const type=str(p.type?.text),text=str(p.text);
+ if(start===null||!teamId||p.isPenalty===true||p.isTurnover===true||/\bpenalty\b/i.test(text))return null;
+ const base={from:start,teamId,result:null as string|null};
+ if(/^(Field Goal|Extra Point) Good$/i.test(type))return {...base,to:-10,kind:/^Field Goal/i.test(type)?'field-goal':'extra-point',basis:'confirmed-scoring-kick',result:'Good'};
+ if(/field goal|extra point/i.test(type))return null;
+ if(/punt|kickoff/i.test(type)){
+  const kind=/punt/i.test(type)?'punt':'kickoff',match=text.match(kind==='punt'?/\bpunt(?:s|ed)?\s+(\d{1,3})\s+yards?\b/i:/\bkickoff\s+(\d{1,3})\s+yards?\b/i),distance=match?Number(match[1]):null;
+  // Post-play end spots include returns/touchbacks and are never treated as kick landing spots.
+  if(distance===null||distance<1||distance>110||start-distance < -10)return null;
+  return {...base,to:start-distance,kind,basis:'reported-kick-distance',result:/touchback/i.test(text)?'Touchback':/fair catch/i.test(text)?'Fair catch':null};
+ }
+ if(!trace||end===null)return null;
+ if(/^(Pass Reception|Passing Touchdown)$/i.test(type))return {...base,to:end,kind:'pass',basis:'reported-spots'};
+ if(/pass|kick|punt/i.test(type))return null;
+ return {...base,to:end,kind:/rush/i.test(type)?'rush':'ground',basis:'reported-spots'};
+}
+
 export function normalizeGameCenter(raw:Raw):GameCenterData {
  const c=raw.header?.competitions?.[0];const previous=Array.isArray(raw.drives?.previous)?raw.drives.previous:[];
  const all=[...previous,...(raw.drives?.current?[raw.drives.current]:[])];const unique=new Map<string,Raw>();for(const d of all)if(d?.id)unique.set(String(d.id),d);
@@ -45,5 +67,15 @@ export function normalizeGameCenter(raw:Raw):GameCenterData {
   if(source&&(downText(source)||teams.some(t=>t.id===possession)))situation={downDistance:downText(source),possessionTeamId:teams.some(t=>t.id===possession)?possession:null,basis:'provider'};
   if(!situation){const last=all.flatMap(d=>rows(d?.plays)).at(-1);if(last&&normalizeFieldPlay(last)?.trace&&downText(last.end)){const endTeam=id(last.end?.team?.id);situation={downDistance:downText(last.end),possessionTeamId:teams.some(t=>t.id===endTeam)?endTeam:null,basis:'last-play'};}}
  }
- return {situation,branding,teams,neutral,venue:str(raw.gameInfo?.venue?.fullName)||null,homeTeamId:rows(c?.competitors).find((t:Raw)=>t.homeAway==='home')?.team?.id||null,drives,teamStats,playerStats};
+ let ballPosition:GameCenterData['ballPosition']=null,currentDrive:GameCenterData['currentDrive']=null;
+ if(situation?.possessionTeamId){
+  const teamId=situation.possessionTeamId,source=c?.situation||raw.situation,last=all.flatMap(d=>rows(d?.plays)).at(-1);
+  const direct=yard(source?.yardsToEndzone),lastEnd=yard(last?.end?.yardsToEndzone);
+  const target=(spot:number,d:unknown)=>typeof d==='number'&&Number.isFinite(d)&&d>=0&&d<=100?Math.max(0,spot-d):null;
+  if(direct!==null)ballPosition={teamId,yardsToEndzone:direct,firstDown:target(direct,source?.distance),basis:'provider'};
+  else if(last&&lastEnd!==null&&id(last?.end?.team?.id)===teamId&&Number.isInteger(last?.end?.down)&&last.end.down>=1&&last.end.down<=4)ballPosition={teamId,yardsToEndzone:lastEnd,firstDown:target(lastEnd,last?.end?.distance),basis:'last-play'};
+  const d=raw.drives?.current;
+  if(d?.id&&id(d.team?.id)===teamId)currentDrive={id:String(d.id),teamId,description:str(d.description),plays:Number.isInteger(d.offensivePlays)&&d.offensivePlays>=0?d.offensivePlays:null,yards:typeof d.yards==='number'&&Number.isFinite(d.yards)?d.yards:null,elapsed:str(d.timeElapsed?.displayValue)||null};
+ }
+ return {ballPosition,currentDrive,situation,branding,teams,neutral,venue:str(raw.gameInfo?.venue?.fullName)||null,homeTeamId:rows(c?.competitors).find((t:Raw)=>t.homeAway==='home')?.team?.id||null,drives,teamStats,playerStats};
 }
