@@ -68,8 +68,13 @@ export async function inspectThisDevice(){
   request.onsuccess=()=>{const db=request.result;if(!db.objectStoreNames.contains('settings')){db.close();resolve(undefined);return;}const tx=db.transaction('settings','readonly');const get=tx.objectStore('settings').get('preferences');get.onsuccess=()=>resolve(normalizePreferences(get.result).following);get.onerror=()=>resolve(undefined);tx.oncomplete=()=>db.close();};
  });
  const registration=await navigator.serviceWorker?.getRegistration('/');
+ let pushSubscriptionPresent:boolean|null=null,subscriptionMatchesControl:boolean|null=null,workerScriptExpected:boolean|null=null;
+ try{const subscription=await registration?.pushManager?.getSubscription();pushSubscriptionPresent=!!subscription;
+  if(subscription&&typeof crypto!=='undefined'&&crypto.subtle){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(subscription.endpoint));subscriptionMatchesControl=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('')===control.id;}
+  if(registration?.active?.scriptURL){const script=new URL(registration.active.scriptURL);workerScriptExpected=script.origin===location.origin&&script.pathname==='/alerts-sw.js';}
+ }catch{}
  const response=await fetch('/api/alerts/diagnostics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-  ...control,syncHistory:readSyncHistory(),clientNow:Date.now(),workerFollowing,localFollowing:readPreferences().following,
+  ...control,pushSubscriptionPresent,subscriptionMatchesControl,workerScriptExpected,workerPending:localStorage.getItem('fourth-down-worker-pending')==='true',syncHistory:readSyncHistory(),clientNow:Date.now(),workerFollowing,localFollowing:readPreferences().following,
   pendingSettings:localStorage.getItem('fourth-down-alert-settings-pending-v1')==='true',followingPending:localStorage.getItem('fourth-down-following-pending')==='true',
   permission:typeof Notification==='undefined'?'unsupported':Notification.permission,
   standalone:window.matchMedia('(display-mode: standalone)').matches||(navigator as Navigator&{standalone?:boolean}).standalone===true,
