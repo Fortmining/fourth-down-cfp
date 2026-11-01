@@ -1,16 +1,196 @@
 "use client";
-import {useEffect,useState} from 'react';
-import {subscribeLiveRefresh} from '../lib/live-refresh';
-import type {GameCenterData,FieldPlay,FieldBranding} from '../lib/game-center';
+import { useEffect, useState } from 'react';
+import { subscribeLiveRefresh } from '../lib/live-refresh';
+import type { GameCenterData, FieldPlay, FieldBranding } from '../lib/game-center';
 import './game-center.css';
-export default function GameCenter({id}:{id:string}) {
- const [data,setData]=useState<GameCenterData|null>(null),[error,setError]=useState(''),[selected,setSelected]=useState<string|null>(null),[observedAt,setObservedAt]=useState<string|null>(null);
- useEffect(()=>{const controller=new AbortController();let running=false;async function refresh(){if(running)return;running=true;try{const r=await fetch(`/api/games/${encodeURIComponent(id)}`,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(12000)])});if(!r.ok)throw Error();const body=await r.json();if(body.game?.id!==id||!body.center||!Array.isArray(body.center.drives)||!Array.isArray(body.center.teams)||!Array.isArray(body.center.teamStats)||!Array.isArray(body.center.playerStats))throw Error();if(controller.signal.aborted)return;setData(body.center);setObservedAt(Number.isFinite(Date.parse(body.observedAt))?body.observedAt:null);setError('');}catch{if(!controller.signal.aborted)setError('Play details could not refresh. Any earlier plays remain visible.');}finally{running=false;}}void refresh();const stop=subscribeLiveRefresh(refresh);return()=>{controller.abort();stop();};},[id]);
- const fallbackBrand:FieldBranding={kind:'unknown',teamName:null,logo:null,color:null};
- const plays=data?.drives.flatMap(d=>d.plays)||[];const play=plays.find(p=>p.id===selected)||plays.filter(p=>p.trace).at(-1);
- return <section className="gameCenter" aria-label="Play-by-play and field"><h2>Inside the game</h2><p className="gameFreshness">{observedAt?`Play feed checked ${new Date(observedAt).toLocaleTimeString(undefined,{timeZoneName:'short'})}`:'Play-feed check time unavailable'} · Updates every minute while visible and when you return.</p>{error&&<p role="status">{error}</p>}{!data?<p>Play details loading or unavailable.</p>:<><div className="centerScores">{data.teams.map(t=><a href={`/team/${t.id}`} key={t.id}>{t.logo&&<img className="gameLogo" src={t.logo} width="36" height="36" alt=""/>}{t.name} <strong>{t.score}</strong></a>)}</div><p>{data.venue||'Venue unavailable'} · {data.neutral===true?'Neutral site — neither team’s home field':data.neutral===false?'Home designation supplied by ESPN':'Site designation unavailable'}</p><div className="gameSituation" aria-label="Reported game situation"><strong>{data.situation?.downDistance||'Current down and distance unavailable'}</strong>{data.situation?.possessionTeamId&&<span> · Possession: <a href={`/team/${data.situation.possessionTeamId}`}>{data.teams.find(t=>t.id===data.situation?.possessionTeamId)?.name||'Team unavailable'}</a></span>}<p>{data.situation?.basis==='last-play'?'After the last reported play; not a separate live observation.':data.situation?'Latest situation supplied by ESPN; feed may be delayed.':'No current situation supplied. Historical plays remain available below.'}</p></div><div className="gamePlayback"><span>{selected?'Viewing a selected play':'Following latest plotted play'}</span>{selected&&<button className="detailButton" onClick={()=>setSelected(null)}>Follow latest play</button>}</div><p className="fieldDisclosure">Schematic field, not the venue’s actual turf. Positions are relative to the offense’s goal. Tracers show reported start/end spots, never tracked ball flight.</p>{play?<PlayField branding={data.branding||fallbackBrand} play={play} teamName={data.teams.find(t=>t.id===play.teamId)?.name}/>:<p>No verified play positions available. No movement has been invented.</p>}<details><summary>Play-by-play and drive history</summary>{data.drives.length?data.drives.slice().reverse().map(d=><article className="detailCard" key={d.id}><h3>{d.team} · {d.result||'Drive in progress'}</h3><p>{d.description}</p><ol>{d.plays.slice().reverse().map(p=><li key={p.id}><button className="playChoice" onClick={()=>setSelected(p.id)} aria-pressed={play?.id===p.id}>Q{p.period??'—'} {p.clock} · {p.text}</button></li>)}</ol></article>):<p>Drive history unavailable from the source.</p>}</details><details><summary>Team stats</summary>{data.teamStats.length?data.teamStats.map(t=><div key={t.teamId}><h3><a href={`/team/${t.teamId}`}>{t.name}</a></h3><dl>{t.stats.map(s=><div key={s.label}><dt>{s.label}</dt><dd>{s.value}</dd></div>)}</dl></div>):<p>Team stats unavailable.</p>}</details><details><summary>Player stats</summary>{data.playerStats.length?data.playerStats.map(t=><div key={t.teamId}>{t.groups.map(g=><section key={g.name}><h3>{g.name}</h3><div className="statScroll" tabIndex={0} role="region" aria-label={`${g.name} player statistics`}><table><caption>{g.name} · {data.teams.find(team=>team.id===t.teamId)?.name||'Team unavailable'}</caption><thead><tr><th scope="col">Player</th>{g.labels.map(l=><th scope="col" key={l}>{l}</th>)}</tr></thead><tbody>{g.players.map(p=><tr key={p.name}><th scope="row">{p.name}</th>{p.values.map((v,i)=><td key={i}>{v}</td>)}</tr>)}</tbody></table></div></section>)}</div>):<p>Player stats unavailable.</p>}</details><p>ESPN play data can be delayed or corrected. No additional background polling schedule is used.</p></>}</section>;
+type HeaderGame = {
+    status: string;
+    detail: string;
+    date: string;
+    kickoffTbd?: boolean;
+    teams: {
+        id: string;
+        name: string;
+        logo?: string | null;
+        score?: string;
+        homeAway?: string;
+    }[];
+};
+const tabs = ['Plays', 'Drives', 'Team Stats', 'Players'] as const;
+export default function GameCenter({ id, fallbackGame }: {
+    id: string;
+    fallbackGame?: HeaderGame;
+}) {
+    const [data, setData] = useState<GameCenterData | null>(null), [game, setGame] = useState<HeaderGame | null>(null), [error, setError] = useState(''), [selected, setSelected] = useState<string | null>(null), [observedAt, setObservedAt] = useState<string | null>(null), [tab, setTab] = useState<number>(0);
+    useEffect(() => { const controller = new AbortController(); let running = false; async function refresh() { if (running)
+        return; running = true; try {
+        const r = await fetch(`/api/games/${encodeURIComponent(id)}`, { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12000)]) });
+        if (!r.ok)
+            throw Error();
+        const body = await r.json();
+        if (body.game?.id !== id || !body.center || !Array.isArray(body.center.drives) || !Array.isArray(body.center.teams) || !Array.isArray(body.center.teamStats) || !Array.isArray(body.center.playerStats))
+            throw Error();
+        if (controller.signal.aborted)
+            return;
+        setData(body.center);
+        setGame(body.game);
+        setObservedAt(Number.isFinite(Date.parse(body.observedAt)) ? body.observedAt : null);
+        setError('');
+    }
+    catch {
+        if (!controller.signal.aborted)
+            setError('Play details could not refresh. Any earlier plays remain visible.');
+    }
+    finally {
+        running = false;
+    } } void refresh(); const stop = subscribeLiveRefresh(refresh); return () => { controller.abort(); stop(); }; }, [id]);
+    const source = game || fallbackGame;
+    const teams = [...(source?.teams || data?.teams || [])].sort((a, b) => ('homeAway' in a && a.homeAway === 'away' ? -1 : 'homeAway' in a && a.homeAway === 'home' ? 1 : 0) - ('homeAway' in b && b.homeAway === 'away' ? -1 : 'homeAway' in b && b.homeAway === 'home' ? 1 : 0));
+    const plays = data?.drives.flatMap(d => d.plays) || [];
+    const play = plays.find(p => p.id === selected) || plays.filter(p => p.trace).at(-1);
+    const branding = data?.branding || { kind: 'unknown', teamName: null, logo: null, color: null } as FieldBranding;
+    return <section className="gameCenter gcCast" aria-label="Gamecast">
+    <h2 className="gcSrOnly">Gamecast</h2>
+    <div className="gcBroadcast">
+    <div className="gcKicker">
+    <span>{data?.venue || 'GAMECAST'}{data?.neutral === true ? ' · NEUTRAL SITE' : ''}</span>
+    <details className="gcInfo">
+    <summary aria-label="About this field and game data">ⓘ</summary>
+    <div>
+    <strong>About this Gamecast</strong>
+    <p>Schematic field with verified home-team branding where available, not actual stadium artwork. Spots are relative to the offense. Straight tracers connect reported start and end spots; they are not tracked ball flight.</p>
+    <p>{data?.situation?.basis === 'last-play' ? 'Situation is from the last reported play.' : 'ESPN data may be delayed or corrected.'} Updates every minute while visible and when you return.</p>
+    <p>{observedAt ? `Checked ${new Date(observedAt).toLocaleTimeString(undefined, { timeZoneName: 'short' })}` : 'Check time unavailable'}</p>
+    <a href={`https://www.espn.com/college-football/game/_/gameId/${id}`}>ESPN game coverage ↗</a>
+    </div>
+    </details>
+    </div>
+    <div className="gcScoreboard">{teams.map((t, i) => <div className={`gcTeam gcTeam${i}`} key={t.id}>
+        <a href={`/team/${t.id}`}>{t.logo && /^https:\/\/(?:[a-z0-9-]+\.)*espncdn\.com\//i.test(t.logo) ? <img src={t.logo} width="56" height="56" alt=""/> : <span className="gcMonogram">{t.name.slice(0, 2)}</span>}<span>
+        <small>{'homeAway' in t ? t.homeAway || 'TEAM' : 'TEAM'}</small>
+        <b>{t.name}</b>{data?.situation?.possessionTeamId === t.id && <em>● Possession</em>}</span>
+        </a>
+        <strong>{source?.status === 'pre' ? '—' : t.score ?? '—'}</strong>
+        </div>)}<div className="gcClock">
+    <span>{source?.status === 'post' ? 'FINAL' : source?.status === 'pre' ? 'UPCOMING' : 'LIVE'}</span>
+    <b>{source?.status === 'pre' ? (source.kickoffTbd ? 'Time TBD' : new Date(source.date).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) : source?.status === 'post' ? 'Game complete' : source?.detail || 'Status unavailable'}</b>
+    </div>
+    </div>
+    <div className="gcSituation">{data?.situation?.downDistance || (source?.status === 'post' ? 'Full time' : source?.status === 'pre' ? 'Kickoff ahead' : 'Waiting for the next update')}{data?.situation?.basis === 'last-play' && <small>Last reported play</small>}</div>
+    </div>{error && <p className="gcNotice" role="status">{error}</p>}<div className="gcFieldStage">
+    <div className="gcFieldPlane">
+    <Field play={play} branding={branding}/>
+    </div>
+    <div className="gcFieldLegend">
+    <span>
+    <i />First down</span>
+    <span>
+    <i />Line of scrimmage</span>
+    <b>{branding.kind === 'home' ? branding.teamName : branding.kind === 'neutral' ? 'Neutral field' : 'Fourth Down'}</b>
+    </div>
+    </div>
+    <div className="gcSelected">
+    <div className="gcPlayMeta">
+    <span>{selected ? 'REPLAY' : 'LATEST PLOTTED PLAY'}{play ? ` · Q${play.period ?? '—'} ${play.clock}` : ''}</span>{selected && <button onClick={() => setSelected(null)}>Latest play</button>}</div>{play ? <>
+        <div className="gcPlayHeadline">
+        <strong className={play.yards !== null && play.yards < 0 ? 'gcLoss' : ''}>{play.yards === null ? '—' : `${play.yards > 0 ? '+' : ''}${play.yards}`}<small>YDS</small>
+        </strong>
+        <b>{play.downDistance || 'Reported play'}</b>
+        </div>
+        <p>{play.text}</p>{!play.trace && <small>Verified position data unavailable for this play.</small>}</> : <p>{data ? 'Play positions will appear when verified spots are available.' : 'Loading game details…'}</p>}</div>
+    <div className="gcTabs" role="tablist" aria-label="Game details">{tabs.map((t, i) => <button key={t} id={`gc-tab-${i}`} role="tab" aria-selected={tab === i} aria-controls="gc-panel" tabIndex={tab === i ? 0 : -1} onClick={() => setTab(i)} onKeyDown={e => { let next = tab; if (e.key === 'ArrowRight')
+            next = (tab + 1) % 4;
+        else if (e.key === 'ArrowLeft')
+            next = (tab + 3) % 4;
+        else if (e.key === 'Home')
+            next = 0;
+        else if (e.key === 'End')
+            next = 3;
+        else
+            return; e.preventDefault(); setTab(next); document.getElementById(`gc-tab-${next}`)?.focus(); }}>{t}</button>)}</div>
+    <div id="gc-panel" className="gcPanel" role="tabpanel" aria-labelledby={`gc-tab-${tab}`}>
+ {tab === 0 && (plays.length ? <ol className="gcPlays">{plays.slice().reverse().map(p => <li key={p.id}>
+            <button onClick={() => setSelected(p.id)} aria-pressed={play?.id === p.id}>
+            <span className="gcPlayTime">Q{p.period ?? '—'}<b>{p.clock}</b>
+            </span>
+            <span>{play?.id === p.id ? <>
+                <b>On the field</b>
+                <small>{p.downDistance || 'Selected play'}</small>
+                </> : p.text}</span>
+            <strong className={p.yards !== null && p.yards < 0 ? 'gcLoss' : ''}>{p.yards === null ? '—' : `${p.yards > 0 ? '+' : ''}${p.yards}`}<small>YDS</small>
+            </strong>
+            </button>
+            </li>)}</ol> : <Empty text="Play-by-play will appear when the source provides it."/>)}
+ {tab === 1 && (data?.drives.length ? <div className="gcDrives">{data.drives.slice().reverse().map(d => <article key={d.id}>
+            <header>
+            <b>{d.team}</b>
+            <span>{d.result || 'In progress'}</span>
+            </header>
+            <p>{d.description || 'Drive details unavailable'}</p>
+            <button onClick={() => { setSelected(d.plays.at(-1)?.id || null); setTab(0); }}>View plays <span>→</span>
+            </button>
+            </article>)}</div> : <Empty text="Drive history is not available yet."/>)}
+ {tab === 2 && (data?.teamStats.length ? <div className="gcTeamStats">{data.teamStats.map(t => <section key={t.teamId}>
+            <h3>
+            <a href={`/team/${t.teamId}`}>{t.name}</a>
+            </h3>
+            <dl>{t.stats.map(s => <div key={s.label}>
+                <dt>{s.label}</dt>
+                <dd>{s.value}</dd>
+                </div>)}</dl>
+            </section>)}</div> : <Empty text="Team statistics are not available yet."/>)}
+ {tab === 3 && (data?.playerStats.length ? data.playerStats.map(t => <section className="gcPlayerTeam" key={t.teamId}>
+        <h3>{data.teams.find(team => team.id === t.teamId)?.name || 'Team'}</h3>{t.groups.map(g => <div key={g.name} className="statScroll" tabIndex={0} role="region" aria-label={`${g.name} player statistics`}>
+            <table>
+            <caption>{g.name}</caption>
+            <thead>
+            <tr>
+            <th scope="col">Player</th>{g.labels.map(l => <th scope="col" key={l}>{l}</th>)}</tr>
+            </thead>
+            <tbody>{g.players.map(p => <tr key={p.name}>
+                <th scope="row">{p.name}</th>{p.values.map((v, i) => <td key={i}>{v}</td>)}</tr>)}</tbody>
+            </table>
+            </div>)}</section>) : <Empty text="Player statistics are not available yet."/>)}
+ </div>
+    </section>;
 }
-function PlayField({play,teamName,branding}:{play:FieldPlay;teamName?:string;branding:FieldBranding}) {
- const x=(y:number)=>110-y;
- return <div><p>{branding.kind==='home'?`${branding.teamName||'Home team'} colors and logo · schematic, not actual stadium artwork`:branding.kind==='neutral'?'Neutral-site schematic · no home-team field branding':'Generic schematic · home field unverified'}</p><p>Selected play · Q{play.period??'—'} {play.clock} · Yellow line: pre-snap first-down target.</p><p><strong>Play start: {play.downDistance||'Down and distance unavailable'}</strong> · {play.teamId?<>Possession: <a href={`/team/${play.teamId}`}>{teamName||'Team name unavailable'}</a></>:'Possession unavailable'} · {play.yards===null?'Yardage unavailable':`${play.yards>0?'+':''}${play.yards} reported yards`}</p><svg viewBox="0 0 120 54" role="img" aria-label={`Schematic play positions. ${play.text}`}><rect width="120" height="54" fill="#164d32"/><rect width="10" height="54" fill={branding.color||'#123c2a'}/><rect x="110" width="10" height="54" fill={branding.color||'#123c2a'}/>{branding.logo&&<image href={branding.logo} x="55" y="17" width="10" height="10" opacity=".65"/>}<g stroke="white" strokeWidth=".3">{Array.from({length:11},(_,i)=><line key={i} x1={10+i*10} x2={10+i*10} y1="0" y2="54"/>)}</g><text x="60" y="12" textAnchor="middle" fill="white" fontSize="4">SCHEMATIC · OFFENSE →</text>{play.trace&&play.start!==null&&play.end!==null?<><path d={`M ${x(play.start)} 27 L ${x(play.end)} 27`} stroke="#ffd166" strokeWidth="1.4" fill="none"/><ellipse key={play.id} className="playBall" cx={x(play.end)} cy="27" rx="1.8" ry="1" fill="#c58a53"><animate attributeName="cx" from={x(play.start)} to={x(play.end)} dur=".8s" fill="freeze"/></ellipse><ellipse className="staticPlayBall" cx={x(play.end)} cy="27" rx="1.8" ry="1" fill="#c58a53"/></>:null}{play.firstDown!==null&&<line x1={x(play.firstDown)} x2={x(play.firstDown)} y1="0" y2="54" stroke="#ffdc51" strokeWidth=".7"/>}</svg><p>{play.text}</p>{!play.trace&&<p>Position animation unavailable for this play.</p>}</div>;
+function Empty({ text }: {
+    text: string;
+}) { return <p className="gcEmpty">{text}</p>; }
+function Field({ play, branding }: {
+    play?: FieldPlay;
+    branding: FieldBranding;
+}) {
+    const x = (n: number) => 110 - n;
+    const trace = play?.trace && play.start !== null && play.end !== null;
+    const gain = (play?.yards || 0) >= 0;
+    return <svg viewBox="0 0 120 54" role="img" aria-label={play ? `Schematic field positions for selected play. ${play.trace ? 'Reported start and end spots.' : 'Position data unavailable.'}` : 'Football field. Awaiting verified play positions.'}>
+    <defs>
+    <linearGradient id="gcTurf" x2="0" y2="1">
+    <stop stopColor="#237c4e"/>
+    <stop offset="1" stopColor="#12462f"/>
+    </linearGradient>
+    <filter id="gcBallShadow">
+    <feDropShadow dx="0" dy=".6" stdDeviation=".7" floodOpacity=".65"/>
+    </filter>
+    </defs>
+    <rect width="120" height="54" rx="1" fill="url(#gcTurf)"/>{Array.from({ length: 10 }, (_, i) => <rect key={i} x={10 + i * 10} width="10" height="54" fill={i % 2 ? '#fff' : '#000'} opacity=".045"/>)}<rect width="10" height="54" fill={branding.color || '#152b40'}/>
+    <rect x="110" width="10" height="54" fill={branding.color || '#152b40'}/>
+    <text transform="translate(6 27) rotate(-90)" textAnchor="middle" fill="white" fontSize="3" fontWeight="900">FOURTH DOWN</text>
+    <text transform="translate(114 27) rotate(90)" textAnchor="middle" fill="white" fontSize="3" fontWeight="900">{branding.kind === 'home' ? 'HOME FIELD' : 'GAME DAY'}</text>
+    <g stroke="#fff" strokeWidth=".25" opacity=".8">{Array.from({ length: 11 }, (_, i) => <line key={i} x1={10 + i * 10} x2={10 + i * 10} y1="0" y2="54"/>)}{Array.from({ length: 101 }, (_, i) => <g key={i}>{[1, 22, 31, 52].map(y => <line key={y} x1={10 + i} x2={10 + i} y1={y} y2={y + 1}/>)}</g>)}</g>{[10, 20, 30, 40, 50, 40, 30, 20, 10].map((n, i) => <g key={i} fill="#fff" opacity=".8" fontSize="3" fontWeight="700">
+        <text x={20 + i * 10} y="9" textAnchor="middle">{n}</text>
+        <text x={20 + i * 10} y="47" textAnchor="middle" transform={`rotate(180 ${20 + i * 10} 46)`}>{n}</text>
+        </g>)}{branding.logo ? <image href={branding.logo} x="53" y="20" width="14" height="14" opacity=".65"/> : <text x="60" y="29" textAnchor="middle" fontSize="4" fontWeight="900" fill="white" opacity=".35">4TH DOWN</text>}{play?.start !== null && play?.start !== undefined && <line x1={x(play.start)} x2={x(play.start)} y1="0" y2="54" stroke="#67c8ff" strokeWidth=".65"/>}{play?.firstDown !== null && play?.firstDown !== undefined && <line x1={x(play.firstDown)} x2={x(play.firstDown)} y1="0" y2="54" stroke="#ffdb4c" strokeWidth=".8"/>}{trace && play && <g key={play.id}>
+        <path className="gcTracer" pathLength="1" d={`M ${x(play.start!)} 27 L ${x(play.end!)} 27`} stroke={gain ? '#b6ff6b' : '#ff927f'} strokeWidth="2" strokeLinecap="round"/>
+        <circle cx={x(play.start!)} cy="27" r="1" fill="white"/>
+        <g className="gcBall" filter="url(#gcBallShadow)">
+        <animateTransform attributeName="transform" type="translate" from={`${x(play.start!)} 27`} to={`${x(play.end!)} 27`} dur=".85s" fill="freeze"/>
+        <ellipse rx="3" ry="1.8" fill="#a95126" stroke="#fff0d6" strokeWidth=".4"/>
+        <path d="M -1.2 0 H 1.2 M -.7 -.6 V .6 M 0 -.6 V .6 M .7 -.6 V .6" stroke="white" strokeWidth=".25"/>
+        </g>
+        <g className="gcStaticBall" transform={`translate(${x(play.end!)} 27)`}>
+        <ellipse rx="3" ry="1.8" fill="#a95126" stroke="white" strokeWidth=".4"/>
+        </g>
+        </g>}</svg>;
 }

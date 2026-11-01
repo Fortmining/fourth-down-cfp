@@ -6,7 +6,8 @@
       "feature/verified-mascot-names": false,
       "release/2026-confirmed-resumes": false,
       "feature/navigation-home-redesign": false,
-      "feature/pulse-feed-pilot": false
+      "feature/pulse-feed-pilot": false,
+      "feature/gamecast-visual-redesign": false
     }
   }
 }

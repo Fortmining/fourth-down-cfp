@@ -1,0 +1,26 @@
+import {chromium,webkit,devices} from 'playwright';
+import AxeBuilder from '@axe-core/playwright';
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const base=process.env.TEST_URL||'http://127.0.0.1:3027';
+if(!process.env.GAMECAST_CAPTURE)throw Error('Set GAMECAST_CAPTURE to the saved, normalized ESPN game capture (no live requests).');
+const capture=JSON.parse(fs.readFileSync(process.env.GAMECAST_CAPTURE));
+const fixtures=JSON.parse(fs.readFileSync(new URL('../tests/fixtures/game-center-release.json',import.meta.url)));
+const out=process.env.GAMECAST_RESULTS||'/tmp/fourth-down-gamecast-redesign';fs.mkdirSync(out,{recursive:true});const results=[];
+for(const [engine,mobile] of [[chromium,false],[webkit,true]]){
+ const browser=await engine.launch();const context=await browser.newContext(mobile?{...devices['iPhone 13']}:{viewport:{width:1440,height:1100}});const p=await context.newPage();let phase='captured',writes=0;const errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await p.route('**/api/**',r=>{if(r.request().method()!=='GET'){writes++;return r.fulfill({status:403});}const path=new URL(r.request().url()).pathname;const game=phase==='captured'?capture.game:{...capture.game,status:'in',detail:'Q3 · 08:41'};if(path==='/api/live')return r.fulfill({json:{games:[game],polls:[],warnings:[],updatedAt:capture.observedAt}});if(path.endsWith('/401856731')){if(phase==='failure')return r.fulfill({status:503});return r.fulfill({json:{...capture,game,center:phase==='captured'?capture.center:fixtures[phase]||fixtures.next}});}return r.fulfill({status:404});});
+ await p.goto(base+'/game/401856731',{waitUntil:'domcontentloaded',timeout:60000});await p.locator('.gcPlays button').first().waitFor();assert.equal(await p.locator('.gcTeam img').count(),2);assert.match(await p.locator('.gcClock').innerText(),/FINAL/);assert.equal(await p.locator('.gcBall').count(),1);assert.equal(await p.getByRole('heading',{name:capture.game.name,exact:true}).count(),1);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await p.screenshot({path:out+`/gamecast-${mobile?'mobile':'desktop'}.png`,fullPage:false});
+ await p.locator('.gcPlays button').nth(1).click();await p.getByRole('button',{name:'Latest play',exact:true}).waitFor();await p.getByRole('button',{name:'Latest play',exact:true}).click();
+ for(const name of ['Drives','Team Stats','Players']){await p.getByRole('tab',{name,exact:true}).click();assert.ok((await p.locator('#gc-panel').innerText()).length>40);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
+ const axe=await new AxeBuilder({page:p}).include('.gcCast').analyze();assert.deepEqual(axe.violations.map(v=>({id:v.id,detail:v.nodes.map(n=>n.failureSummary)})),[]);
+ await p.getByRole('tab',{name:'Plays',exact:true}).click();await p.getByRole('tab',{name:'Plays',exact:true}).press('ArrowRight');assert.equal(await p.getByRole('tab',{name:'Drives',exact:true}).getAttribute('aria-selected'),'true');
+ phase='first';await p.evaluate(()=>window.dispatchEvent(new Event('focus')));await p.locator('.gcSituation').filter({hasText:'2nd & 1'}).waitFor();phase='next';await p.evaluate(()=>window.dispatchEvent(new Event('focus')));await p.locator('.gcSituation').filter({hasText:'3rd & 4'}).waitFor();assert.match(await p.locator('.gcPlayHeadline').innerText(),/-3/);
+ phase='failure';await p.evaluate(()=>window.dispatchEvent(new Event('focus')));await p.getByRole('status').filter({hasText:'Play details could not refresh'}).waitFor();assert.match(await p.locator('.gcPlayHeadline').innerText(),/-3/);
+ phase='neutral';await p.evaluate(()=>window.dispatchEvent(new Event('online')));await p.locator('.gcKicker').filter({hasText:'NEUTRAL SITE'}).waitFor();assert.equal(await p.locator('.gcFieldPlane image').count(),0);
+ phase='missing';await p.evaluate(()=>window.dispatchEvent(new Event('focus')));await p.getByText('Play positions will appear when verified spots are available.',{exact:true}).waitFor();assert.equal(await p.locator('.gcBall').count(),0);
+ await p.emulateMedia({reducedMotion:'reduce'});phase='next';await p.evaluate(()=>window.dispatchEvent(new Event('focus')));await p.locator('.gcBall').waitFor({state:'attached'});assert.equal(await p.locator('.gcBall').isVisible(),false);assert.equal(await p.locator('.gcStaticBall').isVisible(),true);
+ if(mobile){await p.setViewportSize({width:320,height:760});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
+ phase='failure';await p.reload({waitUntil:'domcontentloaded'});await p.getByText('Play details could not refresh. Any earlier plays remain visible.',{exact:true}).waitFor();assert.equal(await p.locator('.gcTeam>strong').first().innerText(),'24');assert.equal(await p.locator('.gcBall').count(),0);assert.equal(writes,0);assert.deepEqual(errors,[]);results.push({engine:engine.name(),mobile,capturedSourceReplay:true,simulatedUpdatesRecoveryNeutralMissing:true,replay:true,tabs:true,reducedMotion:true,overflow:false,axeViolations:axe.violations.length,pageErrors:errors,writeRequests:writes});await browser.close();
+}
+fs.writeFileSync(out+'/results.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));

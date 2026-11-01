@@ -1,4 +1,616 @@
-.gameCenter{margin-top:1.5rem;max-width:100%;overflow:hidden}.gameCenter svg{display:block;width:100%;border-radius:12px;margin:1rem 0}.fieldDisclosure{font-size:.85rem;opacity:.8}.gameCenter summary{cursor:pointer;font-weight:700;padding:1rem 0}.gameCenter ol{padding-left:1.3rem}.playChoice{background:transparent;color:inherit;border:0;text-align:left;padding:.65rem .3rem;line-height:1.5;width:100%;cursor:pointer}.playChoice[aria-pressed=true]{box-shadow:inset 3px 0 #bd8a2e}.playChoice:focus-visible{outline:2px solid #bd8a2e}.gameCenter dl>div{display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid #8884;padding:.5rem}.statScroll{overflow-x:auto}.gameCenter table{border-collapse:collapse;min-width:100%}.gameCenter th,.gameCenter td{padding:.5rem;text-align:left;white-space:nowrap}.gameCenter caption{text-align:left}.gameLogo{width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:.5rem}@media(prefers-reduced-motion:reduce){.playBall{display:none}}
-.centerScores{display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;padding:1rem 0}.centerScores a{display:flex;align-items:center;gap:.5rem}.centerScores strong{font-size:1.6rem}
-.staticPlayBall{display:none}@media(prefers-reduced-motion:reduce){.staticPlayBall{display:block}}
-.gameSituation{padding:1rem;border:1px solid #8884;border-radius:12px;margin:1rem 0}.gameSituation p,.gameFreshness{font-size:.85rem;opacity:.85}.gamePlayback{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+.gcCast {
+  margin:1rem 0 2rem;
+  min-width:0;
+  border:1px solid var(--border,#dce0e5);
+  border-radius:20px;
+  background:var(--panel,#fff);
+  box-shadow:0 12px 35px #14243b10;
+  overflow:visible}
+.gcCast * {
+  box-sizing:border-box}
+.gcBroadcast {
+  background:#101e32;
+  color:#fff;
+  border-radius:19px 19px 0 0;
+  border-top:4px solid #edb82e;
+  padding:14px 22px}
+.gcKicker {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#c4cfdd}
+.gcInfo {
+  position:relative;
+  letter-spacing:normal;
+  text-transform:none;
+  z-index:5}
+.gcInfo summary {
+  cursor:pointer;
+  font-size:23px;
+  list-style:none;
+  line-height:1}
+.gcInfo summary::-webkit-details-marker {
+  display:none}
+.gcInfo>div {
+  position:absolute;
+  right:0;
+  top:32px;
+  width:min(310px,75vw);
+  background:#fff;
+  color:#14243b;
+  padding:18px;
+  border:1px solid #d3dbe4;
+  border-radius:12px;
+  box-shadow:0 12px 40px #0005;
+  font-size:12px;
+  line-height:1.5;
+  font-weight:400}
+.gcInfo p {
+  margin:8px 0}
+.gcInfo a {
+  color:#21558c}
+.gcScoreboard {
+  display:grid;
+  grid-template-columns:1fr 150px 1fr;
+  align-items:center;
+  gap:24px;
+  padding:20px 0}
+.gcTeam {
+  display:flex;
+  align-items:center;
+  gap:16px;
+  min-width:0}
+.gcTeam a {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:#fff;
+  text-decoration:none;
+  min-width:0}
+.gcTeam img {
+  object-fit:contain;
+  flex-shrink:0}
+.gcTeam b {
+  font-size:16px;
+  display:block;
+  line-height:1.15}
+.gcTeam small {
+  font-size:9px;
+  color:#a6b5c7;
+  text-transform:uppercase;
+  display:block;
+  letter-spacing:.12em;
+  margin-bottom:5px}
+.gcTeam em {
+  font-size:10px;
+  color:#ffdb69;
+  font-style:normal;
+  display:block;
+  margin-top:5px}
+.gcTeam>strong {
+  font-size:48px;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+  margin-left:auto;
+  letter-spacing:-.05em}
+.gcTeam1 {
+  grid-column:3;
+  grid-row:1;
+  flex-direction:row-reverse}
+.gcTeam1 a {
+  flex-direction:row-reverse;
+  text-align:right}
+.gcTeam1>strong {
+  margin-left:0;
+  margin-right:auto}
+.gcClock {
+  grid-column:2;
+  grid-row:1;
+  text-align:center}
+.gcClock span {
+  color:#ffda64;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.15em;
+  display:block}
+.gcClock b {
+  font-size:13px;
+  display:block;
+  margin-top:8px}
+.gcSituation {
+  border-top:1px solid #ffffff26;
+  padding-top:11px;
+  text-align:center;
+  font-size:13px;
+  font-weight:700}
+.gcSituation small {
+  margin-left:10px;
+  font-weight:400;
+  color:#b8c7d8;
+  font-size:10px}
+.gcMonogram {
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  background:#30435c;
+  border-radius:50%;
+  font-weight:900}
+.gcFieldStage {
+  position:relative;
+  perspective:1000px;
+  background:radial-gradient(ellipse at 50% 20%,#314c53,#0d1c2b 75%);
+  padding:12px 30px 35px;
+  overflow:hidden}
+.gcFieldPlane {
+  transform:rotateX(29deg) rotateZ(-4deg) scale(.94);
+  transform-style:preserve-3d;
+  box-shadow:0 10px 0 #0c2b20,0 22px 25px #0009;
+  border:3px solid #d9e6dd;
+  border-radius:5px;
+  margin:-2px 0 3px}
+.gcFieldPlane svg {
+  display:block;
+  width:100%;
+  height:auto;
+  border-radius:2px}
+.gcTracer {
+  stroke-dasharray:1;
+  animation:gcTrace .85s ease-out both;
+  filter:drop-shadow(0 0 1px #b7ff87)}
+@keyframes gcTrace {
+  from {
+  stroke-dashoffset:1}
+to {
+  stroke-dashoffset:0}
+}
+.gcStaticBall {
+  display:none}
+.gcFieldLegend {
+  position:absolute;
+  bottom:11px;
+  left:20px;
+  right:20px;
+  display:flex;
+  gap:15px;
+  align-items:center;
+  color:#d1dedf;
+  font-size:9px}
+.gcFieldLegend span {
+  display:flex;
+  align-items:center;
+  gap:5px}
+.gcFieldLegend i {
+  width:12px;
+  height:3px;
+  background:#ffdb4c}
+.gcFieldLegend span:nth-child(2) i {
+  background:#67c8ff}
+.gcFieldLegend b {
+  margin-left:auto;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-size:9px}
+.gcSelected {
+  padding:17px 22px 20px;
+  border-bottom:1px solid var(--border,#dce0e5)}
+.gcPlayMeta {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  font-size:10px;
+  letter-spacing:.07em;
+  font-weight:800;
+  color:var(--muted,#5c6a7b)}
+.gcCast button {
+  font:inherit;
+  cursor:pointer}
+.gcPlayMeta button {
+  border:1px solid var(--border,#dce0e5);
+  background:transparent;
+  color:inherit;
+  border-radius:20px;
+  padding:5px 10px;
+  font-size:11px;
+  letter-spacing:normal}
+.gcPlayHeadline {
+  display:flex;
+  gap:18px;
+  align-items:center;
+  margin:10px 0}
+.gcPlayHeadline>strong {
+  font-size:29px;
+  color:#23754a;
+  line-height:1}
+.gcPlayHeadline small,.gcPlays strong small {
+  display:block;
+  font-size:9px;
+  letter-spacing:.08em;
+  margin-top:4px}
+.gcPlayHeadline>b {
+  font-size:14px}
+.gcSelected p {
+  font-size:14px;
+  line-height:1.5;
+  margin:9px 0 0}
+.gcSelected>small {
+  color:var(--muted,#5c6a7b)}
+.gcCast .gcLoss {
+  color:#b64532}
+.gcTabs {
+  display:flex;
+  border-bottom:1px solid var(--border,#dce0e5);
+  padding:0 18px;
+  gap:20px}
+.gcTabs button {
+  border:0;
+  border-bottom:3px solid transparent;
+  background:transparent;
+  color:var(--muted,#5c6a7b);
+  font-size:13px;
+  font-weight:800;
+  padding:17px 3px 13px}
+.gcTabs button[aria-selected=true] {
+  color:var(--ink,#14243b);
+  border-color:#e7ad20}
+.gcCast button:focus-visible,.gcCast a:focus-visible,.gcCast summary:focus-visible,.gcCast [tabindex]:focus-visible {
+  outline:3px solid #c98a00;
+  outline-offset:3px}
+.gcPanel {
+  padding:8px 22px 20px;
+  min-width:0}
+.gcPlays {
+  list-style:none;
+  margin:0;
+  padding:0;
+  max-height:520px;
+  overflow:auto}
+.gcPlays li+li {
+  border-top:1px solid var(--border,#dce0e5)}
+.gcPlays button {
+  display:grid;
+  grid-template-columns:52px 1fr 40px;
+  gap:14px;
+  align-items:center;
+  width:100%;
+  text-align:left;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:inherit;
+  padding:16px 8px;
+  font-size:13px;
+  line-height:1.5}
+.gcPlays button[aria-pressed=true] {
+  background:#e6b62c12;
+  box-shadow:inset 3px 0 #d7a82d}
+.gcPlayTime {
+  font-size:10px;
+  color:var(--muted,#5c6a7b)}
+.gcPlayTime b {
+  display:block;
+  font-size:12px}
+.gcPlays strong {
+  color:#23754a;
+  font-size:17px;
+  text-align:right}
+.gcPlays button>span:nth-child(2)>small {
+  display:block;
+  color:var(--muted,#5c6a7b);
+  font-size:11px}
+.gcDrives {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  padding-top:12px}
+.gcDrives article {
+  border:1px solid var(--border,#dce0e5);
+  border-radius:12px;
+  padding:16px}
+.gcDrives header {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  font-size:13px}
+.gcDrives header span {
+  font-size:10px;
+  background:#d7a82d20;
+  padding:4px 8px;
+  border-radius:10px}
+.gcDrives p {
+  font-size:12px;
+  color:var(--muted,#5c6a7b);
+  line-height:1.5}
+.gcDrives button {
+  border:0;
+  background:transparent;
+  color:inherit;
+  font-size:11px;
+  font-weight:800;
+  padding:0}
+.gcDrives button span {
+  margin-left:10px}
+.gcTeamStats {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px}
+.gcPanel h3 {
+  font-size:15px;
+  margin:18px 0 12px}
+.gcPanel h3 a {
+  color:inherit}
+.gcTeamStats dl {
+  margin:0}
+.gcTeamStats dl>div {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  border-bottom:1px solid var(--border,#dce0e5);
+  padding:11px 0;
+  font-size:12px}
+.gcTeamStats dd {
+  font-weight:800;
+  margin:0}
+.statScroll {
+  overflow:auto;
+  max-width:100%;
+  margin-bottom:20px}
+.gcCast table {
+  border-collapse:collapse;
+  min-width:100%;
+  font-size:12px}
+.gcCast caption {
+  text-align:left;
+  font-weight:800;
+  padding:10px 0;
+  text-transform:capitalize}
+.gcCast th,.gcCast td {
+  padding:11px 12px;
+  text-align:right;
+  white-space:nowrap;
+  border-bottom:1px solid var(--border,#dce0e5)}
+.gcCast th:first-child {
+  text-align:left}
+.gcCast thead {
+  background:#8192a110;
+  color:var(--muted,#5c6a7b);
+  font-size:10px}
+.gcEmpty {
+  padding:30px 10px;
+  text-align:center;
+  color:var(--muted,#5c6a7b);
+  font-size:14px}
+.gcNotice {
+  padding:10px 20px;
+  background:#f5c44d20;
+  font-size:12px;
+  margin:0}
+.gameLogo {
+  width:36px;
+  height:36px;
+  object-fit:contain;
+  vertical-align:middle;
+  margin-right:.5rem}
+.gamecastShell main>header h1 {
+  font-size:clamp(22px,4vw,34px);
+  line-height:1.1;
+  margin:6px 0 12px}
+.gamecastShell main>header .eyebrow {
+  font-size:10px}
+.gamecastShell .displaySettings {
+  margin:8px 0}
+.gamecastShell .followControl {
+  display:inline-flex;
+  margin:10px 12px 0 0}
+.gamecastShell .followControl p:empty {
+  display:none}
+.gamecastShell .detailButton {
+  font-size:12px;
+  padding:8px 12px}
+.gamecastShell .gcDisplayOptions {
+  font-size:12px;
+  margin-bottom:6px}
+.gamecastShell .gcDisplayOptions summary {
+  cursor:pointer}
+.gamecastShell main>p:empty {
+  display:none}
+@media(max-width:600px) {
+  .gcBroadcast {
+  padding:12px}
+.gcScoreboard {
+  grid-template-columns:1fr 68px 1fr;
+  gap:8px;
+  padding:17px 0}
+.gcTeam {
+  gap:6px;
+  flex-wrap:wrap}
+.gcTeam a,.gcTeam1 a {
+  flex-direction:column;
+  align-items:flex-start;
+  text-align:left;
+  gap:6px}
+.gcTeam1 a {
+  align-items:flex-end;
+  text-align:right}
+.gcTeam img {
+  width:40px;
+  height:40px}
+.gcTeam b {
+  font-size:12px;
+  max-width:105px}
+.gcTeam>strong {
+  font-size:38px}
+.gcTeam small {
+  font-size:8px;
+  margin-bottom:3px}
+.gcTeam em {
+  font-size:8px}
+.gcClock b {
+  font-size:10px;
+  line-height:1.4}
+.gcClock span {
+  font-size:9px}
+.gcKicker {
+  font-size:8px;
+  letter-spacing:.06em}
+.gcFieldStage {
+  padding:15px 10px 34px}
+.gcFieldPlane {
+  transform:rotateX(25deg) rotateZ(-4deg) scale(.94)}
+.gcFieldLegend {
+  left:12px;
+  right:12px;
+  gap:10px;
+  font-size:8px}
+.gcFieldLegend b {
+  display:none}
+.gcSelected {
+  padding:14px}
+.gcTabs {
+  padding:0 10px;
+  gap:0;
+  justify-content:space-between}
+.gcTabs button {
+  font-size:12px}
+.gcPanel {
+  padding:6px 10px 16px}
+.gcPlays button {
+  grid-template-columns:38px 1fr 32px;
+  gap:9px;
+  font-size:12px}
+.gcDrives {
+  grid-template-columns:1fr}
+.gcTeamStats {
+  gap:14px}
+.gcTeamStats dl>div {
+  font-size:11px}
+.gcCast {
+  border-radius:16px}
+.gcBroadcast {
+  border-radius:15px 15px 0 0}
+}
+@media(prefers-reduced-motion:reduce) {
+  .gcTracer {
+  animation:none}
+.gcBall {
+  display:none}
+.gcStaticBall {
+  display:block}
+}
+
+/* Gamecast is compact;
+   do not inherit the homepage hero or generic section spacing. */
+.gamecastShell main>header {
+  min-height:0;
+  background:none;
+  border:0;
+  padding:0;
+  margin:0 0 10px;
+  color:var(--ink,#14243b);
+  overflow:visible;
+  display:block}
+.gamecastShell main>header::before,.gamecastShell main>header::after,.gcCast header::before,.gcCast header::after {
+  content:none}
+.gamecastShell main>header h1 {
+  font-family:Arial,Helvetica,sans-serif;
+  font-weight:800;
+  letter-spacing:-.6px;
+  text-transform:none;
+  max-width:none;
+  font-size:clamp(18px,3vw,27px);
+  margin:5px 0 8px}
+.gamecastShell main>header .eyebrow {
+  color:var(--muted,#5c6a7b);
+  margin:0}
+.gamecastShell .detailStatus:empty {
+  display:none}
+.gamecastShell .gcDisplayOptions {
+  padding:0;
+  margin:0 0 10px;
+  border:0;
+  background:none}
+.gamecastShell .gcDisplayOptions:not([open]) {
+  display:inline-block;
+  margin-right:16px}
+.gamecastShell main>button.detailButton {
+  margin:0 10px 8px 0}
+.gamecastShell main>.followControl {
+  padding:0;
+  margin:0 0 8px;
+  vertical-align:middle}
+.gcCast {
+  padding:0}
+.gcCast header {
+  position:static;
+  isolation:auto;
+  overflow:visible;
+  min-height:0;
+  background:none;
+  border:0;
+  border-radius:0;
+  padding:0;
+  margin:0;
+  color:inherit}
+.gcCast .gcSrOnly {
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0}
+.gcCast .gcBroadcast {
+  margin:0}
+.gcCast .gcPanel {
+  margin:0}
+.gcCast .gcPlayerTeam {
+  padding:0;
+  margin:0 0 20px;
+  border:0;
+  background:none}
+.gcCast .gcTeamStats>section {
+  padding:0;
+  margin:0;
+  border:0;
+  background:none}
+.gcCast .gcDrives article {
+  margin:0}
+.gcCast .gcInfo {
+  margin:0;
+  padding:0;
+  border:0;
+  background:none}
+.gcCast .gcInfo summary {
+  padding:0}
+.gamecastShell main {
+  padding-top:20px}
+@media(max-width:600px) {
+  .gamecastShell main {
+  padding:16px 10px}
+.gamecastShell main>header h1 {
+  font-size:19px;
+  line-height:1.2}
+.gcScoreboard {
+  gap:6px}
+.gcTeam {
+  gap:5px}
+.gcTeam b {
+  font-size:11px;
+  max-width:90px}
+.gcTeam>strong {
+  font-size:33px}
+.gcTeam img {
+  width:34px;
+  height:34px}
+}
+
+.gamecastShell .gcDisplayOptions>summary{min-height:44px;font-size:11px;gap:0}.gcCast .gcInfo>summary{min-height:32px;width:32px;display:grid;place-items:center}.gamecastShell section.gcCast{margin:12px 0 24px}.gamecastShell main>.followControl button{font-size:12px;padding:8px;margin:0}.gamecastShell main>.followControl{margin-bottom:0}.gamecastShell main>button.detailButton{font-size:11px;padding:8px;margin:0 8px 0 0}.gamecastShell .gcDisplayOptions:not([open]){margin:0 10px 0 0}.gcFieldPlane text{font-family:Arial,Helvetica,sans-serif;filter:none;paint-order:stroke;stroke:#ffffff30;stroke-width:.04px}
+@media(max-width:600px){.gcScoreboard{grid-template-columns:1fr 60px 1fr;padding:10px 0}.gcTeam a,.gcTeam1 a{gap:4px}.gcTeam b{font-size:10px;max-width:80px}.gcTeam>strong{font-size:30px}.gcTeam img{width:30px;height:30px}.gcTeam small{font-size:7px}.gcClock b{font-size:9px}.gamecastShell main>header h1{font-size:17px}.gcBroadcast{padding:10px}.gcSituation{padding-top:8px;font-size:11px}}
