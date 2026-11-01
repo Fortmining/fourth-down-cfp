@@ -111,3 +111,11 @@ test("future and invalid publication dates cannot masquerade as published rankin
   assert.equal(p[0].week, 7);
   assert.equal(p[1].teams.length, 0);
 });
+
+// Official 2026 release schedule: https://collegefootballplayoff.com/news/2026/8/6/sc-aug-2627
+test('first CFP publication remains scheduled until the announced 7pm Eastern show',()=>{
+ const before=collectPolls([],2026,10,false,new Date('2026-11-03T18:59:59-05:00')).find(p=>p.id==='cfp')!;
+ assert.equal(before.status,'not_published');assert.match(before.message,/7 p.m. Eastern/);
+ const after=collectPolls([],2026,10,false,new Date('2026-11-03T19:00:00-05:00')).find(p=>p.id==='cfp')!;
+ assert.equal(after.status,'unavailable');assert.equal(after.teams.length,0);
+});
