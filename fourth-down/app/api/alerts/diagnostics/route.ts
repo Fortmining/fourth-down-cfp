@@ -1,3 +1,4 @@
+import {sanitizeDeviceSubscriptionFacts,mergeGameAudit} from '../../../lib/worker-diagnostics';
 import {NextResponse} from 'next/server';
 import {appendDeliveryAudit,cronAuthorized,redis,loadSubscription,sameToken,SUBS,type SavedSubscription} from '../../../lib/push-store';
 import {normalizePreferences,type AlertFeed} from '../../../lib/alerts';
@@ -24,7 +25,7 @@ export async function GET(request:Request){
     ]);
     devices.push({deviceAlias:s.id.slice(0,12),pushService:new URL(s.subscription.endpoint).hostname,
      settingsSavedAt:iso(s.updatedAt),categoryActiveSince:Object.fromEntries(Object.entries(s.typeSince).map(([k,v])=>[k,iso(v)])),
-     preferences:s.preferences,kickoffAccess:s.kickoffAccess??null,gameAccess:s.gameAccess??null,kickoffHistory:(kickoffHistory||[]).map((entry:string)=>JSON.parse(entry)),deviceReport:report?JSON.parse(report):null,audit:(history||[]).slice(0,50).map((entry:string)=>JSON.parse(entry)),eventHistory:[...new Set<string>([...(eventHistory||[]),...(history||[])])].map(entry=>JSON.parse(entry)).filter(entry=>typeof entry.eventId==='string'&&entry.eventId.startsWith(`game:${gameId}:`)).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at)).slice(0,300),claims:{kickoff:!!kickoff,final:!!final},lastBrowserDisplayReceiptAt:iso(delivery)});
+     preferences:s.preferences,kickoffAccess:s.kickoffAccess??null,gameAccess:s.gameAccess??null,kickoffHistory:(kickoffHistory||[]).map((entry:string)=>JSON.parse(entry)),deviceReport:report?JSON.parse(report):null,audit:(history||[]).slice(0,50).map((entry:string)=>JSON.parse(entry)),eventHistory:mergeGameAudit([...(eventHistory||[]),...(history||[])],gameId),claims:{kickoff:!!kickoff,final:!!final},lastBrowserDisplayReceiptAt:iso(delivery)});
    }
   }while(cursor!=='0');
   const baseline=await redis('GET','fd:v05:baseline');const feed=baseline?JSON.parse(baseline) as AlertFeed:null;
@@ -48,7 +49,7 @@ export async function POST(request:Request){
   }
   const workerFollowing=normalizePreferences({following:d.workerFollowing}).following;
   const syncHistory=(Array.isArray(d.syncHistory)?d.syncHistory:[]).slice(-40).map(sanitizeSyncAttempt).filter(Boolean);
-  const report={syncHistory,reportedAt:new Date().toISOString(),clientReportedAt:iso(d.clientNow),clockOffsetMs:Number.isFinite(d.clientNow)?Date.now()-d.clientNow:null,
+  const report={...sanitizeDeviceSubscriptionFacts(d),syncHistory,reportedAt:new Date().toISOString(),clientReportedAt:iso(d.clientNow),clockOffsetMs:Number.isFinite(d.clientNow)?Date.now()-d.clientNow:null,
    workerFollowing,localFollowing:normalizePreferences({following:d.localFollowing}).following,
    pendingSettings:d.pendingSettings===true,followingPending:d.followingPending===true,standalone:d.standalone===true,workerPresent:d.workerPresent===true,
    permission:['granted','denied','default','unsupported'].includes(d.permission)?d.permission:null,platform:['ios','macos','other'].includes(d.platform)?d.platform:null};

@@ -124,8 +124,8 @@ export async function GET(request:Request) {
       const payload={...effective,title,types,receipt};
       try{await recordNotification(current.id,payload);}catch{auditHealthy=false;await deliveryAudit(current.id,{kind:'history-unavailable',eventId:event.id,runId});}
       await deliveryAudit(current.id,{kind:'provider-send-attempt',scoreboardSource:feed.sourceFetch?.scoreboard??null,eventId:event.id,runId,types,ttl,urgency,expiresAt:effective.expiresAt??null,favoriteTeamIds:current.preferences.favorites.filter(t=>event.teamIds.includes(t.id)).map(t=>t.id),myTeams:current.preferences.myTeams,favoriteChoices:current.preferences.gameAlerts?.favorites});
-      await webpush.sendNotification(current.subscription,JSON.stringify(payload),{TTL:ttl,urgency,timeout:5000});sent++;if(gameKey)deliveredGames.add(gameKey);deliveryStage='acceptance-storage';
-      await deliveryAudit(current.id,{kind:'provider-accepted',runId,settingsSavedAt:current.updatedAt,eligibility,eventId:event.id,types,eventObservedAt:event.observedAt,following:current.preferences.following});
+      const providerResponse=await webpush.sendNotification(current.subscription,JSON.stringify(payload),{TTL:ttl,urgency,timeout:5000});sent++;if(gameKey)deliveredGames.add(gameKey);deliveryStage='acceptance-storage';
+      await deliveryAudit(current.id,{kind:'provider-accepted',status:providerResponse?.statusCode??null,runId,settingsSavedAt:current.updatedAt,eligibility,eventId:event.id,types,eventObservedAt:event.observedAt,following:current.preferences.following});
       for(const type of types)await redis('HSET','fd:v05:accepted-types',type,JSON.stringify({eventId:event.id,at:new Date().toISOString()}));
      }catch(error){
       failed++;

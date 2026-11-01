@@ -1,3 +1,4 @@
+import * as workerDiagnostics from '../app/lib/worker-diagnostics.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -45,7 +46,7 @@ function harness({resumePublisher,releaseEnabled=false}={}) {
   const exports={};const source=ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
   vm.runInNewContext(source,{exports,process:{env:{...env,...(releaseEnabled?{FOURTH_DOWN_RESUME_RELEASE:"confirmed-2026-v1"}:{})}},Buffer,URL,Request,Response,AbortSignal,Date,console,
    fetch:async(_url,options)=>json({result:command(JSON.parse(options.body))}),
-   require:name=>mapping[name]??(name.includes('ranking-recovery')?rankingRecovery:name.includes('outlook-snapshots')?outlook:name.includes('notification-history')?history:name.includes('lib/pulse')?pulse:name.includes('game-alerts')?gameAlerts:name.includes('kickoff-recovery')?recovery:name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
+   require:name=>mapping[name]??(name.includes('worker-diagnostics')?workerDiagnostics:name.includes('ranking-recovery')?rankingRecovery:name.includes('outlook-snapshots')?outlook:name.includes('notification-history')?history:name.includes('lib/pulse')?pulse:name.includes('game-alerts')?gameAlerts:name.includes('kickoff-recovery')?recovery:name.includes('lib/push-store')?store:name.includes('lib/alerts')||name==='./alerts'?alerts:name==='next/server'?{NextResponse:{json}}:require(name))});
   return exports;
  }
  const store=load('app/lib/push-store.ts');
@@ -54,7 +55,7 @@ function harness({resumePublisher,releaseEnabled=false}={}) {
  const subscription=load('app/api/alerts/subscription/route.ts');
  const config=load('app/api/alerts/config/route.ts');
  const kickoffDiagnostics=load('app/lib/kickoff-diagnostics.ts');
- const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/playoff/resume-production':{publishReleasedResumes:async(...args)=>resumePublisher(...args)},'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../../lib/live-feed':{loadLiveFeed:async options=>{assert.equal(options?.forAlerts,true);if(options.resumeCapture)options.resumeCapture.batch={controlled:true};return feedError?json({error:'Fixture outage'},{status:503}):json(feed);}},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}});
+ const dispatcher=load('app/api/alerts/dispatch/route.ts',{'../../../lib/playoff/resume-production':{publishReleasedResumes:async(...args)=>resumePublisher(...args)},'../../../lib/kickoff-diagnostics':kickoffDiagnostics,'../../../lib/live-feed':{loadLiveFeed:async options=>{assert.equal(options?.forAlerts,true);if(options.resumeCapture)options.resumeCapture.batch={controlled:true};return feedError?json({error:'Fixture outage'},{status:503}):json(feed);}},'../../../data/confirmed-developments.json':news, 'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;return {statusCode:201};}}});
  const sender={'web-push':{setVapidDetails(){},async sendNotification(s,payload,options){sent.push({s,payload:JSON.parse(payload),options});if(sendError)throw sendError;}}};
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
@@ -419,4 +420,12 @@ test('optional confirmed resume publishing runs after favorite final delivery an
  const preferences=alerts.defaultAlertPreferences();preferences.favorites=[{id:'1',name:'Favorite'}];preferences.myTeams={enabled:true,kickoff:true,final:true};await h.subscription.POST(request({action:'create',subscription:endpoint,preferences}));
  h.setFeed({season:2026,updatedAt:new Date().toISOString(),games:[{...game,status:'post',providerStatus:'STATUS_FINAL',completed:true,teams:[{...game.teams[0],score:'28',winner:true},game.teams[1]]}],polls:[]});
  assert.equal((await run(h)).status,200);assert.equal(calls,2);assert.equal(h.sent.length,1);assert.equal(h.sent[0].payload.id,'game:resume-safe:final');assert.equal(JSON.parse(h.values.get('fd:v05:last-check')).resumeSync.status,'failed');
+});
+
+test('provider acceptance preserves its actual status without capturing response headers, payload credentials or endpoint',async()=>{
+ const h=harness(),now=Date.now(),game={id:'900000002',name:'One at Two',date:new Date(now-300000).toISOString(),status:'in',providerStatus:'STATUS_IN_PROGRESS',completed:false,period:4,clock:30,teams:[{id:'1',name:'One',score:'14'},{id:'2',name:'Two',score:'7'}]};
+ h.setFeed({season:2026,updatedAt:new Date(now-60000).toISOString(),games:[game],polls:[]});await run(h);
+ const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};assert.equal((await h.subscription.POST(request({action:'create',subscription:endpoint,preferences:p}))).status,200);
+ h.setFeed({season:2026,updatedAt:new Date(Date.now()+10).toISOString(),games:[{...game,status:'post',providerStatus:'STATUS_FINAL',completed:true,clock:0,teams:[{...game.teams[0],winner:true},game.teams[1]]}],polls:[]});assert.equal((await run(h)).status,200);
+ const audits=[...h.lists.values()].flat().map(x=>JSON.parse(x)).filter(x=>x.kind==='provider-accepted');assert.ok(audits.length>0);assert.ok(audits.some(e=>e.status===201));assert.ok(audits.every(e=>!('subscription' in e)&&!('headers' in e)&&!('receipt' in e)));
 });
