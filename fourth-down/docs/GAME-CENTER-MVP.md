@@ -14,4 +14,6 @@ Release exclusions / next checks: actual licensed home/neutral venue art; live n
 
 Rebased onto released main including CFP cutoff PR #29 and Pulse PR #26. The single DetailPage conflict retains the Pulse review notice, score-refresh hook and Game Center. Home branding uses the provider's explicit non-neutral designation, unique home team, validated six-digit color and ESPN-hosted team logo, with an explicit schematic label. Neutral or unknown-site games do not inherit home branding. No licensed stadium field designs have been acquired or invented. Reported yardage conflicting with endpoint distance suppresses the tracer; reduced-motion users receive a static endpoint marker.
 
-Fourteen focused adapter/refresh tests pass, including neutral/unknown branding, unsafe asset rejection, conflicting yardage and negative gains. Production launch remains blocked on real live-game synchronization and physical-iPhone verification; browser/offline simulations do not satisfy those checks. No production deployment, new infrastructure or asset rights claimed.
+Fourteen focused adapter/refresh tests pass, including neutral/unknown branding, unsafe asset rejection, conflicting yardage and negative gains. Under the owner’s updated release-first direction, real-game and physical-iPhone checks remain follow-up observations, not sole launch blockers. Automated simulations remain explicitly labeled. No production deployment, new infrastructure or asset rights claimed.
+
+Current release gates and deployment/rollback scope: GAME-CENTER-RELEASE.md.
