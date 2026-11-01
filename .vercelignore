@@ -1,0 +1,7 @@
+.git
+.vercel
+.env*
+**/.env*
+fourth-down/node_modules
+fourth-down/.next
+**/*.tsbuildinfo
