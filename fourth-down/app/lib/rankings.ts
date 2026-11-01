@@ -83,7 +83,7 @@ export function collectPolls(
     const beforeFirst =
       source.id === "cfp" &&
       season === 2026 &&
-      now.getTime() < Date.parse("2026-11-03T00:00:00-05:00");
+      now.getTime() < Date.parse("2026-11-03T19:00:00-05:00");
     const status: Poll["status"] = !teams.length
       ? beforeFirst
         ? "not_published"
@@ -100,7 +100,7 @@ export function collectPolls(
       teams,
       message:
         status === "not_published"
-          ? "The first 2026 CFP rankings are scheduled for November 3."
+          ? "The first 2026 CFP rankings are scheduled for November 3 at 7 p.m. Eastern."
           : status === "unavailable"
             ? failed
               ? "Ranking feed temporarily unavailable. No other poll is substituted."
