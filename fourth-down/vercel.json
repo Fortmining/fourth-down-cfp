@@ -10,7 +10,8 @@
       "feature/gamecast-visual-redesign": false,
       "feature/gamecast-possession-and-drive": false,
       "feature/conditional-game-scenarios": false,
-      "fix/gamecast-horizontal-camera": false
+      "fix/gamecast-horizontal-camera": false,
+      "feature/multi-game-sandbox": false
     }
   }
 }
