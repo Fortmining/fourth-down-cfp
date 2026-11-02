@@ -33,6 +33,7 @@ export function parseNewsFeed(input:string,sourceId:string,now:number):NewsItem[
   const collegeContext=source.scope==='college-football'||/college football|ncaa football|\bfbs\b|\bCFP (rankings?|committee|playoff)|College Football Playoff/i.test(title)||(matched.teamIds.length>0&&/football|gameday/i.test(title+' '+body));
   if(!collegeContext||/high school|intramural|soccer|\bNFL\b/i.test(title))return [];
   const category=categorizeFootball(title,true,matched.teamIds.length),credit=plain(text(child(n,'creator')||child(n,'author')),160)||source.name;
+  if(source.metadataPrefix&&credit===source.name)return []; // Syndication requires an actual author byline.
   const candidate:Candidate={id,sourceId,title,url,kind:category==='game-highlights'?'highlight':category==='recap'?'recap':'news',contentCategory:category,conferenceIds:footballConferences(title,matched.teamIds),publishedAt,updatedAt,observedAt:new Date(now).toISOString(),...(source.metadataPrefix||sourceId==='kff-news'?{}:{summary:body}),classification:{category:'routine',evidence:'Permitted college-football feed metadata; no breaking designation supplied.'},football:true,teamIds:matched.teamIds,national:matched.teamIds.length===0,credit,contentEvidence:{url,resourceId,resourceType:'article',verifiedAt:new Date(now).toISOString()}};
   const item=normalizeNews(candidate,newsMatchTeams,[],now,false,true);return item?[{...item,matchEvidence:matched.matchEvidence}]:[];
  });
