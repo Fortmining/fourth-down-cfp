@@ -11,7 +11,8 @@
       "feature/gamecast-possession-and-drive": false,
       "feature/conditional-game-scenarios": false,
       "fix/gamecast-horizontal-camera": false,
-      "feature/multi-game-sandbox": false
+      "feature/multi-game-sandbox": false,
+      "feature/ranked-scenario-discovery": false
     }
   }
 }
