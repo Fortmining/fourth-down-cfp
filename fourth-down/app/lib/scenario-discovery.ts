@@ -8,3 +8,12 @@ export function discoverScenarioGames(c:SandboxCatalog,poll:Poll|undefined,ranke
  const ranks=new Map(poll?.teams.map(t=>[t.teamId,t.rank])??[]),q=search.trim().toLowerCase();
  return c.games.filter(g=>Date.parse(g.date)>now&&!excluded.includes(g.id)&&(!rankedOnly||g.teams.some(t=>ranks.has(t.id)))&&g.teams.some(t=>t.name.toLowerCase().includes(q)));
 }
+export function scenarioSourceAfterRefresh(polls:Poll[],previous:SourceId|null,manual:boolean):SourceId|null{return manual&&polls.some(p=>p.id===previous)?previous:preferredScenarioPoll(polls);}
+export function teamScenarioGames(c:SandboxCatalog,games:SandboxCatalog['games'],teamId:string,scope:'team'|'opponents'|'all'){
+ if(!teamId||scope==='all')return games;
+ const team=c.teams.find(t=>t.id===teamId);if(!team)return [];
+ if(scope==='team')return games.filter(g=>g.teams.some(t=>t.id===teamId));
+ const opponents=new Set(c.teams.filter(t=>t.id!==teamId&&(team.wins.some(id=>t.losses.includes(id))||team.losses.some(id=>t.wins.includes(id)))).map(t=>t.id));
+ for(const g of c.games.filter(g=>g.teams.some(t=>t.id===teamId)))for(const t of g.teams)if(t.id!==teamId)opponents.add(t.id);
+ return games.filter(g=>!g.teams.some(t=>t.id===teamId)&&g.teams.some(t=>opponents.has(t.id)));
+}

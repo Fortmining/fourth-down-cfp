@@ -50,7 +50,7 @@ export default function TeamPage({id}:{id:string}) {
    <header className="teamHero">{data?.logo&&<img src={data.logo} width="88" height="88" alt=""/>}<div><p className="eyebrow">2026 TEAM CENTER</p><h1>{data?.name||(busy?'Loading team…':'Team unavailable')}</h1><p>{data?.conference||'Conference unavailable'}{data?.nickname&&` · ${data.nickname}`}</p></div></header>
    {error&&<p role="alert" className="teamWarning">{error}</p>}
    {!data&&!busy&&<p><a href="/games">Browse games</a> or retry this team.</p>}
-   {data&&<><nav className="teamSections" aria-label="Team sections"><a href="#overview">Overview</a><a href="#schedule">Schedule</a><a href="#stats">Stats</a></nav>
+   {data&&<><nav className="teamSections" aria-label="Team sections"><a href="#overview">Overview</a><a href="#schedule">Schedule</a><a href="#stats">Stats</a>{process.env.NEXT_PUBLIC_FOURTH_DOWN_RESUMES==='true'&&<a href={`/scenarios?team=${id}`}>What If? remaining games</a>}</nav>
     <p className="teamFreshness">Updated {new Date(data.observedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})} · ESPN</p>
     {data.warnings.length>0&&<details className="teamWarning"><summary>Some team data is unavailable</summary><ul>{data.warnings.map(w=><li key={w}>{w}</li>)}</ul></details>}
     <section id="overview" aria-labelledby="overview-heading"><h2 id="overview-heading">Overview</h2><div className="teamRecordGrid"><article><h3>Overall</h3><strong>{data.record?.status==='available'?data.record.overall:'Unavailable'}</strong></article><article><h3>Conference</h3><strong>{data.record?.status==='available'?data.record.conference||'Unavailable':'Unavailable'}</strong></article></div>

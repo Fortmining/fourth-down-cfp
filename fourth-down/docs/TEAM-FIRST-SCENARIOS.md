@@ -1,0 +1,13 @@
+# Team-first What If? release candidate
+
+Adds `/scenarios?team=<verified-id>`, an accessible all-team chooser, focused remaining schedule and Opponent watch. Opponent watch consists of verified past opponents (reciprocal confirmed game IDs) and supplied future opponents, never an inferred playoff competitor list. Search and official ranked-matchup filters compose with that scope. Invalid/unavailable baselines remain explicit; no records or opponents are invented.
+
+Team Pages and published ranking entries link into the selected team's sandbox; Game Center's existing single-game section links into multi-game exploration. The mobile Playoffs tab stays active on What If. Selected picks remain visible across team/filter changes, have individual Remove controls, and remain temporary in-memory choices. The focused team's overall and supported conference records show confirmed → hypothetical comparisons even while exploring other teams.
+
+An untouched ranking selector can upgrade to a genuinely published CFP edition on refresh; manual AP/Coaches choices remain selected. Publication cutoff, provider distinctions and official poll data are unchanged. Hypothetical results never change official rankings, stored records or notification preferences.
+
+No new data API, Redis key, publisher request, credentials, schedules, services or paid usage. Existing two visible-page feed GETs remain; team URL navigation can request route rendering but does not add ingestion or notification polling. Twelve focused arithmetic/discovery/source-choice tests pass; focused lint/type check pass. Local browser validation uses a saved real November 2 packet plus explicitly synthetic CFP publication timing; it is not actual rankings-night evidence. Production and Preview deployments require approval; branch automatic deployment is disabled.
+
+Excludes: selection forecasts, bracket/seeding, probabilities, championship qualification, unverified fixtures. Private PR #19 research is separate. Read-only all25 rankings-night capture/compare workflow is prepared under workspace outputs/cfp-nov3-readiness; actual publication remains unobserved.
+
+Final browser pass: Chromium desktop and iPhone-sized WebKit pass team deep links, schedule scope, Opponent watch, pick preservation across team/back navigation, individual removal, Rankings/Team Page/Game Center entries, simulated CFP default upgrade, manual poll preservation, overflow and axe checks. Zero mutation requests/page errors. Synthetic CFP/clock testing is private replay; actual publication remains unobserved. Final build uses the existing public Resume flag configuration. No Preview or production deployment performed.

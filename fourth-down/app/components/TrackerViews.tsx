@@ -171,6 +171,7 @@ export default function TrackerViews({view}:{view:'games'|'rankings'|'following'
                           <small>
                             {t.conference} · {recordFor(t) || "Current record unavailable"}
                           </small>
+                          {process.env.NEXT_PUBLIC_FOURTH_DOWN_RESUMES==='true'&&<Link prefetch={false} href={`/scenarios?team=${t.teamId}`} aria-label={`Explore ${t.name} scenarios`}>What If?</Link>}
                         </span>
                         <Change t={t} />
                       </li>
