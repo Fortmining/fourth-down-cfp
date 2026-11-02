@@ -9,7 +9,8 @@
       "feature/pulse-feed-pilot": false,
       "feature/gamecast-visual-redesign": false,
       "feature/gamecast-possession-and-drive": false,
-      "feature/conditional-game-scenarios": false
+      "feature/conditional-game-scenarios": false,
+      "fix/gamecast-horizontal-camera": false
     }
   }
 }

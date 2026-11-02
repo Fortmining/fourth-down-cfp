@@ -148,7 +148,7 @@
   padding:12px 30px 35px;
   overflow:hidden}
 .gcFieldPlane {
-  transform:rotateX(29deg) rotateZ(-4deg) scale(.94);
+  transform:rotateX(18deg) rotateZ(0deg) scale(.94);
   transform-style:preserve-3d;
   box-shadow:0 10px 0 #0c2b20,0 22px 25px #0009;
   border:3px solid #d9e6dd;
@@ -462,7 +462,7 @@ to {
 .gcFieldStage {
   padding:15px 10px 34px}
 .gcFieldPlane {
-  transform:rotateX(25deg) rotateZ(-4deg) scale(.94)}
+  transform:rotateX(15deg) rotateZ(0deg) scale(.94)}
 .gcFieldLegend {
   left:12px;
   right:12px;
