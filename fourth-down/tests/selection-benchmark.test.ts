@@ -21,3 +21,5 @@ test('future labels and feature leakage are rejected; incomplete vintages exclud
  assert.equal(benchmarkSelection({...input,coverage:{complete:false,issues:['missing']}},target).status,'excluded-incomplete');
  const before=JSON.stringify(input);const r=benchmarkSelection(input,target);assert.equal(r.models.length,10);assert.equal(JSON.stringify(input),before);
 });
+
+test('committee rank error is distinct from playoff seeds and missing identities are explicit',async()=>{const{committeeRankMetrics}=await import('../app/lib/playoff/selection-benchmark.ts');const ids=Array.from({length:25},(_,i)=>String(i+1)),r=committeeRankMetrics([...ids].reverse(),ids);assert.equal(r.top25Overlap,25);assert.ok(r.conditionalRankMAE!>0);const missing=committeeRankMetrics(ids.slice(1),ids);assert.deepEqual(missing.missing,['1']);assert.equal(missing.matched,24);assert.throws(()=>committeeRankMetrics(ids.slice(0,4),ids.slice(0,4)));});

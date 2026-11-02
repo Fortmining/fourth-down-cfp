@@ -2,7 +2,7 @@ import {hash,runShadow,candidates} from './engine.ts';
 import {colleyReference} from './colley-reference.ts';
 import type {Inputs} from './types';
 
-export type SelectionTarget={season:2024|2025;selectionDay:string;source:string;seeds:string[]};
+export type SelectionTarget={season:2024|2025;selectionDay:string;source:string;seeds:string[];committeeRanks?:string[];committeeRankingSource?:string};
 const historicalConferences=new Set(['1','4','5','8','151','12','15','17','37']);
 
 /** Frozen experimental champion proxy, NOT verified championship qualification.
@@ -53,6 +53,12 @@ export function benchmarkSelection(input:Inputs,target:SelectionTarget){
  const forecasts=[...snapshots.map(s=>({id:s.weights.id,order:s.rows.map(t=>t.id),snapshotId:s.id})),...controls.map(c=>({...c,snapshotId:null}))].map(m=>({...m,forecast:historicalFieldProxy(m.order,input)}));
  return {status:'retrospective-proxy-backtest',season:input.season,asOf:input.observedAt,inputHash:hash(input),
   modelVersion:'resume-shadow-v1.2.0',leadDays:(publication-at)/86400000,targetSource:target.source,
-  models:forecasts.map(m=>({id:m.id,snapshotId:m.snapshotId,forecast:m.forecast,metrics:selectionMetrics(m.forecast.seeds,target.seeds)})),
+  models:forecasts.map(m=>({id:m.id,snapshotId:m.snapshotId,forecast:m.forecast,metrics:selectionMetrics(m.forecast.seeds,target.seeds),committeeRankMetrics:target.committeeRanks?committeeRankMetrics(m.order,target.committeeRanks):null})),
   limitations:['Conditional champion/eligibility proxy, not validated conference qualification','Historical features were archived; algorithm was developed later, not a contemporaneous prediction','Overlapping windows in only two seasons are not independent trials','No game-prediction metric establishes selection or seeding accuracy','No production activation or probability claim']};
+}
+
+export function committeeRankMetrics(order:string[],actual:string[]){
+ if(actual.length!==25||new Set(actual).size!==25||new Set(order).size!==order.length)throw Error('Require unique ordering and 25 official committee ranks');
+ const rows=actual.map((id,i)=>({id,committeeRank:i+1,modelPosition:order.includes(id)?order.indexOf(id)+1:null}));const errors=rows.flatMap(r=>r.modelPosition===null?[]:[Math.abs(r.modelPosition-r.committeeRank)]);
+ return {matched:errors.length,missing:rows.filter(r=>r.modelPosition===null).map(r=>r.id),conditionalRankMAE:errors.length?errors.reduce((a,b)=>a+b,0)/errors.length:null,top25Overlap:order.slice(0,25).filter(id=>actual.includes(id)).length,rows};
 }
