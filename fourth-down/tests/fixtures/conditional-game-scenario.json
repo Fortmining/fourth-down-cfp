@@ -1,0 +1,126 @@
+{
+  "season": 2026,
+  "at": "2026-11-01T19:20:00.427Z",
+  "snapshotId": "3092162fb509832cf27d26fc59cda835c8d8f4098ae091eba88ba264ec548589",
+  "issues": [],
+  "rows": [
+    {
+      "id": "96",
+      "name": "Kentucky Wildcats",
+      "overall": "7-1",
+      "conferenceRecord": "5-1",
+      "wins": [
+        {
+          "gameId": "401856659"
+        },
+        {
+          "gameId": "401856694"
+        },
+        {
+          "gameId": "401864576"
+        },
+        {
+          "gameId": "401856709"
+        },
+        {
+          "gameId": "401856715"
+        },
+        {
+          "gameId": "401856722"
+        },
+        {
+          "gameId": "401856729"
+        }
+      ],
+      "losses": [
+        {
+          "gameId": "401856674"
+        }
+      ],
+      "remaining": [
+        {
+          "gameId": "401856745",
+          "date": "2026-11-07T05:00Z",
+          "opponentId": "2633",
+          "conferenceGame": true
+        }
+      ]
+    },
+    {
+      "id": "2633",
+      "name": "Tennessee Volunteers",
+      "overall": "6-2",
+      "conferenceRecord": "3-2",
+      "wins": [
+        {
+          "gameId": "401856666"
+        },
+        {
+          "gameId": "401856681"
+        },
+        {
+          "gameId": "401856692"
+        },
+        {
+          "gameId": "401856710"
+        },
+        {
+          "gameId": "401856713"
+        },
+        {
+          "gameId": "401856723"
+        }
+      ],
+      "losses": [
+        {
+          "gameId": "401856704"
+        },
+        {
+          "gameId": "401856731"
+        }
+      ],
+      "remaining": [
+        {
+          "gameId": "401856745",
+          "date": "2026-11-07T05:00Z",
+          "opponentId": "96",
+          "conferenceGame": true
+        }
+      ]
+    }
+  ],
+  "officialEditions": [
+    {
+      "id": "ap",
+      "date": "2026-11-01T07:00Z",
+      "ranks": [
+        {
+          "id": "96",
+          "rank": 8,
+          "movement": 1
+        },
+        {
+          "id": "2633",
+          "rank": 16,
+          "movement": 0
+        }
+      ]
+    },
+    {
+      "id": "coaches",
+      "date": "2026-11-01T07:00Z",
+      "ranks": [
+        {
+          "id": "96",
+          "rank": 7,
+          "movement": 1
+        },
+        {
+          "id": "2633",
+          "rank": 16,
+          "movement": 1
+        }
+      ]
+    }
+  ]
+}
