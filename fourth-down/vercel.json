@@ -14,7 +14,8 @@
       "feature/multi-game-sandbox": false,
       "feature/ranked-scenario-discovery": false,
       "feature/team-first-scenarios": false,
-      "feature/wins-out-discovery": false
+      "feature/wins-out-discovery": false,
+      "codex/cfp-context-journey": false
     }
   }
 }
