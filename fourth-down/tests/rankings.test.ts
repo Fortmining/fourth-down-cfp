@@ -46,7 +46,7 @@ test("current season CFP is prioritized; prior season never is", () => {
         2026,
         8,
         false,
-        now,
+        new Date("2026-11-03T19:01:00-05:00"),
       ),
     ),
     "ap",
@@ -54,11 +54,11 @@ test("current season CFP is prioritized; prior season never is", () => {
   assert.equal(
     defaultPoll(
       collectPolls(
-        [poll("AP Top 25"), poll("College Football Playoff")],
+        [poll("AP Top 25"), {...poll("College Football Playoff"),date:"2026-11-03T07:00Z"}],
         2026,
         8,
         false,
-        now,
+        new Date("2026-11-03T19:01:00-05:00"),
       ),
     ),
     "cfp",
@@ -119,3 +119,5 @@ test('first CFP publication remains scheduled until the announced 7pm Eastern sh
  const after=collectPolls([],2026,10,false,new Date('2026-11-03T19:00:00-05:00')).find(p=>p.id==='cfp')!;
  assert.equal(after.status,'unavailable');assert.equal(after.teams.length,0);
 });
+
+test('premature CFP feed cannot publish before the show, and AP/Coaches are never its fallback',()=>{const raw=[{...poll('College Football Playoff Rankings',10),type:'cfp',date:'2026-11-03T07:00Z'},{...poll('AP Top 25',10),date:'2026-11-03T07:00Z'},{...poll('AFCA Coaches Poll',10),date:'2026-11-03T07:00Z'}];const before=collectPolls(raw,2026,10,false,new Date('2026-11-03T18:59:59-05:00'));assert.equal(before.find(p=>p.id==='cfp')!.teams.length,0);assert.equal(before.find(p=>p.id==='cfp')!.status,'not_published');assert.ok(before.find(p=>p.id==='ap')!.teams.length);const after=collectPolls(raw,2026,10,false,new Date('2026-11-03T19:00:00-05:00'));assert.equal(after.find(p=>p.id==='cfp')!.status,'available');const delayed=collectPolls(raw.filter(p=>p.type!=='cfp'),2026,10,false,new Date('2026-11-03T19:01:00-05:00'));assert.equal(delayed.find(p=>p.id==='cfp')!.teams.length,0);assert.equal(delayed.find(p=>p.id==='cfp')!.status,'unavailable');});
