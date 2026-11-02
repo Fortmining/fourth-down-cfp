@@ -52,7 +52,8 @@ export function collectPolls(
   now = new Date(),
 ): Poll[] {
   return sources.map((source) => {
-    const candidates = raw.filter(
+    const beforeFirst = source.id === "cfp" && season === 2026 && now.getTime() < Date.parse("2026-11-03T19:00:00-05:00");
+    const candidates = (beforeFirst ? [] : raw).filter(
       (p) =>
         identify(p) === source.id &&
         p.season?.year === season &&
@@ -79,11 +80,6 @@ export function collectPolls(
       }))
       .sort((a: Ranked, b: Ranked) => a.rank - b.rank);
     const pollWeek = p?.occurrence?.number || null;
-    // Only claim “not published” when the announced 2026 first release is still ahead.
-    const beforeFirst =
-      source.id === "cfp" &&
-      season === 2026 &&
-      now.getTime() < Date.parse("2026-11-03T00:00:00-05:00");
     const status: Poll["status"] = !teams.length
       ? beforeFirst
         ? "not_published"
@@ -100,7 +96,7 @@ export function collectPolls(
       teams,
       message:
         status === "not_published"
-          ? "The first 2026 CFP rankings are scheduled for November 3."
+          ? "The first 2026 CFP rankings are scheduled for November 3 at 7 p.m. Eastern."
           : status === "unavailable"
             ? failed
               ? "Ranking feed temporarily unavailable. No other poll is substituted."

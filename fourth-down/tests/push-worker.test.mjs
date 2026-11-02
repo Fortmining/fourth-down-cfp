@@ -53,7 +53,7 @@ test('temporary worker eligibility, overlap dedupe, timed expiry and queued unfo
 });
 
 test('worker reports its revision and zero open clients after processing a background real event',async()=>{
- const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.8.5');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
+ const w=worker(),p=defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams.enabled=true;p.myTeams.final=true;await w.prefs(p);await w.push({...message,receipt:'d'.repeat(64)});assert.equal(w.receipts[0].body.workerVersion,'0.8.6');assert.equal(w.receipts[0].body.openClients,0);assert.equal(w.receipts[0].body.platform,'unknown');
 });
 test('recovered kickoff enforces expiry and original eligibility time without consuming final dedupe',async()=>{
  const now=Date.now(),w=worker(),p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'123',gameId:'123',name:'One',duration:'game',createdAt:now-3600000,expiresAt:now+86400000}]};await w.prefs(p);
@@ -112,4 +112,11 @@ test('desktop notification clicks open internal game, team, rankings and playoff
 });
 test('desktop notification click reuses and focuses a same-origin tab; invalid schemes fall back to settings',async()=>{
  for(const path of ['/game/123','javascript:alert(1)']){const listeners={},navigations=[];let focused=0;vm.runInNewContext(fs.readFileSync('public/alerts-sw.js','utf8'),{URL,self:{location:{origin:'https://fourth-down-cfp.vercel.app'},addEventListener:(k,v)=>listeners[k]=v,clients:{matchAll:async()=>[{url:'https://fourth-down-cfp.vercel.app/',navigate:async u=>navigations.push(u),focus:async()=>focused++}],openWindow:async()=>assert.fail('Existing tab should be reused')}}});let pending;listeners.notificationclick({notification:{data:{url:path},close(){}},waitUntil:p=>pending=p});await pending;assert.equal(focused,1);assert.equal(navigations[0],'https://fourth-down-cfp.vercel.app'+(path.startsWith('/')?path:'/#alerts'));}
+});
+
+test('new eligible temporary-follow event displays; diagnostics distinguish a missing, muted, late or expired worker follow without replay',async()=>{
+ const now=Date.now(),event={id:'game:900000001:halftime',title:'Simulated new halftime',body:'Offline test only',url:'/game/900000001',teamIds:['61','57'],types:['halftime'],observedAt:now,eligibilityAt:now,expiresAt:now+300000,receipt:'f'.repeat(64)};
+ const p=defaultAlertPreferences();p.following={enabled:true,items:[{kind:'game',id:'900000001',gameId:'900000001',duration:'game',createdAt:now-1000,expiresAt:now+86400000,alerts:{halftime:true}}]};
+ const w=worker();await w.prefs(p);await w.push(event);assert.equal(w.shown.length,1);const scope=w.receipts[0].body.scope;assert.equal(scope.followingMatch,true);assert.equal(scope.followingCategoryEnabled,true);assert.equal(scope.followingCreatedBeforeEvent,true);assert.equal(scope.followingUnexpired,true);assert.equal(scope.favoriteMatch,false);assert.equal(w.receipts[0].body.workerBuild,'game-push-diag-20261031');
+ for(const state of ['missing','muted','late','expired']){const prefs=structuredClone(p),other=worker();if(state==='missing')prefs.following.items=[];if(state==='muted')prefs.following.items[0].alerts.halftime=false;if(state==='late')prefs.following.items[0].createdAt=now+1000;if(state==='expired')prefs.following.items[0].expiresAt=now-1;await other.prefs(prefs);await other.push(event);assert.equal(other.shown.length,0);const report=other.reports.at(-1).body;assert.equal(report.outcome,'not-selected');assert.equal(report.scope[state==='missing'?'followingMatch':state==='muted'?'followingCategoryEnabled':state==='late'?'followingCreatedBeforeEvent':'followingUnexpired'],false);assert.ok(!JSON.stringify(report.scope).includes('900000001'));}
 });

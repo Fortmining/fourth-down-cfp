@@ -1,0 +1,8 @@
+{"verifiedAt":"2026-10-31","channels":[
+{"id":"yt-acc","name":"ACC Digital Network","url":"https://www.youtube.com/user/ACCDigitalNetwork","lookup":{"forUsername":"ACCDigitalNetwork"},"evidence":"https://theacc.com","conferenceIds":["Atlantic Coast Conference"]},
+{"id":"yt-big12","name":"Big 12 Conference","url":"https://www.youtube.com/user/Big12Conference","lookup":{"forUsername":"Big12Conference"},"evidence":"https://big12sports.com","conferenceIds":["Big 12 Conference"]},
+{"id":"yt-sec","name":"Southeastern Conference","url":"https://www.youtube.com/@sec","lookup":{"forHandle":"@sec"},"evidence":"https://www.secsports.com","conferenceIds":["Southeastern Conference"]},
+{"id":"yt-mountain-west","name":"Mountain West Conference","url":"https://www.youtube.com/mountainwestconf","lookup":null,"evidence":"https://themw.com","conferenceIds":["Mountain West Conference"]},
+{"id":"yt-cusa","name":"Conference USA","url":"https://www.youtube.com/user/conferenceusa","lookup":{"forUsername":"conferenceusa"},"evidence":"https://conferenceusa.com","conferenceIds":["Conference USA"]},
+{"id":"yt-pac12","name":"Pac-12 Conference","url":"https://www.youtube.com/pac12","lookup":null,"evidence":"https://pac-12.com/news/2026/6/30/general-the-new-pac-12-conference-officially-launches-with-the-addition-of-seven-full-time-members.aspx","conferenceIds":["Pac-12 Conference"]}
+]}

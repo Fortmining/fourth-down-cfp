@@ -1,0 +1,19 @@
+import {createHash} from 'node:crypto';
+import {readNewsPacket,reconcileNews,type NewsItem} from './news-pulse.ts';
+export const STORY_LIMITS={items:200,revisions:4,bytes:512*1024,retentionDays:180,apiMetadataDays:30};
+export type Revision={digest:string;updatedAt:string;state:string};
+export type StoryArchive={version:1;generation:number;checkedAt:string;items:NewsItem[];revisions:Record<string,Revision[]>};
+export type StoryStore={read:()=>Promise<{state:StoryArchive|null;etag:string}>;commit:(expected:string,state:StoryArchive)=>Promise<'saved'|'conflict'|'limited'>};
+export const emptyArchive=():StoryArchive=>({version:1,generation:0,checkedAt:new Date(0).toISOString(),items:[],revisions:{}});
+export const storyKey=(i:Pick<NewsItem,'sourceId'|'id'>)=>i.sourceId+':'+i.id;
+const digest=(x:unknown)=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+export function mergeArchive(old:StoryArchive,items:NewsItem[],now:number):StoryArchive{
+ if(!Number.isFinite(now)||now<Date.parse(old.checkedAt))throw Error('Archive clock regressed');
+ const safe=items.filter(i=>!i.fixture),next=reconcileNews(old.items,safe).filter(i=>{const age=now-Date.parse(i.publishedAt||i.publishedDate||i.updatedAt);return age<=STORY_LIMITS.retentionDays*86400000&&(!i.sourceId.startsWith('yt-')||now-Date.parse(i.contentEvidence?.verifiedAt||i.updatedAt)<STORY_LIMITS.apiMetadataDays*86400000);}).slice(0,STORY_LIMITS.items);
+ const revisions:Record<string,Revision[]>={};for(const item of next){const key=storyKey(item),entry={digest:digest([item.title,item.url,item.state,item.updatedAt,item.image?.url]),updatedAt:item.updatedAt,state:item.state||'published'},history=old.revisions[key]||[];revisions[key]=(history.at(-1)?.digest===entry.digest?history:[...history,entry]).slice(-STORY_LIMITS.revisions);}
+ if(digest([old.items,old.revisions])===digest([next,revisions]))return old;
+ const state:StoryArchive={version:1,generation:old.generation+1,checkedAt:new Date(now).toISOString(),items:next,revisions};if(Buffer.byteLength(JSON.stringify(state))>STORY_LIMITS.bytes)throw Error('Archive size limit');return state;
+}
+export function decodeArchive(raw:string):StoryArchive|null{if(!raw)return null;if(Buffer.byteLength(raw)>STORY_LIMITS.bytes)throw Error('Archive size limit');const x=JSON.parse(raw);if(x.version!==1||!Number.isSafeInteger(x.generation)||x.generation<0||!Number.isFinite(Date.parse(x.checkedAt))||!Array.isArray(x.items)||x.items.length>STORY_LIMITS.items||!x.revisions||typeof x.revisions!=='object')throw Error('Invalid archive');const p=readNewsPacket({version:1,mode:'captured',evaluatedAt:x.checkedAt,items:x.items,sources:[],pushDelivery:false});if(!p||p.items.length!==x.items.length||p.items.some(i=>i.fixture))throw Error('Invalid archive items');for(const entries of Object.values(x.revisions) as Revision[][])if(!Array.isArray(entries)||entries.length>4||entries.some(e=>typeof e.digest!=='string'||!/^([a-f0-9]{64})$/.test(e.digest)||!Number.isFinite(Date.parse(e.updatedAt))))throw Error('Invalid revisions');return x;}
+export async function archiveUpdate(store:StoryStore,items:NewsItem[],now:number){const old=await store.read(),next=mergeArchive(old.state||emptyArchive(),items,now);if(next===old.state)return {status:'unchanged' as const,state:next};const status=await store.commit(old.etag,next);return {status,state:status==='saved'?next:old.state};}
+export function archivedStory(state:StoryArchive|null,source:string,id:string,now=Date.now()){const item=state?.items.find(i=>i.sourceId===source&&i.id===id);if(!item||['retracted','conflicted'].includes(item.state||''))return null;if(now-Date.parse(item.publishedAt||item.publishedDate||item.updatedAt)>STORY_LIMITS.retentionDays*86400000)return null;if(source.startsWith('yt-')&&now-Date.parse(item.contentEvidence?.verifiedAt||item.updatedAt)>=30*86400000)return null;return item;}

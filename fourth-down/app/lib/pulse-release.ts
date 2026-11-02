@@ -1,0 +1,2 @@
+export function pulseReleaseEnabled(env:Record<string,string|undefined>=process.env){return env.VERCEL_ENV==='production'&&env.FOURTH_DOWN_PULSE_RELEASE==='official-feed-v1'&&env.FOURTH_DOWN_PULSE_ARCHIVE==='isolated-v1'&&env.NEXT_PUBLIC_FOURTH_DOWN_NEWS_PILOT==='true';}
+export function pulseArchiveEnabled(env:Record<string,string|undefined>=process.env){return pulseReleaseEnabled(env)&&env.FOURTH_DOWN_PULSE_ARCHIVE==='isolated-v1';}

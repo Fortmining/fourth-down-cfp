@@ -1,18 +1,19 @@
+import {sanitizeWorkerScope} from '../../../lib/worker-diagnostics';
 import { NextResponse } from 'next/server';
 import { appendDeliveryAudit,redis,tokenHash } from '../../../lib/push-store';
 export async function POST(request:Request) {
  const json=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}});
  if(request.headers.get('origin')!==new URL(request.url).origin)return json({error:'Origin rejected'},403);
  try{
-  const text=await request.text();if(text.length>700)return json({error:'Invalid receipt'},400);
-  const {receipt,workerVersion,platform,openClients,outcome:reportedOutcome,receivedAt,scope}=JSON.parse(text);
+  const text=await request.text();if(text.length>2048)return json({error:'Invalid receipt'},400);
+  const {receipt,workerVersion,workerBuild,platform,openClients,outcome:reportedOutcome,receivedAt,scope}=JSON.parse(text);
   const outcome=reportedOutcome??'displayed';
   if(!['received','displayed','expired','not-selected','duplicate','storage-failed','display-failed'].includes(outcome))return json({error:'Invalid outcome'},400);if(typeof receipt!=='string'||!/^[a-f0-9]{64}$/.test(receipt))return json({error:'Invalid receipt'},400);
   const stored=await redis(outcome==='received'?'GET':'GETDEL',`fd:v05:receipt:${tokenHash(receipt)}`);if(!stored)return json({error:'Receipt expired'},410);
   let id=stored,kind='immediate',eventId='',types:string[]=[];try{const parsed=JSON.parse(stored);id=parsed.id;kind=parsed.kind;eventId=parsed.eventId;types=parsed.types||[];}catch{}
   if(typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id))return json({error:'Invalid receipt'},400);
-  const deviceEvidence={deviceAlias:id.slice(0,12),workerVersion:typeof workerVersion==='string'&&/^\d+\.\d+\.\d+$/.test(workerVersion)?workerVersion:null,platform:['ios','macos','other','unknown'].includes(platform)?platform:null,openClients:Number.isInteger(openClients)&&openClients>=0&&openClients<=1000?openClients:null};
-  const workerScope=scope&&typeof scope==='object'?Object.fromEntries(['settingsPresent','favoriteMatch','favoriteEnabled','kickoffEnabled','finalEnabled','categoryEnabled','followingEnabled'].map(key=>[key,scope[key]===true])):undefined;
+  const deviceEvidence={workerBuild:typeof workerBuild==='string'&&/^[a-z0-9-]{1,48}$/.test(workerBuild)?workerBuild:null,deviceAlias:id.slice(0,12),workerVersion:typeof workerVersion==='string'&&/^\d+\.\d+\.\d+$/.test(workerVersion)?workerVersion:null,platform:['ios','macos','other','unknown'].includes(platform)?platform:null,openClients:Number.isInteger(openClients)&&openClients>=0&&openClients<=1000?openClients:null};
+  const workerScope=sanitizeWorkerScope(scope);
   await appendDeliveryAudit(id,{kind:outcome==='displayed'?'browser-displayed':outcome==='received'?'worker-received':outcome==='storage-failed'||outcome==='display-failed'?'worker-failed':'worker-suppressed',outcome,eventId:kind==='event'?eventId:null,test:kind!=='event',receivedAt:Number.isFinite(receivedAt)&&receivedAt>0?receivedAt:null,scope:workerScope,...deviceEvidence});
   if(outcome!=='displayed')return json({ok:true,outcome});
   if(kind==='event'&&typeof eventId==='string')for(const type of types)if(['pulseUpset','pulseFinal','pulseClose','pulseInteresting','playoffShakeup','bubbleMovement','halftime','close','upsetWatch','confirmedUpset','scoring','kickoff','final','upset','development','ap','coaches','cfp'].includes(type))await redis('HSET','fd:v05:verified-types',type,JSON.stringify({eventId,at:new Date().toISOString(),...deviceEvidence}));

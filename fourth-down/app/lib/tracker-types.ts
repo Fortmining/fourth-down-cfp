@@ -1,0 +1,45 @@
+import type {CurrentRecord} from "./playoff/record-view";
+import type {Ranked} from "./model";
+import type {Poll,SourceId} from "./rankings";
+export type Team = {
+  id: string;
+  name: string;
+  logo?: string;
+  score?: string;
+  homeAway: string;
+  winner?: boolean;
+  rank?: number;
+  record: string;
+};
+export type Game = {
+  id: string;
+  name: string;
+  date: string;
+  status: string;
+  detail: string;
+  kickoffTbd?: boolean;
+  completed?:boolean;
+  providerStatus?:string;
+  period?:number|null;
+  clock?:number|null;
+  teams: Team[];
+  broadcast: string;
+};
+export type Feed = {
+  currentRecords?:Record<string,CurrentRecord>;
+  recordObservedAt?:string;
+  recordStatus?:string;
+  polls: Poll[];
+  defaultRankingSource: SourceId;
+  updatedAt: string;
+  season: number | null;
+  week: number | null;
+  rankingSource: string | null;
+  rankingDate: string | null;
+  isCommitteeRanking: boolean;
+  rankings: Ranked[];
+  games: Game[];
+  warnings: string[];
+  provider: string;
+  scoreboardDate: string | null;
+};

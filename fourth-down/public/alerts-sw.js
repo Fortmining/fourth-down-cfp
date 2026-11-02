@@ -22,6 +22,16 @@ function selected(message,p) {
  const invite=types.some(t=>['pulseUpset','pulseClose','pulseInteresting'].includes(t));
  return !!(followed||favorite||breaking||(national&&(!invite||(!already&&message.discovery?.expiresAt>Date.now()))));
 }
+// Diagnostic facts only: selected() above remains the delivery authority.
+function selectionScope(message,p) {
+ const types=Array.isArray(message.types)?message.types:[],gameId=/^game:([^:]+):/.exec(message.id)?.[1],cutoff=message.eligibilityAt??message.observedAt;
+ const follows=Array.isArray(p?.following?.items)?p.following.items:[],matching=follows.filter(f=>f&&(f.duration==='game'?f.gameId===gameId:f.kind==='team'&&message.teamIds?.includes(f.id)));
+ const extras=['halftime','close','upsetWatch','confirmedUpset','scoring'];
+ const chosen=f=>types.some(t=>f.alerts?f.alerts[t]===true:(t==='kickoff'||t==='final'?p?.gameAlerts?.following?.[t]!==false:extras.includes(t)&&p?.gameAlerts?.following?.[t]===true));
+ return {settingsPresent:!!p,finalEnabled:p?.myTeams?.final===true,favoriteMatch:message.teamIds?.some(id=>p?.favorites?.some(t=>t.id===id))===true,favoriteEnabled:p?.myTeams?.enabled===true,kickoffEnabled:p?.myTeams?.kickoff===true,categoryEnabled:types.some(t=>p?.gameAlerts?.favorites?.[t]===true),followingEnabled:p?.following?.enabled===true,
+  followingMatch:matching.length>0,followingCategoryEnabled:matching.some(chosen),followingCreatedBeforeEvent:matching.some(f=>chosen(f)&&f.createdAt<=cutoff),followingUnexpired:matching.some(f=>chosen(f)&&f.createdAt<=cutoff&&f.expiresAt>Date.now()),
+  payloadObservedAtValid:Number.isFinite(message.observedAt),payloadEligibilityAtValid:Number.isFinite(message.eligibilityAt),payloadTeamIdsValid:Array.isArray(message.teamIds)&&message.teamIds.every(id=>typeof id==='string'),followingCount:Math.min(follows.length,40),matchingFollowCount:Math.min(matching.length,40)};
+}
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 self.addEventListener('message',event=>{
@@ -38,7 +48,7 @@ self.addEventListener('message',event=>{
 // alongside local checks; terminal outcomes are reported after display/suppression.
 async function reportOutcome(message,outcome,receivedAt,scope) {
  if(!/^[a-f0-9]{64}$/.test(message.receipt||''))return;
- try{await fetch(outcome==='displayed'?'/api/alerts/receipt':'/api/alerts/receipt-status',{method:'POST',headers:{'Content-Type':'application/json'},...(typeof AbortSignal!=='undefined'&&AbortSignal.timeout?{signal:AbortSignal.timeout(2500)}:{}),body:JSON.stringify({receipt:message.receipt,outcome,receivedAt,scope,workerVersion:'0.8.5',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});}catch{}
+ try{await fetch(outcome==='displayed'?'/api/alerts/receipt':'/api/alerts/receipt-status',{method:'POST',headers:{'Content-Type':'application/json'},...(typeof AbortSignal!=='undefined'&&AbortSignal.timeout?{signal:AbortSignal.timeout(2500)}:{}),body:JSON.stringify({receipt:message.receipt,outcome,receivedAt,scope,workerVersion:'0.8.6',workerBuild:'game-push-diag-20261031',platform:typeof navigator==='undefined'?'unknown':/iPhone|iPad|iPod/.test(navigator.userAgent)?'ios':/Macintosh/.test(navigator.userAgent)?'macos':'other',openClients:await self.clients.matchAll({type:'window',includeUncontrolled:true}).then(t=>Math.min(t.length,1000)).catch(()=>null)})});}catch{}
 }
 self.addEventListener('push',event=>{
  if(!event.data)return;
@@ -51,7 +61,7 @@ self.addEventListener('push',event=>{
   let db,preferences;
   try{db=await openAlertsDb();preferences=await new Promise((resolve,reject)=>{const tx=db.transaction('settings','readonly');const get=tx.objectStore('settings').get('preferences');get.onsuccess=()=>resolve(get.result);get.onerror=reject;});}
   catch{db?.close();await report('storage-failed');return;}
-  const scope={settingsPresent:!!preferences,finalEnabled:preferences?.myTeams?.final===true,favoriteMatch:message.teamIds?.some(id=>preferences?.favorites?.some(t=>t.id===id))===true,favoriteEnabled:preferences?.myTeams?.enabled===true,kickoffEnabled:preferences?.myTeams?.kickoff===true,categoryEnabled:message.types?.some(t=>preferences?.gameAlerts?.favorites?.[t]===true)===true,followingEnabled:preferences?.following?.enabled===true};
+  const scope=selectionScope(message,preferences);
   if(!selected(message,preferences)){db.close();await report('not-selected',scope);return;}
   // Atomic IDB claims survive worker restarts and duplicate provider pushes.
   let fresh;

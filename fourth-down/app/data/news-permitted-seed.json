@@ -1,0 +1,31 @@
+{
+  "verifiedAt": "2026-10-31T15:06:14.900838Z",
+  "armyXml": "<rss version=\"2.0\"><channel><item><title><![CDATA[Honored Division Week #8: Black Knights face Memphis on the road, honor 3rd Infantry Division with gameday patch]]></title><link>https://www.army.mil/article/296478/honored_division_week_8_black_knights_face_memphis_on_the_road_honor_3rd_infantry_division_with_gameday_patch</link><guid>https://www.army.mil/article/296478/honored_division_week_8_black_knights_face_memphis_on_the_road_honor_3rd_infantry_division_with_gameday_patch</guid><description><![CDATA[The Army West Point Football team (5-2) travels to Memphis, Tennessee, to face the Tigers at 8 p.m. Oct. 31 following a 38-35 victory at Tulsa last week...]]></description><pubDate>Fri, 30 Oct 2026 09:21:24 EDT</pubDate><source url=\"https://www.army.mil/rss/static/0.xml\"><![CDATA[Articles last 36 hours.]]></source></item></channel></rss>",
+  "videos": [
+    {
+      "id": "1026781",
+      "sourceId": "dvids-editorial",
+      "title": "CBS Army - 2nd Lt. Michael Graham and 2nd Lt. Brandon Spence",
+      "url": "https://www.dvidshub.net/video/1026781/cbs-army-2nd-lt-michael-graham-and-2nd-lt-brandon-spence",
+      "kind": "video",
+      "publishedAt": null,
+      "publishedDate": "2026-10-19",
+      "updatedAt": "2026-10-31T15:06:14.900838Z",
+      "observedAt": "2026-10-31T15:06:14.900838Z",
+      "football": true,
+      "teamIds": [
+        "349",
+        "2426"
+      ],
+      "national": true,
+      "summary": "Official Army\u2013Navy spirit video, not game highlights. Original video is hosted by DVIDS.",
+      "credit": "U.S. Army Reserve / Staff Sgt. Emilie Lenglain",
+      "contentEvidence": {
+        "url": "https://www.dvidshub.net/video/1026781/cbs-army-2nd-lt-michael-graham-and-2nd-lt-brandon-spence",
+        "resourceId": "1026781",
+        "resourceType": "video",
+        "verifiedAt": "2026-10-31T15:06:14.900838Z"
+      }
+    }
+  ]
+}
