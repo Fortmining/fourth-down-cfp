@@ -12,7 +12,8 @@
       "feature/conditional-game-scenarios": false,
       "fix/gamecast-horizontal-camera": false,
       "feature/multi-game-sandbox": false,
-      "feature/ranked-scenario-discovery": false
+      "feature/ranked-scenario-discovery": false,
+      "feature/team-first-scenarios": false
     }
   }
 }
