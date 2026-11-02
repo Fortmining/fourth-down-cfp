@@ -4,3 +4,5 @@
 .sandboxFilters,.sandboxLinks{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.sandboxLinks{font-size:12px}.sandboxShell select{display:block;min-height:44px;width:100%;padding:10px;background:var(--panel,#fff);color:inherit;border:1px solid #a7b1bf;border-radius:8px}.sandboxComparison{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sandboxComparison dt{font-size:11px;color:var(--muted,#526073)}.sandboxComparison dd{margin:6px 0;font-size:18px}@media(max-width:650px){.sandboxComparison{grid-template-columns:1fr}}
 
 .sandboxTeamStart,.sandboxPicks{padding:16px;margin:16px 0;border:1px solid var(--border,#cbd2da);border-radius:12px;background:var(--panel,#fff)}.sandboxTeamStart label{display:block;max-width:520px}.sandboxPicks ul{padding:0;list-style:none;display:grid;gap:8px}.sandboxPicks li{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}.sandboxPicks li span{min-width:0;overflow-wrap:anywhere}
+
+.sandboxWinsOut{padding:12px 0}.sandboxWinsOut p{font-size:12px;line-height:1.5;max-width:640px}.sandboxWinsOut button{background:#14243b;color:white;border-color:#d8a827}

@@ -17,3 +17,11 @@ export function teamScenarioGames(c:SandboxCatalog,games:SandboxCatalog['games']
  for(const g of c.games.filter(g=>g.teams.some(t=>t.id===teamId)))for(const t of g.teams)if(t.id!==teamId)opponents.add(t.id);
  return games.filter(g=>!g.teams.some(t=>t.id===teamId)&&g.teams.some(t=>opponents.has(t.id)));
 }
+export function winsOutPlan(c:SandboxCatalog,choices:{gameId:string;winnerId:string}[],teamId:string,excluded:string[]=[],now=Date.now()){
+ if(!c.teams.some(t=>t.id===teamId))return {games:0,choices:[] as typeof choices,reason:'A verified team baseline is required.'};
+ if(choices.length>16||new Set(choices.map(p=>p.gameId)).size!==choices.length)return {games:0,choices:[] as typeof choices,reason:'Refresh invalid or duplicate selections first.'};
+ if(choices.some(p=>{const g=c.games.find(g=>g.id===p.gameId);return !g||excluded.includes(g.id)||Date.parse(g.date)<=now||!g.teams.some(t=>t.id===p.winnerId);}))return {games:0,choices:[] as typeof choices,reason:'Refresh unavailable selections first.'};
+ const games=c.games.filter(g=>g.teams.some(t=>t.id===teamId)&&Date.parse(g.date)>now&&!excluded.includes(g.id)),ids=new Set(games.map(g=>g.id));
+ const next=[...choices.filter(p=>!ids.has(p.gameId)),...games.map(g=>({gameId:g.id,winnerId:teamId}))].sort((a,b)=>a.gameId.localeCompare(b.gameId));
+ return {games:games.length,choices:next,reason:!games.length?'No verified remaining games are available.':next.length>16?'Remove other picks first: wins out would exceed the 16-game limit.':''};
+}
