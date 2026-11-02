@@ -32,6 +32,7 @@ export function newsUrl(value:string,source:NewsSource,fixture=false):string|nul
     if(u.protocol!=='https:' || u.username || u.password || u.port || !source.hosts.includes(u.hostname))return null;
     if(source.id==='army-news'&&!/^\/article\/\d+\/[a-z0-9_/-]+$/.test(u.pathname))return null;
     if(source.id==='kff-news'&&!/^\/news\/article\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
+    if(['tennessee-lookout','kentucky-lantern','stateline'].includes(source.id)&&!/^\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
     if(source.id==='dvids-editorial'&&!/^\/video\/\d+\/[a-z0-9-]+$/.test(u.pathname))return null;
     if(source.id==='tennessee-youtube'||source.id.startsWith('yt-')) {
       if(fixture) {if(u.href!==source.home)return null;}
@@ -85,10 +86,10 @@ export function reconcileNews(previous:NewsItem[],incoming:NewsItem[]):NewsItem[
   return [...rows.values()].sort((a,b)=>stamp(b.updatedAt)-stamp(a.updatedAt)).slice(0,1000);
 }
 export function visibleNews(items:NewsItem[],now:number,archive=false){
-  const clusters=new Set<string>();
+  const clusters=new Set<string>(),urls=new Set<string>();
   return items.filter(i=>i.state!=='retracted'&&i.state!=='conflicted'&&(!(i.publishedAt||i.publishedDate)||now-stamp(i.publishedAt||i.publishedDate!)<=(archive?180:7)*86400000))
     .sort((a,b)=>stamp(b.publishedAt||b.updatedAt)-stamp(a.publishedAt||a.updatedAt))
-    .filter(i=>{if(clusters.has(i.clusterId))return false;clusters.add(i.clusterId);return true;});
+    .filter(i=>{if(clusters.has(i.clusterId)||(!i.fixture&&urls.has(i.url)))return false;clusters.add(i.clusterId);if(!i.fixture)urls.add(i.url);return true;});
 }
 export function newsIsStale(item:NewsItem,now:number){return !(item.publishedAt||item.publishedDate)||now-stamp(item.publishedAt||item.publishedDate!)>24*3600000;}
 export type NewsAudience = {favorites:{id:string;name:string}[]; following?:{items:{kind:string;id:string;gameId?:string;createdAt:number;expiresAt:number}[]}};
@@ -119,3 +120,8 @@ export {pulseTeamNames};
 export function newsStoryPath(item:Pick<NewsItem,'sourceId'|'id'>){return '/pulse/story/'+encodeURIComponent(item.sourceId)+'/'+encodeURIComponent(item.id);}
 
 export function rankPulseItems(items:NewsItem[],audience:NewsAudience,now:number,personalized:boolean){const score=(i:NewsItem)=>{const fresh=!newsIsStale(i,now)?100:0,breaking=i.classification?.category==='breaking'&&i.classification.evidence?20:0,own=personalized?newsReasons(i,audience,now).reduce((n,r)=>n+(r.startsWith('Favorite team')?6:r.startsWith('Temporary game')?7:r.startsWith('Temporary team')?4:1),0):0;return fresh+breaking+own;};return [...items].sort((a,b)=>score(b)-score(a)||Date.parse(b.publishedAt||b.publishedDate||b.updatedAt)-Date.parse(a.publishedAt||a.publishedDate||a.updatedAt));}
+
+export function pulseDiscovery(items:NewsItem[],audience:NewsAudience,now:number,teamId=''){
+ const personal=items.filter(i=>teamId?i.teamIds.includes(teamId):newsReasons(i,audience,now).length>0);
+ return {items:personal.length?personal:teamId?[]:items,fallback:!teamId&&!personal.length&&items.length>0};
+}
