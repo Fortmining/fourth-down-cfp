@@ -16,7 +16,8 @@
       "feature/team-first-scenarios": false,
       "feature/wins-out-discovery": false,
       "codex/cfp-context-journey": false,
-      "codex/pulse-useful-discovery": false
+      "codex/pulse-useful-discovery": false,
+      "codex/scenario-outcome-explanations": false
     }
   }
 }

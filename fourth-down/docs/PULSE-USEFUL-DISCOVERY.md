@@ -1,3 +1,5 @@
+> Superseded for current RSS implementation by [PULSE-RSS-INTEGRATION.md](PULSE-RSS-INTEGRATION.md). Exact ESPN/FBS/FCS endpoints were subsequently confirmed working in Node; the older discovery observations below are historical, not current availability claims.
+
 # Pulse discovery and permitted source expansion — November2
 
 ## What can improve now

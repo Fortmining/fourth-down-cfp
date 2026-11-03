@@ -1,3 +1,4 @@
+import {privateRssReviewEnabled,sportsRss} from './pulse-rss-policy.ts';
 import {pulseSources} from './pulse-source-registry.ts';
 import {pulseTeamNames,pulseTeams} from './pulse-teams.ts';
 // News discovery is independent of score-based GameDay Pulse and never sends push.
@@ -6,14 +7,14 @@ export type NewsKind = 'news' | 'highlight' | 'analysis' | 'recap' | 'video';
 export type NewsSource = {
   id: string; name: string; home: string; hosts: string[];
   ownershipEvidence: string; permissionEvidence: string;
-  permission: 'documented-api' | 'pending' | 'granted'; imageHosts?:string[]; connected: boolean;
+  permission: 'documented-api' | 'pending' | 'granted' | 'private-review'; imageHosts?:string[]; connected: boolean;
   minimumPollMinutes: number | null;
 };
 export const newsSources:NewsSource[]=pulseSources;
 export type MatchTeam = {id:string; name:string; aliases:string[]};
 export type MatchGame = {id:string; teamIds:string[]; date:string};
 export type Candidate = {
-  id:string; sourceId:string; title:string; url:string; kind:NewsKind;
+  id:string; sourceId:string; title:string; url:string; kind:NewsKind; competition?:'fbs'|'fcs'; privateReview?:boolean;
   publishedAt:string|null; updatedAt:string; state?:'published'|'corrected'|'retracted';
   conferenceIds?:string[];contentCategory?:string;
   summary?:string;credit?:string;publishedDate?:string;observedAt?:string;classification?:{category:'breaking'|'highlights'|'routine'|'recaps'|'major';evidence:string};
@@ -30,6 +31,8 @@ export function newsUrl(value:string,source:NewsSource,fixture=false):string|nul
   try {
     const u=new URL(value);
     if(u.protocol!=='https:' || u.username || u.password || u.port || !source.hosts.includes(u.hostname))return null;
+    if(source.id==='espn-ncf'&&!/^\/college-football\/(story|insider|insider\/story|recruiting|play|video|news|columns)(?:\/|$)/.test(u.pathname))return null;
+    if((source.id==='ncaa-fbs'||source.id==='ncaa-fcs')&&!/^\/(news\/football\/article|video\/football)\/\d{4}-\d{2}-\d{2}\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
     if(source.id==='army-news'&&!/^\/article\/\d+\/[a-z0-9_/-]+$/.test(u.pathname))return null;
     if(source.id==='kff-news'&&!/^\/news\/article\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
     if(['tennessee-lookout','kentucky-lantern','stateline'].includes(source.id)&&!/^\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
@@ -61,8 +64,9 @@ export function matchNews(candidate:Candidate,teams:MatchTeam[],games:MatchGame[
 }
 export function normalizeNews(c:Candidate,teams:MatchTeam[],games:MatchGame[],now:number,allowFixtures=false,allowLive=false):NewsItem|null {
   const source=newsSources.find(s=>s.id===c.sourceId);
+  if(c.privateReview===true&&!privateRssReviewEnabled())return null;
   if(!source||!safeId(c.id)||!c.football||!['news','highlight','analysis','recap','video'].includes(c.kind)||typeof c.title!=='string'||!c.title.trim()||c.title.length>250||/[<>\x00-\x1f]/.test(c.title))return null;
-  if(c.fixture===true){if(!allowFixtures)return null;}else if(!allowLive||source.permission!=='granted'||!source.connected||!c.contentEvidence||newsUrl(c.contentEvidence.url,source)!==newsUrl(c.url,source)||!Number.isFinite(stamp(c.contentEvidence.verifiedAt))||stamp(c.contentEvidence.verifiedAt)>now)return null;
+  if(c.fixture===true){if(!allowFixtures)return null;}else if(!allowLive||!(source.permission==='granted'||(c.privateReview===true&&privateRssReviewEnabled()&&source.permission==='private-review'))||!source.connected||!c.contentEvidence||newsUrl(c.contentEvidence.url,source)!==newsUrl(c.url,source)||!Number.isFinite(stamp(c.contentEvidence.verifiedAt))||stamp(c.contentEvidence.verifiedAt)>now)return null;
   if(!Number.isFinite(stamp(c.updatedAt))||stamp(c.updatedAt)>now+60000)return null;
   if(c.publishedAt!==null&&(!Number.isFinite(stamp(c.publishedAt))||stamp(c.publishedAt)>now+60000||stamp(c.publishedAt)>stamp(c.updatedAt)))return null;
   if(c.state&&!['published','corrected','retracted'].includes(c.state))return null;
@@ -103,16 +107,16 @@ export function newsReasons(item:NewsItem,audience:NewsAudience,now:number):stri
   if(!item.teamIds.length&&item.conferenceIds?.length){for(const t of audience.favorites){const conference=pulseTeams.find(p=>p.id===t.id)?.conference;if(conference&&item.conferenceIds.includes(conference))reasons.push('Conference coverage: '+conference);}}
   return [...new Set(reasons)];
 }
-export type NewsPacket={version:1;mode:'fixtures'|'unavailable'|'live'|'captured';evaluatedAt:string;items:NewsItem[];sources:NewsSource[];pushDelivery:false;freshness?:{sourceId?:string;status:string;observedAt:string;message:string;lastSuccessAt?:string|null;relevantItems?:number;retrievedItemIds?:string[]}[]};
+export type NewsPacket={version:1;mode:'fixtures'|'unavailable'|'live'|'captured'|'review';evaluatedAt:string;items:NewsItem[];sources:NewsSource[];pushDelivery:false;freshness?:{sourceId?:string;status:string;observedAt:string;message:string;lastSuccessAt?:string|null;relevantItems?:number;retrievedItemIds?:string[]}[]};
 export function readNewsPacket(value:unknown):NewsPacket|null {
   const p=value as NewsPacket|null;
-  if(!p||p.version!==1||!['fixtures','unavailable','live','captured'].includes(p.mode)||p.pushDelivery!==false||!Number.isFinite(stamp(p.evaluatedAt))||!Array.isArray(p.items)||p.items.length>1000||!Array.isArray(p.sources)||(p.mode==='unavailable'&&p.items.length>0))return null;
+  if(!p||p.version!==1||!['fixtures','unavailable','live','captured','review'].includes(p.mode)||(p.mode==='review'&&!privateRssReviewEnabled())||p.pushDelivery!==false||!Number.isFinite(stamp(p.evaluatedAt))||!Array.isArray(p.items)||p.items.length>1000||!Array.isArray(p.sources)||(p.mode==='unavailable'&&p.items.length>0))return null;
   for(const i of p.items){
     const s=newsSources.find(s=>s.id===i?.sourceId);
-    if(!i||!s||!safeId(i.id)||typeof i.title!=='string'||(p.mode==='fixtures'&&!i.title.startsWith('Sample:'))||i.title.length>250||(p.mode==='fixtures'?i.fixture!==true:i.fixture===true)||!['news','highlight','analysis','recap','video'].includes(i.kind)||!newsUrl(i.url,s,p.mode==='fixtures')||i.sourceName!==s.name||!Number.isFinite(stamp(i.updatedAt))||(i.publishedAt!==null&&!Number.isFinite(stamp(i.publishedAt)))||!Array.isArray(i.teamIds)||i.teamIds.some(id=>typeof id!=='string'||!/^\d{1,12}$/.test(id))||typeof i.clusterId!=='string'||!Array.isArray(i.matchEvidence))return null;
+    if(!i||!s||(i.privateReview===true&&p.mode!=='review')||!safeId(i.id)||typeof i.title!=='string'||(p.mode==='fixtures'&&!i.title.startsWith('Sample:'))||i.title.length>250||(p.mode==='fixtures'?i.fixture!==true:i.fixture===true)||!['news','highlight','analysis','recap','video'].includes(i.kind)||!newsUrl(i.url,s,p.mode==='fixtures')||i.sourceName!==s.name||!Number.isFinite(stamp(i.updatedAt))||(i.publishedAt!==null&&!Number.isFinite(stamp(i.publishedAt)))||!Array.isArray(i.teamIds)||i.teamIds.some(id=>typeof id!=='string'||!/^\d{1,12}$/.test(id))||typeof i.clusterId!=='string'||!Array.isArray(i.matchEvidence))return null;
   }
   for(const i of p.items){if(i.summary!==undefined&&(typeof i.summary!=='string'||i.summary.length>500))return null;if(i.credit!==undefined&&(typeof i.credit!=='string'||i.credit.length>200))return null;if(i.publishedDate!==undefined&&(typeof i.publishedDate!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(i.publishedDate)||!Number.isFinite(Date.parse(i.publishedDate))||new Date(i.publishedDate).toISOString().slice(0,10)!==i.publishedDate))return null;}
-  if(p.mode==='live'||p.mode==='captured')for(const i of p.items){const source=newsSources.find(s=>s.id===i.sourceId)!;if(!normalizeNews({...i,state:i.state==='conflicted'?undefined:i.state},[],[],Date.now(),false,true)||source.permission!=='granted')return null;}
+  if(p.mode==='live'||p.mode==='captured'||p.mode==='review')for(const i of p.items){const source=newsSources.find(s=>s.id===i.sourceId)!;if(!normalizeNews({...i,state:i.state==='conflicted'?undefined:i.state},[],[],Date.now(),false,true)||!(source.permission==='granted'||(p.mode==='review'&&source.permission==='private-review'&&privateRssReviewEnabled())))return null;}
   return {...p,sources:newsSources};
 }
 
@@ -122,6 +126,17 @@ export function newsStoryPath(item:Pick<NewsItem,'sourceId'|'id'>){return '/puls
 export function rankPulseItems(items:NewsItem[],audience:NewsAudience,now:number,personalized:boolean){const score=(i:NewsItem)=>{const fresh=!newsIsStale(i,now)?100:0,breaking=i.classification?.category==='breaking'&&i.classification.evidence?20:0,own=personalized?newsReasons(i,audience,now).reduce((n,r)=>n+(r.startsWith('Favorite team')?6:r.startsWith('Temporary game')?7:r.startsWith('Temporary team')?4:1),0):0;return fresh+breaking+own;};return [...items].sort((a,b)=>score(b)-score(a)||Date.parse(b.publishedAt||b.publishedDate||b.updatedAt)-Date.parse(a.publishedAt||a.publishedDate||a.updatedAt));}
 
 export function pulseDiscovery(items:NewsItem[],audience:NewsAudience,now:number,teamId=''){
- const personal=items.filter(i=>teamId?i.teamIds.includes(teamId):newsReasons(i,audience,now).length>0);
- return {items:personal.length?personal:teamId?[]:items,fallback:!teamId&&!personal.length&&items.length>0};
+ const national=items.filter(i=>i.competition!=='fcs'&&i.sourceId!=='ncaa-fcs');
+ const personal=items.filter(i=>teamId?i.teamIds.includes(teamId):newsReasons(i,audience,now).some(r=>!r.startsWith('Conference coverage:')));
+ return {items:personal.length?personal:teamId?[]:national,fallback:!teamId&&!personal.length&&national.length>0};
+}
+
+export type PulseView='for-you'|'national'|'fbs'|'fcs';
+export function pulseViewItems(items:NewsItem[],audience:NewsAudience,now:number,view:PulseView,team=''){
+ if(team)return {items:items.filter(i=>i.competition!=='fcs'&&i.teamIds.includes(team)),fallback:false};
+ if(view==='for-you')return pulseDiscovery(items,audience,now);
+ if(view==='fcs')return {items:items.filter(i=>i.competition==='fcs'||i.sourceId==='ncaa-fcs'),fallback:false};
+ const fbs=items.filter(i=>i.competition!=='fcs'&&i.sourceId!=='ncaa-fcs');
+ const national=fbs.filter(i=>sportsRss(i.sourceId));
+ return {items:view==='national'&&national.length?national:fbs,fallback:false};
 }
