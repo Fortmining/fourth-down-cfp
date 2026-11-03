@@ -1,4 +1,4 @@
-import {privateRssReviewEnabled,sportsRss} from './pulse-rss-policy.ts';
+import {privateRssReviewEnabled,sportsRss,readableSourcePermission} from './pulse-rss-policy.ts';
 import {pulseSources} from './pulse-source-registry.ts';
 import {pulseTeamNames,pulseTeams} from './pulse-teams.ts';
 // News discovery is independent of score-based GameDay Pulse and never sends push.
@@ -7,7 +7,7 @@ export type NewsKind = 'news' | 'highlight' | 'analysis' | 'recap' | 'video';
 export type NewsSource = {
   id: string; name: string; home: string; hosts: string[];
   ownershipEvidence: string; permissionEvidence: string;
-  permission: 'documented-api' | 'pending' | 'granted' | 'private-review'; imageHosts?:string[]; connected: boolean;
+  permission: 'documented-api' | 'pending' | 'granted' | 'private-review' | 'owner-authorized'; imageHosts?:string[]; connected: boolean;
   minimumPollMinutes: number | null;
 };
 export const newsSources:NewsSource[]=pulseSources;
@@ -66,7 +66,7 @@ export function normalizeNews(c:Candidate,teams:MatchTeam[],games:MatchGame[],no
   const source=newsSources.find(s=>s.id===c.sourceId);
   if(c.privateReview===true&&!privateRssReviewEnabled())return null;
   if(!source||!safeId(c.id)||!c.football||!['news','highlight','analysis','recap','video'].includes(c.kind)||typeof c.title!=='string'||!c.title.trim()||c.title.length>250||/[<>\x00-\x1f]/.test(c.title))return null;
-  if(c.fixture===true){if(!allowFixtures)return null;}else if(!allowLive||!(source.permission==='granted'||(c.privateReview===true&&privateRssReviewEnabled()&&source.permission==='private-review'))||!source.connected||!c.contentEvidence||newsUrl(c.contentEvidence.url,source)!==newsUrl(c.url,source)||!Number.isFinite(stamp(c.contentEvidence.verifiedAt))||stamp(c.contentEvidence.verifiedAt)>now)return null;
+  if(c.fixture===true){if(!allowFixtures)return null;}else if(!allowLive||!(readableSourcePermission(source.permission)||(c.privateReview===true&&privateRssReviewEnabled()&&source.permission==='private-review'))||!source.connected||!c.contentEvidence||newsUrl(c.contentEvidence.url,source)!==newsUrl(c.url,source)||!Number.isFinite(stamp(c.contentEvidence.verifiedAt))||stamp(c.contentEvidence.verifiedAt)>now)return null;
   if(!Number.isFinite(stamp(c.updatedAt))||stamp(c.updatedAt)>now+60000)return null;
   if(c.publishedAt!==null&&(!Number.isFinite(stamp(c.publishedAt))||stamp(c.publishedAt)>now+60000||stamp(c.publishedAt)>stamp(c.updatedAt)))return null;
   if(c.state&&!['published','corrected','retracted'].includes(c.state))return null;
@@ -116,7 +116,7 @@ export function readNewsPacket(value:unknown):NewsPacket|null {
     if(!i||!s||(i.privateReview===true&&p.mode!=='review')||!safeId(i.id)||typeof i.title!=='string'||(p.mode==='fixtures'&&!i.title.startsWith('Sample:'))||i.title.length>250||(p.mode==='fixtures'?i.fixture!==true:i.fixture===true)||!['news','highlight','analysis','recap','video'].includes(i.kind)||!newsUrl(i.url,s,p.mode==='fixtures')||i.sourceName!==s.name||!Number.isFinite(stamp(i.updatedAt))||(i.publishedAt!==null&&!Number.isFinite(stamp(i.publishedAt)))||!Array.isArray(i.teamIds)||i.teamIds.some(id=>typeof id!=='string'||!/^\d{1,12}$/.test(id))||typeof i.clusterId!=='string'||!Array.isArray(i.matchEvidence))return null;
   }
   for(const i of p.items){if(i.summary!==undefined&&(typeof i.summary!=='string'||i.summary.length>500))return null;if(i.credit!==undefined&&(typeof i.credit!=='string'||i.credit.length>200))return null;if(i.publishedDate!==undefined&&(typeof i.publishedDate!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(i.publishedDate)||!Number.isFinite(Date.parse(i.publishedDate))||new Date(i.publishedDate).toISOString().slice(0,10)!==i.publishedDate))return null;}
-  if(p.mode==='live'||p.mode==='captured'||p.mode==='review')for(const i of p.items){const source=newsSources.find(s=>s.id===i.sourceId)!;if(!normalizeNews({...i,state:i.state==='conflicted'?undefined:i.state},[],[],Date.now(),false,true)||!(source.permission==='granted'||(p.mode==='review'&&source.permission==='private-review'&&privateRssReviewEnabled())))return null;}
+  if(p.mode==='live'||p.mode==='captured'||p.mode==='review')for(const i of p.items){const source=newsSources.find(s=>s.id===i.sourceId)!;if(!normalizeNews({...i,state:i.state==='conflicted'?undefined:i.state},[],[],Date.now(),false,true)||!(readableSourcePermission(source.permission)||(p.mode==='review'&&source.permission==='private-review'&&privateRssReviewEnabled())))return null;}
   return {...p,sources:newsSources};
 }
 
