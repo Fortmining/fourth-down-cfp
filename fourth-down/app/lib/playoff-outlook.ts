@@ -34,3 +34,16 @@ export function teamOutlook(c:SandboxCatalog,choices:{gameId:string;winnerId:str
   changes:row?.selectedResults.length?`${row.selectedResults.length} assumed result(s) change your record. Ranked opponents and their records explain the evidence; no validated conversion to future committee positions is available.`:'No selected result changes this team’s confirmed record.',
   limits:['Private prototype: these bands are descriptive ranking anchors, not calibrated selection probabilities.','Ranks 1–8 / 9–16 / 17+ are fixed structural bands, not thresholds tuned to Tennessee.','Schedule strength, player availability and championship tiebreakers are not fully modeled; a ranked loss is not automatically a quality loss.','Other results are held unchanged unless selected. Future committee judgment and championship qualification remain uncertain.']};
 }
+
+/** Exact rules sensitivity, not a learned ranking-change model or selection likelihood. */
+export function rankingAssumptionPath(poll:Poll|undefined,conferences:Record<string,string>,assumptions:QualificationAssumptions,teamId:string){
+ const base=referenceField(poll,conferences,assumptions);if(base.status!=='conditional'||!poll)return null;
+ const current=[...poll.teams].sort((a,b)=>a.rank-b.rank),team=current.find(t=>t.teamId===teamId);if(!team)return null;
+ if(base.teams.some(t=>t.id===teamId))return {alreadyIncluded:true,currentRank:team.rank,illustratedRank:team.rank,positions:0,entering:[] as string[],leaving:[] as string[],field:base.teams};
+ for(let rank=team.rank-1;rank>=1;rank--){
+  const order=current.filter(t=>t.teamId!==teamId);order.splice(rank-1,0,team);
+  const next=referenceField({...poll,teams:order.map((t,i)=>({...t,rank:i+1}))},conferences,assumptions);
+  if(next.status==='conditional'&&next.teams.some(t=>t.id===teamId))return {alreadyIncluded:false,currentRank:team.rank,illustratedRank:rank,positions:team.rank-rank,entering:next.teams.filter(t=>!base.teams.some(old=>old.id===t.id)).map(t=>t.name),leaving:base.teams.filter(t=>!next.teams.some(now=>now.id===t.id)).map(t=>t.name),field:next.teams};
+ }
+ return null;
+}
