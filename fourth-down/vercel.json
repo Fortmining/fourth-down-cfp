@@ -17,7 +17,8 @@
       "feature/wins-out-discovery": false,
       "codex/cfp-context-journey": false,
       "codex/pulse-useful-discovery": false,
-      "codex/scenario-outcome-explanations": false
+      "codex/scenario-outcome-explanations": false,
+      "codex/pulse-rss-activation": false
     }
   }
 }

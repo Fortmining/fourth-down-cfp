@@ -6,3 +6,7 @@ export function privateRssReviewEnabled(env:Record<string,string|undefined>={NOD
 export const sportsRssIds=['espn-ncf','ncaa-fbs','ncaa-fcs'] as const;
 export type SportsRssId=typeof sportsRssIds[number];
 export const sportsRss=(id:string)=>sportsRssIds.some(x=>x===id);
+
+/** Owner-authorized metadata activation; independent of private fixture/review mode. */
+export function publicSportsRssEnabled(env:Record<string,string|undefined>={NEXT_PUBLIC_FOURTH_DOWN_PULSE_RSS:process.env.NEXT_PUBLIC_FOURTH_DOWN_PULSE_RSS}){return env.NEXT_PUBLIC_FOURTH_DOWN_PULSE_RSS==='headlines-v1';}
+export function readableSourcePermission(permission:string){return permission==='granted'||(permission==='owner-authorized'&&publicSportsRssEnabled());}
