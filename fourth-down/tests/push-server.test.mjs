@@ -153,14 +153,16 @@ test('favorite kickoff routing excludes unrelated favorites and disabled types',
  h.values.set('fd:v05:baseline',JSON.stringify(before));await run(h);assert.equal(h.sent.length,1);
 });
 test('AP, Coaches, CFP and reviewed developments route independently and repeated checks dedupe',async()=>{
- const h=harness();const now=Date.now();const poll=(id,week)=>({id,name:id,status:'available',season:2026,week,date:new Date(now-(week===8?86400000:100)).toISOString(),teams:Array.from({length:25},(_,i)=>({rank:i+1,teamId:String(i+1),name:'Team '+i}))});
- const before=snapshot([],['ap','coaches','cfp'].map(id=>poll(id,8)),-60000);h.setFeed(before);await run(h);
- for(const type of ['ap','coaches','cfp','developments']){const p=alerts.defaultAlertPreferences();p.breaking.enabled=true;p.breaking[type]=true;const cap=await subscribe(h,p,type);const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));record.typeSince.development=now-5000;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
+ const h=harness();const now=Date.now();const poll=(id,week)=>({id,name:id,status:'available',season:2026,week,date:new Date(now-(week===8?86400000:100)).toISOString(),providerUpdatedAt:new Date().toISOString(),teams:Array.from({length:25},(_,i)=>({rank:i+1,teamId:String(i+1),name:'Team '+i}))});
+ const before=snapshot([],['ap','coaches'].map(id=>poll(id,8)),-60000);h.setFeed(before);await run(h);
+ for(const type of ['ap','coaches','cfp','developments']){const p=alerts.defaultAlertPreferences();p.breaking.enabled=true;p.breaking[type]=true;const cap=await subscribe(h,p,type);const record=JSON.parse(h.hashes.get(h.store.SUBS).get(cap.id));record.typeSince.development=now-5000;record.typeSince.cfp=now-5000;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));}
  h.news.push({id:'test-reviewed-report',title:'TEST ONLY official report',summary:'Isolated fixture, never published.',sourceUrl:'https://collegefootballplayoff.com/news/test',publishedAt:new Date(now-1000).toISOString(),verifiedAt:new Date(now-500).toISOString(),confirmed:true});
  h.setFeed(snapshot([],['ap','coaches','cfp'].map(id=>poll(id,9)),10));await run(h);assert.equal(h.sent.length,4);
  for(const type of ['ap','coaches','cfp'])assert.equal(h.sent.filter(s=>s.payload.types.includes(type)).length,1);
  assert.equal(h.sent.filter(s=>s.payload.types.includes('development')).length,1);
- h.values.set('fd:v05:baseline',JSON.stringify(before));await run(h);assert.equal(h.sent.length,4);
+ h.values.set('fd:v05:baseline',JSON.stringify(before));
+ h.values.delete('fd:v08:ranking-state');
+ await run(h);assert.equal(h.sent.length,4);
 });
 test('provider expiration removes endpoints and ambiguous delivery failures never retry the same event',async()=>{
  for(const statusCode of [410,undefined]){

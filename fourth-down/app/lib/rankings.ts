@@ -23,6 +23,7 @@ export type Poll = {
   url: string;
   status: "available" | "awaiting_update" | "not_published" | "unavailable";
   date: string | null;
+  providerUpdatedAt?: string;
   week: number | null;
   season: number | null;
   teams: Ranked[];
@@ -101,6 +102,8 @@ export function collectPolls(
       ...source,
       status,
       date: p?.date || null,
+      ...(source.id === "cfp" && typeof p?.lastUpdated === "string"
+        ? { providerUpdatedAt: p.lastUpdated } : {}),
       week: pollWeek,
       season: p?.season?.year || null,
       teams,
