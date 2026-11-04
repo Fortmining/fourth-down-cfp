@@ -43,6 +43,10 @@ export function allocateShadowField(
     shadow: true,
     definitive: false,
     issues,
+    firstTwoOut: issues.length ? [] : eligible
+      .filter(row => !selected.has(row.id))
+      .slice(0, 2)
+      .map(row => ({ id: row.id, selectionPosition: row.position })),
     field: issues.length
       ? []
       : eligible

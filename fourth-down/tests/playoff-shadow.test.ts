@@ -282,6 +282,10 @@ test("2026 shadow field reserves Power Four, a non-champion six-conference team,
   const result = allocateShadowField(rows, i.teams, champions, true);
   assert.deepEqual(result.issues, []);
   assert.equal(result.field.length, 12);
+  assert.deepEqual(result.firstTwoOut.map(row => row.id), rows
+    .filter(row => !result.field.some(selected => selected.id === row.id))
+    .slice(0, 2)
+    .map(row => row.id));
   assert.ok(result.field.some((r) => r.id === "25"));
   assert.ok(result.field.some((r) => r.id === "29"));
   assert.match(result.field.find((r) => r.id === "87")!.reason, /Notre Dame/);

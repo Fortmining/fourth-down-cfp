@@ -207,3 +207,29 @@ test("conference scenario uses hypothetical winners without modifying confirmed 
   assert.equal(resolved.hypothetical, true);
   assert.equal(JSON.stringify(i), original);
 });
+
+test("championship draw resolves a verified slot without writing a score or final", async () => {
+  const { simulateConferenceTitle } = await import("../app/lib/playoff/championship-trial.ts");
+  const i = input("5");
+  i.pendingGames = [{
+    id: "401869534", name: "Big Ten championship", date: "2026-12-06T20:00:00Z",
+    knownTeamIds: [], observedAt: at, source: "synthetic regression fixture",
+  }];
+  const options = {
+    fixtureId: "401869534", policy: "bigten-2026-top-records" as const,
+    conferenceScheduleComplete: true, simulatedWinners: new Map<string, string>(),
+    ratings: new Map([["1", 0.5], ["2", 0.5]]),
+    strengthCoefficient: 2, homeCoefficient: 0.4, verifiedVenue: { kind: "neutral" as const },
+    draw: 0.4,
+  };
+  const original = JSON.stringify(i);
+  const first = simulateConferenceTitle(i, options);
+  assert.equal(first.status, "simulated");
+  if (first.status === "simulated") assert.equal(first.winner, "1");
+  const second = simulateConferenceTitle(i, { ...options, draw: 0.6 });
+  if (second.status === "simulated") assert.equal(second.winner, "2");
+  else assert.fail("Expected supported title draw");
+  assert.equal(simulateConferenceTitle(i, { ...options, verifiedVenue: null }).status, "withheld");
+  assert.equal(simulateConferenceTitle(i, { ...options, conferenceScheduleComplete: false }).status, "withheld");
+  assert.equal(JSON.stringify(i), original);
+});
