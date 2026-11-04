@@ -36,7 +36,13 @@ function readSeason(directory, withVenue) {
       examples.push({ home, won: Number(game.winner === a), colley: colley.get(a) - colley.get(b), winRate: winRate.get(a) - winRate.get(b) });
     }
   }
-  return examples;
+  const latest = inputs.at(-1);
+  const members = new Set(latest.teams.map(team => team.id));
+  const crossSubdivision = latest.games.filter(game =>
+    validFinal(game, Date.parse(latest.observedAt)) &&
+    game.teams.filter(id => members.has(id)).length === 1
+  ).map(game => ({ won: Number(members.has(game.winner)) }));
+  return { examples, crossSubdivision };
 }
 
 function evaluate(examples, predict) {
@@ -58,8 +64,8 @@ function evaluate(examples, predict) {
 
 const [trainingDirectory, holdoutDirectory, flag] = process.argv.slice(2);
 const withVenue = flag === "--venues";
-const train = readSeason(trainingDirectory, withVenue);
-const holdout = readSeason(holdoutDirectory, withVenue);
+const { examples: train, crossSubdivision: crossTrain } = readSeason(trainingDirectory, withVenue);
+const { examples: holdout, crossSubdivision: crossHoldout } = readSeason(holdoutDirectory, withVenue);
 if (!train.length || !holdout.length) throw new Error("Missing historical examples");
 const results = { trainingGames: train.length, holdoutGames: holdout.length, models: {} };
 for (const key of ["colley", "winRate"]) {
@@ -69,6 +75,13 @@ for (const key of ["colley", "winRate"]) {
 if (withVenue) {
   const model = fitVenueModel(train.map(row => ({ won: row.won, difference: row.colley, home: row.home })));
   results.models.colleyVenue = { ...model, ...evaluate(holdout, row => gameProbability(row.colley, model.strength, row.home * model.home)) };
+}
+if (crossTrain.length && crossHoldout.length) {
+  const fbsWinProbability = (1 + crossTrain.reduce((sum, row) => sum + row.won, 0)) / (2 + crossTrain.length);
+  results.models.crossSubdivision = {
+    fbsWinProbability, trainingGames: crossTrain.length, holdoutGames: crossHoldout.length,
+    ...evaluate(crossHoldout, () => fbsWinProbability),
+  };
 }
 results.models.coin = evaluate(holdout, () => 0.5);
 console.log(JSON.stringify(results, null, 2));
