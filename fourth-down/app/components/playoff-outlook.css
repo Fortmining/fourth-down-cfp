@@ -1,2 +1,19 @@
 .outlookReview{padding:22px;border:1px solid #34d39955;border-radius:20px;background:linear-gradient(130deg,#102827,#101b2b);margin:18px 0;color:#edf7f5}.outlookHero{display:flex;align-items:center;justify-content:space-between;gap:20px}.outlookHero h2{font-size:clamp(1.5rem,4vw,2.3rem);margin:10px 0}.outlookBadge{display:inline-block;background:#f6d581;color:#17222a;font-weight:800;padding:6px 12px;border-radius:999px}.outlookRecord{display:grid;text-align:center;gap:5px;min-width:150px}.outlookRecord strong{font-size:3rem}.outlookRecord span,.outlookReview small{color:#b5c9c8}.outlookColumns,.outlookChampionGrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.outlookReview a{color:#8fe6cf}.outlookReview p,.outlookReview li{line-height:1.6}.outlookReview details{padding:15px 0;border-top:1px solid #ffffff25}.outlookReview summary{cursor:pointer;font-weight:750}.outlookChampionGrid label{display:grid;gap:7px}.outlookReview select{max-width:100%;width:100%;background:#132330;color:#fff;border:1px solid #6b9295;border-radius:9px;padding:11px}.outlookConsent{display:flex;align-items:flex-start;gap:9px;margin:18px 0}.outlookField{padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:9px}.outlookField li{display:flex;align-items:center;gap:12px;padding:12px;background:#ffffff08;border:1px solid #ffffff20;border-radius:12px}.outlookField li.isChosen{border-color:#8fe6cf;background:#34d39920}.outlookField li>b{font-size:1.3rem}.outlookField small{display:block;font-size:.75rem}.outlookField span{margin-left:auto;font-size:.75rem}.outlookReview :focus-visible{outline:3px solid #f6d581;outline-offset:3px}@media(max-width:650px){.outlookReview{padding:16px}.outlookHero{align-items:flex-start;flex-direction:column}.outlookRecord{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.outlookRecord strong{font-size:2rem}.outlookColumns,.outlookChampionGrid,.outlookField{grid-template-columns:1fr}.outlookReview h4{margin-bottom:8px}}
 .sandboxShell .outlookConsent{display:flex;align-items:flex-start;gap:9px}.sandboxShell .outlookConsent input{width:auto;flex:0 0 auto;margin-top:6px}.outlookField li>div{min-width:0}.outlookField a{overflow-wrap:anywhere}
+
+.outlookBracket {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.outlookBracketPath {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line, #566);
+  border-radius: 12px;
+}
+.outlookBracketPath h4 { margin: 0; }
+.outlookBracketPath .outlookField { margin: 0; }
+@media (max-width: 650px) {
+  .outlookBracket { grid-template-columns: 1fr; }
+}

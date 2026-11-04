@@ -1,0 +1,237 @@
+{
+  "id": "cfp",
+  "name": "CFP committee rankings",
+  "url": "https://collegefootballplayoff.com/news/2026/11/3/rankings",
+  "status": "available",
+  "date": "2026-11-03T08:00Z",
+  "week": 10,
+  "season": 2026,
+  "teams": [
+    {
+      "rank": 1,
+      "previous": null,
+      "teamId": "2390",
+      "name": "Miami Hurricanes",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png",
+      "record": "8-0",
+      "conference": "ACC"
+    },
+    {
+      "rank": 2,
+      "previous": null,
+      "teamId": "61",
+      "name": "Georgia Bulldogs",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/61.png",
+      "record": "7-1",
+      "conference": "SEC"
+    },
+    {
+      "rank": 3,
+      "previous": null,
+      "teamId": "254",
+      "name": "Utah Utes",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/254.png",
+      "record": "8-0",
+      "conference": "Big 12"
+    },
+    {
+      "rank": 4,
+      "previous": null,
+      "teamId": "84",
+      "name": "Indiana Hoosiers",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/84.png",
+      "record": "8-1",
+      "conference": "Big Ten"
+    },
+    {
+      "rank": 5,
+      "previous": null,
+      "teamId": "333",
+      "name": "Alabama Crimson Tide",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/333.png",
+      "record": "6-2",
+      "conference": "SEC"
+    },
+    {
+      "rank": 6,
+      "previous": null,
+      "teamId": "96",
+      "name": "Kentucky Wildcats",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/96.png",
+      "record": "7-1",
+      "conference": "SEC"
+    },
+    {
+      "rank": 7,
+      "previous": null,
+      "teamId": "251",
+      "name": "Texas Longhorns",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/251.png",
+      "record": "6-2",
+      "conference": "SEC"
+    },
+    {
+      "rank": 8,
+      "previous": null,
+      "teamId": "26",
+      "name": "UCLA Bruins",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/26.png",
+      "record": "8-0",
+      "conference": "Big Ten"
+    },
+    {
+      "rank": 9,
+      "previous": null,
+      "teamId": "252",
+      "name": "BYU Cougars",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/252.png",
+      "record": "7-1",
+      "conference": "Big 12"
+    },
+    {
+      "rank": 10,
+      "previous": null,
+      "teamId": "145",
+      "name": "Ole Miss Rebels",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/145.png",
+      "record": "6-2",
+      "conference": "SEC"
+    },
+    {
+      "rank": 11,
+      "previous": null,
+      "teamId": "87",
+      "name": "Notre Dame Fighting Irish",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/87.png",
+      "record": "7-1",
+      "conference": "FBS Indep."
+    },
+    {
+      "rank": 12,
+      "previous": null,
+      "teamId": "194",
+      "name": "Ohio State Buckeyes",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/194.png",
+      "record": "6-2",
+      "conference": "Big Ten"
+    },
+    {
+      "rank": 13,
+      "previous": null,
+      "teamId": "2633",
+      "name": "Tennessee Volunteers",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png",
+      "record": "6-2",
+      "conference": "SEC"
+    },
+    {
+      "rank": 14,
+      "previous": null,
+      "teamId": "99",
+      "name": "LSU Tigers",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/99.png",
+      "record": "6-2",
+      "conference": "SEC"
+    },
+    {
+      "rank": 15,
+      "previous": null,
+      "teamId": "2641",
+      "name": "Texas Tech Red Raiders",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png",
+      "record": "7-1",
+      "conference": "Big 12"
+    },
+    {
+      "rank": 16,
+      "previous": null,
+      "teamId": "154",
+      "name": "Wake Forest Demon Deacons",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/154.png",
+      "record": "7-1",
+      "conference": "ACC"
+    },
+    {
+      "rank": 17,
+      "previous": null,
+      "teamId": "248",
+      "name": "Houston Cougars",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/248.png",
+      "record": "6-2",
+      "conference": "Big 12"
+    },
+    {
+      "rank": 18,
+      "previous": null,
+      "teamId": "142",
+      "name": "Missouri Tigers",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/142.png",
+      "record": "6-2",
+      "conference": "SEC"
+    },
+    {
+      "rank": 19,
+      "previous": null,
+      "teamId": "2294",
+      "name": "Iowa Hawkeyes",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2294.png",
+      "record": "6-2",
+      "conference": "Big Ten"
+    },
+    {
+      "rank": 20,
+      "previous": null,
+      "teamId": "30",
+      "name": "USC Trojans",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/30.png",
+      "record": "7-2",
+      "conference": "Big Ten"
+    },
+    {
+      "rank": 21,
+      "previous": null,
+      "teamId": "2579",
+      "name": "South Carolina Gamecocks",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2579.png",
+      "record": "5-3",
+      "conference": "SEC"
+    },
+    {
+      "rank": 22,
+      "previous": null,
+      "teamId": "12",
+      "name": "Arizona Wildcats",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/12.png",
+      "record": "6-2",
+      "conference": "Big 12"
+    },
+    {
+      "rank": 23,
+      "previous": null,
+      "teamId": "2483",
+      "name": "Oregon Ducks",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2483.png",
+      "record": "5-3",
+      "conference": "Big Ten"
+    },
+    {
+      "rank": 24,
+      "previous": null,
+      "teamId": "57",
+      "name": "Florida Gators",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/57.png",
+      "record": "5-3",
+      "conference": "SEC"
+    },
+    {
+      "rank": 25,
+      "previous": null,
+      "teamId": "68",
+      "name": "Boise State Broncos",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/68.png",
+      "record": "7-1",
+      "conference": "Pac-12"
+    }
+  ],
+  "message": "Latest available: Week 10."
+}
