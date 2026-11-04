@@ -19,7 +19,9 @@
       "codex/pulse-useful-discovery": false,
       "codex/scenario-outcome-explanations": false,
       "codex/pulse-rss-activation": false,
-      "codex/pulse-archive-recovery": false
+      "codex/pulse-archive-recovery": false,
+      "codex/cfp-edition-alerts": false,
+      "codex/cfp-show-watch": false
     }
   }
 }
