@@ -32,6 +32,12 @@ type Options = {
 };
 
 /** Terminal qualification only. Midseason standing is not a championship berth. */
+type ConferenceGame = Inputs["games"][number];
+const immutableConferenceFixtures = new WeakMap<Inputs, Map<string, {
+  completed: ConferenceGame[];
+  pending: ConferenceGame[];
+}>>();
+
 export function resolveConference(
   input: Inputs,
   conference: string,
@@ -57,20 +63,30 @@ export function resolveConference(
   if (members.some((t) => t.eligible === null))
     issues.push("Postseason eligibility unresolved");
   const cutoff = Date.parse(input.observedAt);
-  const memberIds = new Set(members.map(team => team.id));
-  const conferenceGames = mergeLedger([], input.games).filter(
-    game =>
-      game.season === input.season &&
-      game.conferenceGame &&
+  // An immutable batch snapshot reuses the same verified fixtures for every draw.
+  const cacheable = Object.isFrozen(input) && Object.isFrozen(input.games) && Object.isFrozen(input.teams);
+  let cached = cacheable ? immutableConferenceFixtures.get(input) : undefined;
+  if (cacheable && !cached) {
+    cached = new Map();
+    immutableConferenceFixtures.set(input, cached);
+  }
+  let prepared = cached?.get(conference);
+  if (!prepared) {
+    const memberIds = new Set(members.map(team => team.id));
+    const fixtures = mergeLedger([], input.games).filter(game =>
+      game.season === input.season && game.conferenceGame &&
       game.teams.every(id => memberIds.has(id)) &&
       !(input.season === 2026 && championshipSlots[game.id]) &&
       !isPac12FlexGame(game.season, game.date, conference, conference, game.id),
-  );
-  const finals: Pick<Inputs["games"][number], "teams" | "winner">[] =
-    conferenceGames.filter(game => validFinal(game, cutoff));
+    );
+    const completed = fixtures.filter(game => validFinal(game, cutoff));
+    const completedIds = new Set(completed.map(game => game.id));
+    prepared = { completed, pending: fixtures.filter(game => !completedIds.has(game.id)) };
+    cached?.set(conference, prepared);
+  }
+  const finals: Pick<ConferenceGame, "teams" | "winner">[] = [...prepared.completed];
   if (options.simulatedWinners) {
-    const pending = conferenceGames.filter(game => !validFinal(game, cutoff));
-    for (const game of pending) {
+    for (const game of prepared.pending) {
       const winner = options.simulatedWinners.get(game.id);
       if (game.state !== "pre" || game.completed ||
           !(Date.parse(game.date) > cutoff) || !(Date.parse(game.observedAt) <= cutoff) ||
@@ -81,7 +97,13 @@ export function resolveConference(
       finals.push({ teams: game.teams, winner });
     }
   }
-  const games = (id: string) => finals.filter((g) => g.teams.includes(id));
+  const byTeam = new Map<string, typeof finals>();
+  for (const game of finals) for (const id of game.teams) {
+    const games = byTeam.get(id);
+    if (games) games.push(game);
+    else byTeam.set(id, [game]);
+  }
+  const games = (id: string) => byTeam.get(id) ?? [];
   const record = (id: string, opponents?: Set<string>) => {
     const gs = games(id).filter(
       (g) => !opponents || g.teams.some((o) => o !== id && opponents.has(o)),

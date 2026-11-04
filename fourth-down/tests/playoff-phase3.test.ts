@@ -205,6 +205,16 @@ test("conference scenario uses hypothetical winners without modifying confirmed 
   });
   assert.deepEqual(resolved.participants, ["1", "2"]);
   assert.equal(resolved.hypothetical, true);
+  const frozen = Object.freeze({
+    ...i, teams: Object.freeze(i.teams) as typeof i.teams,
+    games: Object.freeze(i.games) as typeof i.games,
+  });
+  assert.deepEqual(resolveConference(frozen, "5", "bigten-2026-top-records", {
+    ...options, simulatedWinners: new Map([["future", "2"]]),
+  }), resolved);
+  assert.deepEqual(resolveConference(frozen, "5", "bigten-2026-top-records", {
+    ...options, simulatedWinners: new Map(),
+  }), unresolved);
   assert.equal(JSON.stringify(i), original);
 });
 

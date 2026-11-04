@@ -17,9 +17,15 @@ const transitioning = new Set(["16", "2449"]);
 const evidence = JSON.parse(fs.readFileSync(new URL("./data/eligibility-scope-evidence-2026.json", import.meta.url)));
 const eligibility = applyEligibility(capture.teams, evidence, 2026, capture.observedAt);
 if (eligibility.issues.length) throw new Error(eligibility.issues.join(", "));
-const input = { ...capture, teams: eligibility.teams.map(team => ({
-  ...team, eligible: team.eligible ?? (!transitioning.has(team.id) || transition === "include"),
-})) };
+const input = Object.freeze({
+  ...capture,
+  games: Object.freeze(capture.games.map(game => Object.freeze({ ...game,
+    teams: Object.freeze(game.teams), scores: Object.freeze(game.scores),
+  }))),
+  teams: Object.freeze(eligibility.teams.map(team => Object.freeze({
+    ...team, eligible: team.eligible ?? (!transitioning.has(team.id) || transition === "include"),
+  }))),
+});
 const ap = [...input.editions].filter(p => p.id === "ap" && p.season === 2026)
   .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))[0];
 if (!ap || Date.parse(ap.date) > Date.parse(input.observedAt)) throw new Error("Dated AP baseline required");
@@ -70,6 +76,7 @@ const titleSlots = [
   ["401858318", "acc-2026"], ["401869533", "big12-current"],
   ["401869534", "bigten-2026-top-records"], ["401869545", "sec-current"],
 ];
+if (titleSlots.some(([id]) => venues.get(id)?.neutral !== true)) throw new Error("Neutral title venue unverified");
 const titleDraw = (index, slot) => {
   let value = (seed + Math.imul(4 * index + slot + 1, 0x9e3779b9)) >>> 0;
   value = Math.imul(value ^ (value >>> 16), 0x21f0aaad);
