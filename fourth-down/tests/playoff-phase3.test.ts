@@ -233,3 +233,42 @@ test("championship draw resolves a verified slot without writing a score or fina
   assert.equal(simulateConferenceTitle(i, { ...options, conferenceScheduleComplete: false }).status, "withheld");
   assert.equal(JSON.stringify(i), original);
 });
+
+test("one private playoff trial joins four title draws to twelve seeds and withholds incomplete trials", async () => {
+  const { resolvePlayoffTrial } = await import("../app/lib/playoff/playoff-trial.ts");
+  const i = input();
+  const titles = [
+    ["401858318", "1", "acc-2026"],
+    ["401869533", "4", "big12-current"],
+    ["401869534", "5", "bigten-2026-top-records"],
+    ["401869545", "8", "sec-current"],
+  ] as const;
+  i.teams = i.teams.slice(0, 14).map((team, index) => ({
+    ...team, conference: index < 12 ? titles[Math.floor(index / 3)][1] : "151",
+  }));
+  i.editions = [];
+  i.games = titles.flatMap((_, index) => {
+    const [a, b, c] = i.teams.slice(index * 3, index * 3 + 3).map(team => team.id);
+    return [game(`${a}-${b}`, a, b, a), game(`${a}-${c}`, a, c, a), game(`${b}-${c}`, b, c, b)];
+  });
+  i.pendingGames = titles.map(([id]) => ({
+    id, name: "Championship", date: "2026-12-06T20:00:00Z",
+    knownTeamIds: [], observedAt: at, source: "synthetic regression fixture",
+  }));
+  const scenarios = titles.map(([fixtureId, , policy]) => ({
+    fixtureId, policy, conferenceScheduleComplete: true, simulatedWinners: new Map<string, string>(),
+    ratings: new Map(i.teams.map(team => [team.id, 0.5])),
+    strengthCoefficient: 2, homeCoefficient: 0.4, verifiedVenue: { kind: "neutral" as const },
+    draw: 0.25,
+  }));
+  const rows = runShadow(i).rows;
+  const result = resolvePlayoffTrial(i, scenarios, () => rows);
+  if (result.status !== "simulated") assert.fail(result.issues.join(", "));
+  assert.deepEqual(result.champions, { "1": "1", "4": "4", "5": "7", "8": "10" });
+  assert.equal(result.field.length, 12);
+  assert.equal(result.firstTwoOut.length, 2);
+  const withheld = resolvePlayoffTrial(i, [{ ...scenarios[0], verifiedVenue: null }, ...scenarios.slice(1)], () => {
+    assert.fail("Selection model must not run with a missing champion");
+  });
+  assert.equal(withheld.status, "withheld");
+});
