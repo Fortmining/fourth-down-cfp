@@ -22,8 +22,8 @@ export function gameStrengths(input: Inputs) {
 }
 
 type Example = { difference: number; won: 0 | 1 };
-export function gameProbability(difference: number, coefficient: number) {
-  return 1 / (1 + Math.exp(-difference * coefficient));
+export function gameProbability(difference: number, coefficient: number, offset = 0) {
+  return 1 / (1 + Math.exp(-(difference * coefficient + offset)));
 }
 
 // A regularized logistic fit. A neutral-strength matchup is symmetric.
@@ -45,4 +45,35 @@ export function fitGameCoefficient(examples: Example[]) {
     coefficient = next;
   }
   return coefficient;
+}
+
+// Regularized two-variable fit. Home orientation is supported only by a
+// verified venue flag; designated home teams at neutral sites get no offset.
+export function fitVenueModel(examples: (Example & { home: -1 | 0 | 1 })[]) {
+  let strength = fitGameCoefficient(examples);
+  let home = 0;
+  for (let iteration = 0; iteration < 30; iteration++) {
+    let strengthGradient = strength;
+    let homeGradient = home;
+    let strengthCurvature = 1;
+    let homeCurvature = 1;
+    let cross = 0;
+    for (const row of examples) {
+      const probability = gameProbability(row.difference, strength, row.home * home);
+      const error = probability - row.won;
+      const weight = probability * (1 - probability);
+      strengthGradient += error * row.difference;
+      homeGradient += error * row.home;
+      strengthCurvature += weight * row.difference ** 2;
+      homeCurvature += weight * row.home ** 2;
+      cross += weight * row.home * row.difference;
+    }
+    const determinant = strengthCurvature * homeCurvature - cross ** 2;
+    const strengthStep = (homeCurvature * strengthGradient - cross * homeGradient) / determinant;
+    const homeStep = (strengthCurvature * homeGradient - cross * strengthGradient) / determinant;
+    strength -= strengthStep;
+    home -= homeStep;
+    if (Math.max(Math.abs(strengthStep), Math.abs(homeStep)) < 1e-9) break;
+  }
+  return { strength, home };
 }

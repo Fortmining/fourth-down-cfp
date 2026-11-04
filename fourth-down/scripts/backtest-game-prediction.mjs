@@ -1,9 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fitGameCoefficient, gameProbability, gameStrengths } from "../app/lib/playoff/game-prediction.ts";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { fitGameCoefficient, fitVenueModel, gameProbability, gameStrengths } from "../app/lib/playoff/game-prediction.ts";
 import { validFinal } from "../app/lib/playoff/ledger.ts";
 
-function readSeason(directory) {
+function readSeason(directory, withVenue) {
+  const venues = withVenue ? JSON.parse(execFileSync("python3", [
+    fileURLToPath(new URL("./extract-historical-venues.py", import.meta.url)), directory,
+  ], { encoding: "utf8", maxBuffer: 16_000_000 })) : null;
   const inputs = fs.readdirSync(directory).filter(name => /^inputs-.*\.json$/.test(name))
     .map(name => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8")))
     .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt));
@@ -23,8 +28,12 @@ function readSeason(directory) {
           known.date !== game.date || !known.teams.every(id => game.teams.includes(id) && colley.has(id)) ||
           !validFinal(game, Date.parse(after.observedAt))) continue;
       const [a, b] = known.teams;
+      const venue = venues?.[before.observedAt]?.[game.id];
+      if (withVenue && (!venue || venue.date !== known.date ||
+          ![venue.home, venue.away].includes(a) || ![venue.home, venue.away].includes(b))) continue;
+      const home = !venue || venue.neutral ? 0 : venue.home === a ? 1 : -1;
       seen.add(game.id);
-      examples.push({ won: Number(game.winner === a), colley: colley.get(a) - colley.get(b), winRate: winRate.get(a) - winRate.get(b) });
+      examples.push({ home, won: Number(game.winner === a), colley: colley.get(a) - colley.get(b), winRate: winRate.get(a) - winRate.get(b) });
     }
   }
   return examples;
@@ -47,14 +56,19 @@ function evaluate(examples, predict) {
     calibration: calibration.map(bin => ({ count: bin.count, meanForecast: bin.count ? bin.expected / bin.count : null, observed: bin.count ? bin.wins / bin.count : null })) };
 }
 
-const [trainingDirectory, holdoutDirectory] = process.argv.slice(2);
-const train = readSeason(trainingDirectory);
-const holdout = readSeason(holdoutDirectory);
+const [trainingDirectory, holdoutDirectory, flag] = process.argv.slice(2);
+const withVenue = flag === "--venues";
+const train = readSeason(trainingDirectory, withVenue);
+const holdout = readSeason(holdoutDirectory, withVenue);
 if (!train.length || !holdout.length) throw new Error("Missing historical examples");
 const results = { trainingGames: train.length, holdoutGames: holdout.length, models: {} };
 for (const key of ["colley", "winRate"]) {
   const coefficient = fitGameCoefficient(train.map(row => ({ won: row.won, difference: row[key] })));
   results.models[key] = { coefficient, ...evaluate(holdout, row => gameProbability(row[key], coefficient)) };
+}
+if (withVenue) {
+  const model = fitVenueModel(train.map(row => ({ won: row.won, difference: row.colley, home: row.home })));
+  results.models.colleyVenue = { ...model, ...evaluate(holdout, row => gameProbability(row.colley, model.strength, row.home * model.home)) };
 }
 results.models.coin = evaluate(holdout, () => 0.5);
 console.log(JSON.stringify(results, null, 2));
