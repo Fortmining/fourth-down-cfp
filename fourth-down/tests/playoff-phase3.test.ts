@@ -272,3 +272,20 @@ test("one private playoff trial joins four title draws to twelve seeds and withh
   });
   assert.equal(withheld.status, "withheld");
 });
+
+test("batch accounting keeps unresolved playoff draws in the denominator", async () => {
+  const { runPlayoffBatch } = await import("../app/lib/playoff/playoff-trial.ts");
+  const results = [
+    { status: "withheld", issues: ["Missing venue", "Missing venue"] },
+    { status: "withheld", issues: ["Missing venue", "Unresolved tiebreaker"] },
+  ] as const;
+  const batch = runPlayoffBatch([], { trials: 2, seed: 2026 }, (_, index) => ({
+    status: results[index].status,
+    issues: [...results[index].issues],
+  }));
+  assert.equal(batch.total, 2);
+  assert.equal(batch.withheld, 2);
+  assert.equal(batch.complete, false);
+  assert.equal(batch.withheldReasons["Missing venue"], 2);
+  assert.deepEqual(Object.keys(batch.seedCounts), []);
+});

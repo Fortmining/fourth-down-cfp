@@ -1,4 +1,5 @@
 import { simulateConferenceTitle } from "./championship-trial.ts";
+import { runSeasonDraws } from "./season-draws.ts";
 import { allocateShadowField, powerFour } from "./qualification.ts";
 import type { Inputs, ModelRow } from "./types.ts";
 
@@ -38,4 +39,43 @@ export function resolvePlayoffTrial(
   const field = allocateShadowField(rows, input.teams, champions, true);
   if (field.issues.length) return { status: "withheld" as const, issues: field.issues };
   return { status: "simulated" as const, hypothetical: true as const, champions, ...field };
+}
+
+/** Aggregate all trials, including withheld trials, against the same denominator. */
+export function runPlayoffBatch(
+  games: Parameters<typeof runSeasonDraws>[0],
+  options: Parameters<typeof runSeasonDraws>[1],
+  resolve: (winners: ReadonlyMap<string, string>, index: number) => ReturnType<typeof resolvePlayoffTrial>,
+) {
+  const appearances: Record<string, number[]> = Object.create(null);
+  const withheldReasons: Record<string, number> = Object.create(null);
+  let total = 0;
+  let resolved = 0;
+
+  const ids = games.map(game => game.id).sort((a, b) => a.localeCompare(b));
+  runSeasonDraws(games, options, winners => {
+    const trial = resolve(new Map(ids.map((id, index) => [id, winners[index]])), total++);
+
+    if (trial.status === "withheld") {
+      for (const issue of new Set(trial.issues)) {
+        withheldReasons[issue] = (withheldReasons[issue] ?? 0) + 1;
+      }
+      return;
+    }
+    resolved++;
+    for (const team of trial.field) {
+      const seeds = appearances[team.id] ??= Array<number>(12).fill(0);
+      seeds[team.seed - 1]++;
+    }
+  });
+
+  return {
+    total,
+    resolved,
+    withheld: total - resolved,
+    withheldReasons,
+    seedCounts: appearances,
+    // Even a complete batch needs independent model validation before display.
+    complete: total > 0 && total === resolved,
+  };
 }
