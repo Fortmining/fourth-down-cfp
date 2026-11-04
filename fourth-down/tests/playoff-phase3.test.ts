@@ -101,6 +101,15 @@ test("verified 2026 Big Ten top records resolve clear participants without claim
   const tied = resolveConference(i, "5", "bigten-2026-top-records", {
     regularSeasonComplete: true,
   });
+  const assumed = resolveConference(i, "5", "bigten-2026-top-records", {
+    regularSeasonComplete: true,
+    simulatedWinners: new Map(),
+    bigTenBoundaryDraw: 0,
+  });
+  assert.deepEqual(assumed.participants, ["1", "2"]);
+  assert.equal(assumed.hypothetical, true);
+  assert.equal(assumed.definitive, false);
+  assert.equal(assumed.trace.at(-1)?.step, "Hypothetical Big Ten boundary draw");
   assert.equal(tied.participants.length, 0);
   assert.match(tied.issues.join(), /full-policy confirmation/);
   assert.deepEqual(
@@ -186,4 +195,116 @@ test("dry-run storage budget reserves notification allowance, counts reads, and 
   assert.equal(b.transportInstalled, false);
   assert.equal(storageWriteBudget([], 500000, 0, 0).commandAllowance, 0);
   assert.throws(() => storageWriteBudget([], NaN, 0, 0));
+});
+
+test("conference scenario uses hypothetical winners without modifying confirmed games", () => {
+  const i = input("5");
+  i.games.push({
+    ...game("future", "2", "3", "3"), date: "2026-12-06T18:00:00Z",
+    state: "pre", completed: false, winner: null, scores: [null, null],
+  });
+  const original = JSON.stringify(i);
+  const options = { regularSeasonComplete: true };
+  const unresolved = resolveConference(i, "5", "bigten-2026-top-records", {
+    ...options, simulatedWinners: new Map(),
+  });
+  assert.deepEqual(unresolved.participants, []);
+  const resolved = resolveConference(i, "5", "bigten-2026-top-records", {
+    ...options, simulatedWinners: new Map([["future", "2"]]),
+  });
+  assert.deepEqual(resolved.participants, ["1", "2"]);
+  assert.equal(resolved.hypothetical, true);
+  const frozen = Object.freeze({
+    ...i, teams: Object.freeze(i.teams) as typeof i.teams,
+    games: Object.freeze(i.games) as typeof i.games,
+  });
+  assert.deepEqual(resolveConference(frozen, "5", "bigten-2026-top-records", {
+    ...options, simulatedWinners: new Map([["future", "2"]]),
+  }), resolved);
+  assert.deepEqual(resolveConference(frozen, "5", "bigten-2026-top-records", {
+    ...options, simulatedWinners: new Map(),
+  }), unresolved);
+  assert.equal(JSON.stringify(i), original);
+});
+
+test("championship draw resolves a verified slot without writing a score or final", async () => {
+  const { simulateConferenceTitle } = await import("../app/lib/playoff/championship-trial.ts");
+  const i = input("5");
+  i.pendingGames = [{
+    id: "401869534", name: "Big Ten championship", date: "2026-12-06T20:00:00Z",
+    knownTeamIds: [], observedAt: at, source: "synthetic regression fixture",
+  }];
+  const options = {
+    fixtureId: "401869534", policy: "bigten-2026-top-records" as const,
+    conferenceScheduleComplete: true, simulatedWinners: new Map<string, string>(),
+    ratings: new Map([["1", 0.5], ["2", 0.5]]),
+    strengthCoefficient: 2, homeCoefficient: 0.4, verifiedVenue: { kind: "neutral" as const },
+    draw: 0.4,
+  };
+  const original = JSON.stringify(i);
+  const first = simulateConferenceTitle(i, options);
+  assert.equal(first.status, "simulated");
+  if (first.status === "simulated") assert.equal(first.winner, "1");
+  const second = simulateConferenceTitle(i, { ...options, draw: 0.6 });
+  if (second.status === "simulated") assert.equal(second.winner, "2");
+  else assert.fail("Expected supported title draw");
+  assert.equal(simulateConferenceTitle(i, { ...options, verifiedVenue: null }).status, "withheld");
+  assert.equal(simulateConferenceTitle(i, { ...options, conferenceScheduleComplete: false }).status, "withheld");
+  assert.equal(JSON.stringify(i), original);
+});
+
+test("one private playoff trial joins four title draws to twelve seeds and withholds incomplete trials", async () => {
+  const { resolvePlayoffTrial } = await import("../app/lib/playoff/playoff-trial.ts");
+  const i = input();
+  const titles = [
+    ["401858318", "1", "acc-2026"],
+    ["401869533", "4", "big12-current"],
+    ["401869534", "5", "bigten-2026-top-records"],
+    ["401869545", "8", "sec-current"],
+  ] as const;
+  i.teams = i.teams.slice(0, 14).map((team, index) => ({
+    ...team, conference: index < 12 ? titles[Math.floor(index / 3)][1] : "151",
+  }));
+  i.editions = [];
+  i.games = titles.flatMap((_, index) => {
+    const [a, b, c] = i.teams.slice(index * 3, index * 3 + 3).map(team => team.id);
+    return [game(`${a}-${b}`, a, b, a), game(`${a}-${c}`, a, c, a), game(`${b}-${c}`, b, c, b)];
+  });
+  i.pendingGames = titles.map(([id]) => ({
+    id, name: "Championship", date: "2026-12-06T20:00:00Z",
+    knownTeamIds: [], observedAt: at, source: "synthetic regression fixture",
+  }));
+  const scenarios = titles.map(([fixtureId, , policy]) => ({
+    fixtureId, policy, conferenceScheduleComplete: true, simulatedWinners: new Map<string, string>(),
+    ratings: new Map(i.teams.map(team => [team.id, 0.5])),
+    strengthCoefficient: 2, homeCoefficient: 0.4, verifiedVenue: { kind: "neutral" as const },
+    draw: 0.25,
+  }));
+  const rows = runShadow(i).rows;
+  const result = resolvePlayoffTrial(i, scenarios, () => rows);
+  if (result.status !== "simulated") assert.fail(result.issues.join(", "));
+  assert.deepEqual(result.champions, { "1": "1", "4": "4", "5": "7", "8": "10" });
+  assert.equal(result.field.length, 12);
+  assert.equal(result.firstTwoOut.length, 2);
+  const withheld = resolvePlayoffTrial(i, [{ ...scenarios[0], verifiedVenue: null }, ...scenarios.slice(1)], () => {
+    assert.fail("Selection model must not run with a missing champion");
+  });
+  assert.equal(withheld.status, "withheld");
+});
+
+test("batch accounting keeps unresolved playoff draws in the denominator", async () => {
+  const { runPlayoffBatch } = await import("../app/lib/playoff/playoff-trial.ts");
+  const results = [
+    { status: "withheld", issues: ["Missing venue", "Missing venue"] },
+    { status: "withheld", issues: ["Missing venue", "Unresolved tiebreaker"] },
+  ] as const;
+  const batch = runPlayoffBatch([], { trials: 2, seed: 2026 }, (_, index) => ({
+    status: results[index].status,
+    issues: [...results[index].issues],
+  }));
+  assert.equal(batch.total, 2);
+  assert.equal(batch.withheld, 2);
+  assert.equal(batch.complete, false);
+  assert.equal(batch.withheldReasons["Missing venue"], 2);
+  assert.deepEqual(Object.keys(batch.seedCounts), []);
 });

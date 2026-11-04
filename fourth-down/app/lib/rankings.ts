@@ -23,6 +23,7 @@ export type Poll = {
   url: string;
   status: "available" | "awaiting_update" | "not_published" | "unavailable";
   date: string | null;
+  providerUpdatedAt?: string;
   week: number | null;
   season: number | null;
   teams: Ranked[];
@@ -44,6 +45,14 @@ function identify(p: any): SourceId | undefined {
   )
     return "coaches";
 }
+// CFP publishes an untied Top 25. Never promote an undated or partial edition.
+export function completeCfpEdition(p: any): boolean {
+  return typeof p.date === "string" && Number.isFinite(Date.parse(p.date)) &&
+    Array.isArray(p.ranks) && p.ranks.length === 25 &&
+    p.ranks.every((r: any) => r && Number.isInteger(r.current) && r.current >= 1 && r.current <= 25 && r.team?.id) &&
+    new Set(p.ranks.map((r: any) => r.current)).size === 25 &&
+    new Set(p.ranks.map((r: any) => String(r.team.id))).size === 25;
+}
 export function collectPolls(
   raw: any[],
   season: number | null,
@@ -58,6 +67,8 @@ export function collectPolls(
         identify(p) === source.id &&
         p.season?.year === season &&
         p.ranks?.length &&
+        (source.id !== "cfp" || (completeCfpEdition(p) &&
+          (season !== 2026 || Date.parse(p.date) >= Date.parse("2026-11-03T00:00:00Z")))) &&
         (!p.date || (Number.isFinite(Date.parse(p.date)) && Date.parse(p.date) <= now.getTime())),
     );
     const p = candidates.sort(
@@ -91,6 +102,8 @@ export function collectPolls(
       ...source,
       status,
       date: p?.date || null,
+      ...(source.id === "cfp" && typeof p?.lastUpdated === "string"
+        ? { providerUpdatedAt: p.lastUpdated } : {}),
       week: pollWeek,
       season: p?.season?.year || null,
       teams,
@@ -100,7 +113,7 @@ export function collectPolls(
           : status === "unavailable"
             ? failed
               ? "Ranking feed temporarily unavailable. No other poll is substituted."
-              : "No current-season edition is available from the provider. Publication is unconfirmed; no other poll is substituted."
+              : "No verified current-season edition is available from the provider. CFP requires a dated, complete Top 25. No other poll is substituted."
             : status === "awaiting_update"
               ? `Latest available: Week ${pollWeek}. No Week ${week} edition returned by the provider.`
               : `Latest available${pollWeek ? `: Week ${pollWeek}` : ""}.`,

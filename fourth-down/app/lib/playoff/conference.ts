@@ -28,9 +28,18 @@ type Options = {
   regularSeasonComplete: boolean;
   external?: ExternalEvidence;
   eligibleWins?: Record<string, number>;
+  simulatedWinners?: ReadonlyMap<string, string>;
+  bigTenBoundaryDraw?: number;
+  scenarioFallback?: { ratings: ReadonlyMap<string, number>; draw: number };
 };
 
 /** Terminal qualification only. Midseason standing is not a championship berth. */
+type ConferenceGame = Inputs["games"][number];
+const immutableConferenceFixtures = new WeakMap<Inputs, Map<string, {
+  completed: ConferenceGame[];
+  pending: ConferenceGame[];
+}>>();
+
 export function resolveConference(
   input: Inputs,
   conference: string,
@@ -55,15 +64,48 @@ export function resolveConference(
   const members = input.teams.filter((t) => t.conference === conference);
   if (members.some((t) => t.eligible === null))
     issues.push("Postseason eligibility unresolved");
-  const finals = mergeLedger([], input.games).filter(
-    (g) =>
-      g.season === input.season &&
-      g.conferenceGame &&
-      validFinal(g, Date.parse(input.observedAt)) &&
-      !(input.season === 2026 && championshipSlots[g.id]) &&
-      !isPac12FlexGame(g.season, g.date, conference, conference, g.id),
-  );
-  const games = (id: string) => finals.filter((g) => g.teams.includes(id));
+  const cutoff = Date.parse(input.observedAt);
+  // An immutable batch snapshot reuses the same verified fixtures for every draw.
+  const cacheable = Object.isFrozen(input) && Object.isFrozen(input.games) && Object.isFrozen(input.teams);
+  let cached = cacheable ? immutableConferenceFixtures.get(input) : undefined;
+  if (cacheable && !cached) {
+    cached = new Map();
+    immutableConferenceFixtures.set(input, cached);
+  }
+  let prepared = cached?.get(conference);
+  if (!prepared) {
+    const memberIds = new Set(members.map(team => team.id));
+    const fixtures = mergeLedger([], input.games).filter(game =>
+      game.season === input.season && game.conferenceGame &&
+      game.teams.every(id => memberIds.has(id)) &&
+      !(input.season === 2026 && championshipSlots[game.id]) &&
+      !isPac12FlexGame(game.season, game.date, conference, conference, game.id),
+    );
+    const completed = fixtures.filter(game => validFinal(game, cutoff));
+    const completedIds = new Set(completed.map(game => game.id));
+    prepared = { completed, pending: fixtures.filter(game => !completedIds.has(game.id)) };
+    cached?.set(conference, prepared);
+  }
+  const finals: Pick<ConferenceGame, "teams" | "winner">[] = [...prepared.completed];
+  if (options.simulatedWinners) {
+    for (const game of prepared.pending) {
+      const winner = options.simulatedWinners.get(game.id);
+      if (game.state !== "pre" || game.completed ||
+          !(Date.parse(game.date) > cutoff) || !(Date.parse(game.observedAt) <= cutoff) ||
+          !winner || !game.teams.includes(winner)) {
+        issues.push("A verified remaining conference fixture lacks a supported outcome");
+        continue;
+      }
+      finals.push({ teams: game.teams, winner });
+    }
+  }
+  const byTeam = new Map<string, typeof finals>();
+  for (const game of finals) for (const id of game.teams) {
+    const games = byTeam.get(id);
+    if (games) games.push(game);
+    else byTeam.set(id, [game]);
+  }
+  const games = (id: string) => byTeam.get(id) ?? [];
   const record = (id: string, opponents?: Set<string>) => {
     const gs = games(id).filter(
       (g) => !opponents || g.teams.some((o) => o !== id && opponents.has(o)),
@@ -160,10 +202,24 @@ export function resolveConference(
   function tie(ids: string[], slots: number, depth = 0): string[] {
     if (depth > members.length * 5) return fail("Tiebreaker restart guard");
     if (ids.length <= slots) return ids;
-    if (policy === "bigten-2026-top-records")
-      return fail(
-        "2026 Big Ten tied qualification requires current full-policy confirmation",
-      );
+    if (policy === "bigten-2026-top-records" && !options.scenarioFallback) {
+      const draw = options.bigTenBoundaryDraw;
+      if (options.simulatedWinners && draw !== undefined && draw >= 0 && draw < 1) {
+        const pool = [...ids].sort();
+        const selected: string[] = [];
+        let fraction = draw;
+        // Map one uniform draw to an ordered sample without replacement.
+        while (selected.length < slots) {
+          const scaled = fraction * pool.length;
+          const index = Math.floor(scaled);
+          selected.push(pool.splice(index, 1)[0]);
+          fraction = scaled - index;
+        }
+        trace.push({ step: "Hypothetical Big Ten boundary draw", ids: selected });
+        return selected;
+      }
+      return fail("2026 Big Ten tied qualification requires current full-policy confirmation");
+    }
     const set = new Set(ids),
       mini = finals.filter((g) => g.teams.every((id) => set.has(id)));
     const complete = ids.every((id) =>
@@ -315,6 +371,21 @@ export function resolveConference(
         if (answer) return answer;
       }
     }
+    const scenario = options.simulatedWinners ? options.scenarioFallback : undefined;
+    const drawRemaining = () => {
+      if (!scenario || !(scenario.draw >= 0 && scenario.draw < 1)) return null;
+      const pool = [...ids].sort();
+      const chosen: string[] = [];
+      let fraction = scenario.draw;
+      while (chosen.length < slots) {
+        const scaled = fraction * pool.length;
+        const index = Math.floor(scaled);
+        chosen.push(pool.splice(index, 1)[0]);
+        fraction = scaled - index;
+      }
+      trace.push({ step: "Hypothetical terminal draw", ids: chosen });
+      return chosen;
+    };
     const metric =
       policy === "acc-2026"
         ? "team-success"
@@ -329,12 +400,20 @@ export function resolveConference(
       !Number.isFinite(Date.parse(e.asOf)) ||
       Date.parse(e.asOf) > Date.parse(input.observedAt) ||
       ids.some((id) => !Number.isFinite(e.values[id]))
-    )
+    ) {
+      if (scenario && ids.every(id => Number.isFinite(scenario.ratings.get(id)))) {
+        const answer = reduced(
+          top(ids, allValues(ids, id => scenario.ratings.get(id) ?? null), "scenario rating"),
+          "Hypothetical rating proxy",
+        );
+        return answer ?? drawRemaining() ?? fail("Scenario draw unavailable");
+      }
       return fail(
         "Official SportSource " +
           metric +
           " unavailable; do not substitute model ratings",
       );
+    }
     if (!["higher", "lower"].includes(e.direction))
       return fail("External metric direction unspecified");
     const answer = reduced(
@@ -351,7 +430,7 @@ export function resolveConference(
       "SportSource " + metric,
     );
     if (answer) return answer;
-    return fail(
+    return drawRemaining() ?? fail(
       "Conference-administered draw unresolved; never synthesize coin toss",
     );
   }
@@ -374,7 +453,7 @@ export function resolveConference(
         group = [...new Set([...group, ...expanded])];
         if (
           new Set(group.map((id) => record(id).played)).size > 1 &&
-          group.length > 2
+          group.length > 2 && !options.scenarioFallback
         ) {
           fail(
             "ACC alternate-schedule multi-team branch requires additional reference cases",
@@ -400,7 +479,7 @@ export function resolveConference(
               );
               if (!challengers.length) break;
               const nextGroup = [contender, ...challengers];
-              if (nextGroup.length > 2) {
+              if (nextGroup.length > 2 && !options.scenarioFallback) {
                 fail(
                   "ACC alternate-schedule multi-team continuation unresolved",
                 );
@@ -438,6 +517,7 @@ export function resolveConference(
     issues: [...new Set(issues)],
     participants: issues.length ? [] : selected,
     definitive: false,
+    hypothetical: options.simulatedWinners !== undefined,
     shadow: true,
   };
 }
