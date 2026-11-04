@@ -31,3 +31,22 @@
 @media(max-width:500px){.outlookRounds{grid-template-columns:1fr}.outlookOdds{font-size:.78rem}}
 .outlookSeedGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem}
 @media(max-width:650px){.outlookSeedGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Keep the predictor on the same theme surfaces as the scenario editor. */
+.sandboxShell .outlookReview {
+  background: var(--panel, #fff);
+  color: inherit;
+  border-color: var(--border, #a7b1bf);
+}
+.outlookReview a, .outlookReview small, .outlookRecord span { color: inherit; }
+.outlookReview a { text-decoration: underline; }
+.outlookReview details, .outlookField li, .outlookMatch { border-color: var(--border, #a7b1bf); }
+.outlookField li, .outlookMatch { background: var(--panel, #fff); }
+.sandboxShell .outlookReview button { color: inherit; }
+.sandboxShell .outlookReview button[aria-pressed=true] { background: #14243b; color: #fff; }
+.outlookMatch button span { overflow-wrap: anywhere; }
+.outlookMatch button span:last-child, .outlookOdds td { font-variant-numeric: tabular-nums; }
+.outlookMatch button + button { margin-top: .25rem; }
+.outlookRankControls label { max-width: 11rem; }
+.scenarioEditor { padding: 1rem; border: 1px solid var(--border,#a7b1bf); border-radius: 12px; }
+.scenarioEditor > summary { font-weight: 800; }
