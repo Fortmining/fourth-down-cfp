@@ -62,3 +62,18 @@ test('historical first edition, incomplete Top 25, and same-date refresh cannot 
  const refresh=cfpFeed('2026-11-10T09:00Z',nextAt+60000);
  assert.equal(recoverRankings(next,refresh,null,nextAt+60000).events.length,0);
 });
+
+test('provider update metadata cannot suppress a complete new CFP edition',()=>{
+ const at=Date.parse('2026-11-11T04:45Z');
+ for(const metadata of [undefined,'invalid','2026-11-10T08:00Z','2026-11-11T05:00Z']){
+  const current=cfpFeed('2026-11-10T08:00Z',at);
+  current.polls[0].providerUpdatedAt=metadata;
+  const result=recoverRankings(null,current,null,at);
+  assert.equal(result.events.length,1);
+  assert.equal(result.events[0].eligibilityAt,at);
+ }
+ const stale=cfpFeed('2026-11-08T08:00Z',at);
+ assert.equal(recoverRankings(null,stale,null,at).events.length,0);
+ const prior=cfpFeed('2026-11-03T08:00Z',at-604800000);
+ assert.equal(recoverRankings(prior,stale,null,at).events.length,1);
+});
