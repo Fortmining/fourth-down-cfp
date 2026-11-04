@@ -9,10 +9,11 @@ type TitleInput = Parameters<typeof simulateConferenceTitle>[1];
 export function resolvePlayoffTrial(
   input: Inputs,
   titles: readonly TitleInput[],
-  estimateOrder: (champions: Readonly<Record<string, string>>) => ModelRow[],
+  estimateOrder: (champions: Readonly<Record<string, string>>, titleParticipants: readonly string[]) => ModelRow[],
 ) {
   const champions: Record<string, string> = {};
   const issues: string[] = [];
+  const titleParticipants: string[] = [];
   if (input.season !== 2026 || titles.length !== powerFour.length) {
     return { status: "withheld" as const, issues: ["Four 2026 title games required"] };
   }
@@ -24,12 +25,13 @@ export function resolvePlayoffTrial(
       issues.push("Repeated conference title");
     } else {
       champions[result.conference] = result.winner;
+      titleParticipants.push(...result.participants);
     }
   }
   if (issues.length || !powerFour.every(conference => champions[conference])) {
     return { status: "withheld" as const, issues: issues.length ? issues : ["Missing Power Four winner"] };
   }
-  const rows = estimateOrder(Object.freeze(champions));
+  const rows = estimateOrder(Object.freeze(champions), titleParticipants);
   const rankedIds = new Set(rows.map(row => row.id));
   if (rankedIds.size !== rows.length ||
       rows.length !== input.teams.length ||
