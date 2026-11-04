@@ -6,9 +6,11 @@ import { gameProbability, gameStrengths } from "../app/lib/playoff/game-predicti
 import { resolvePlayoffTrial, runPlayoffBatch } from "../app/lib/playoff/playoff-trial.ts";
 import { runShadow } from "../app/lib/playoff/engine.ts";
 
-const [source, modelFile, pairing = "published", transition = "exclude"] = process.argv.slice(2);
+const [source, modelFile, pairing = "published", transition = "exclude", selection = "fixed-ap", bigTen = "strict"] = process.argv.slice(2);
 if (!["published", "swap"].includes(pairing) || !["include", "exclude"].includes(transition))
   throw new Error("Unknown sensitivity scenario");
+if (!["fixed-ap", "record-response"].includes(selection)) throw new Error("Unknown selection model");
+if (!["strict", "sample-boundary"].includes(bigTen)) throw new Error("Unknown Big Ten scenario");
 const capture = JSON.parse(fs.readFileSync(path.join(source, "inputs.json")));
 if (capture.season !== 2026 || !capture.coverage.complete) throw new Error("Reconciled 2026 capture required");
 const models = JSON.parse(fs.readFileSync(modelFile)).models;
@@ -86,12 +88,25 @@ const titleDraw = (index, slot) => {
 const fixtureTeams = new Map(fixtures.map(game => [game.id, game.teams]));
 const titleFirst = new Map();
 const example = {};
+const cohortCounts = new Map();
+const nextGameByTeam = new Map();
+const remainingByTeam = new Map();
+for (const game of input.games.filter(game => !game.completed)
+  .sort((a, b) => Date.parse(a.date) - Date.parse(b.date) || a.id.localeCompare(b.id))) {
+  for (const team of game.teams) {
+    if (!nextGameByTeam.has(team)) nextGameByTeam.set(team, game.id);
+    const remaining = remainingByTeam.get(team) ?? [];
+    remaining.push(game.id);
+    remainingByTeam.set(team, remaining);
+  }
+}
 const started = performance.now();
 const result = runPlayoffBatch(fixtures, { trials: 50_000, seed }, (winners, index) => {
   const titles = titleSlots.map(([fixtureId, policy], slot) => ({
     fixtureId, policy, simulatedWinners: winners, conferenceScheduleComplete: true,
     ratings: colley, strengthCoefficient: model.strength, homeCoefficient: model.home,
     verifiedVenue: { kind: "neutral" }, draw: titleDraw(index, slot),
+    bigTenBoundaryDraw: bigTen === "sample-boundary" ? titleDraw(index + 50_000, slot) : undefined,
   }));
   const trial = resolvePlayoffTrial(input, titles, (champions, titleParticipants) => {
     const wins = new Map(input.teams.map(team => [team.id, records[team.id].wins]));
@@ -103,9 +118,30 @@ const result = runPlayoffBatch(fixtures, { trials: 50_000, seed }, (winners, ind
     for (const team of titleParticipants) played.set(team, played.get(team) + 1);
     for (const winner of Object.values(champions)) wins.set(winner, wins.get(winner) + 1);
     const rate = id => (wins.get(id) + 1) / (played.get(id) + 2);
-    return [...template].sort((a, b) => (apRank.get(a.id) ?? 26) - (apRank.get(b.id) ?? 26) ||
+    const projectedScore = new Map(input.teams.map(({ id }) => {
+      const currentRate = (records[id].wins + 1) / (records[id].games + 2);
+      // Candidate sensitivity in rank-equivalent units. Coefficients require backtesting.
+      return [id, (apRank.get(id) ?? 26) - 36 * (rate(id) - currentRate)];
+    }));
+    return [...template].sort((a, b) => (selection === "record-response"
+      ? projectedScore.get(a.id) - projectedScore.get(b.id)
+      : (apRank.get(a.id) ?? 26) - (apRank.get(b.id) ?? 26)) ||
       rate(b.id) - rate(a.id) || Number(a.id) - Number(b.id));
   });
+  const selected = new Set(trial.status === "simulated" ? trial.field.map(team => team.id) : []);
+  for (const [team, remaining] of remainingByTeam) {
+    if (!apRank.has(team) && !colley.has(team)) continue;
+    const categories = ["all", winners.get(nextGameByTeam.get(team)) === team ? "nextWin" : "nextLoss"];
+    if (remaining.every(id => winners.get(id) === team)) categories.push("winsOut");
+    for (const category of categories) {
+      const key = team + ":" + category;
+      const counts = cohortCounts.get(key) ?? { total: 0, withheld: 0, selected: 0 };
+      counts.total++;
+      if (trial.status === "withheld") counts.withheld++;
+      if (selected.has(team)) counts.selected++;
+      cohortCounts.set(key, counts);
+    }
+  }
   if (trial.status === "simulated") {
     if (!example.field) Object.assign(example, { index, field: trial.field, firstTwoOut: trial.firstTwoOut });
     for (const [conference, winner] of Object.entries(trial.champions)) {
@@ -116,14 +152,21 @@ const result = runPlayoffBatch(fixtures, { trials: 50_000, seed }, (winners, ind
   return trial;
 });
 console.log(JSON.stringify({
-  asOf: input.observedAt, seed, apDate: ap.date, pairing, transition, flex,
+  asOf: input.observedAt, seed, apDate: ap.date, selection, bigTen, pairing, transition, flex,
   assumptions: [
     "Ordinary FBS membership presumed eligible absent a documented restriction. Two transitional teams are varied as an explicit sensitivity.",
     "Flex opponents are assumptions; these four games do not enter conference standings.",
     "Power Four titles use neutral sites and the fitted pregame model. Other conference title results are not modeled.",
-    "AP ordering is held fixed for ranked teams. Remaining records break unranked ties.",
+    selection === "fixed-ap" ? "AP ordering is held fixed for ranked teams. Remaining records break unranked ties."
+      : "Unvalidated sensitivity: AP prior adjusted by simulated change in smoothed win rate, including title games.",
+    bigTen === "strict" ? "Unknown Big Ten qualification ties withhold a trial."
+      : "Big Ten boundary ties use a uniform hypothetical draw among tied teams, without asserting official tiebreakers.",
     "Counts are scenario diagnostics, not calibrated playoff odds. Missing decisive rules withhold the trial.",
   ],
   fixtures: fixtures.length, durationMs: performance.now() - started,
+  cohortBounds: Object.fromEntries([...cohortCounts].map(([key, counts]) => [key, {
+    ...counts, lower: counts.selected / counts.total,
+    upper: (counts.selected + counts.withheld) / counts.total,
+  }])),
   result, example, titleWinnerCounts: Object.fromEntries(titleFirst),
 }, null, 2));

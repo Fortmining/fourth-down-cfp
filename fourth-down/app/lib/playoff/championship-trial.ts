@@ -17,6 +17,7 @@ export function simulateConferenceTitle(
     homeCoefficient: number;
     verifiedVenue: TitleVenue | null;
     draw: number;
+    bigTenBoundaryDraw?: number;
   },
 ) {
   const withheld = (issues: string[]) => ({
@@ -33,6 +34,7 @@ export function simulateConferenceTitle(
   const qualification = resolveConference(input, slot.conference, options.policy, {
     regularSeasonComplete: options.conferenceScheduleComplete,
     simulatedWinners: options.simulatedWinners,
+    bigTenBoundaryDraw: options.bigTenBoundaryDraw,
   });
   if (qualification.participants.length !== 2) return withheld(qualification.issues);
   const [first, second] = qualification.participants;

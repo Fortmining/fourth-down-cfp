@@ -101,6 +101,15 @@ test("verified 2026 Big Ten top records resolve clear participants without claim
   const tied = resolveConference(i, "5", "bigten-2026-top-records", {
     regularSeasonComplete: true,
   });
+  const assumed = resolveConference(i, "5", "bigten-2026-top-records", {
+    regularSeasonComplete: true,
+    simulatedWinners: new Map(),
+    bigTenBoundaryDraw: 0,
+  });
+  assert.deepEqual(assumed.participants, ["1", "2"]);
+  assert.equal(assumed.hypothetical, true);
+  assert.equal(assumed.definitive, false);
+  assert.equal(assumed.trace.at(-1)?.step, "Hypothetical Big Ten boundary draw");
   assert.equal(tied.participants.length, 0);
   assert.match(tied.issues.join(), /full-policy confirmation/);
   assert.deepEqual(

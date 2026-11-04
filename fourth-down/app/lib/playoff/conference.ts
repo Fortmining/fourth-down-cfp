@@ -29,6 +29,7 @@ type Options = {
   external?: ExternalEvidence;
   eligibleWins?: Record<string, number>;
   simulatedWinners?: ReadonlyMap<string, string>;
+  bigTenBoundaryDraw?: number;
 };
 
 /** Terminal qualification only. Midseason standing is not a championship berth. */
@@ -200,10 +201,24 @@ export function resolveConference(
   function tie(ids: string[], slots: number, depth = 0): string[] {
     if (depth > members.length * 5) return fail("Tiebreaker restart guard");
     if (ids.length <= slots) return ids;
-    if (policy === "bigten-2026-top-records")
-      return fail(
-        "2026 Big Ten tied qualification requires current full-policy confirmation",
-      );
+    if (policy === "bigten-2026-top-records") {
+      const draw = options.bigTenBoundaryDraw;
+      if (options.simulatedWinners && draw !== undefined && draw >= 0 && draw < 1) {
+        const pool = [...ids].sort();
+        const selected: string[] = [];
+        let fraction = draw;
+        // Map one uniform draw to an ordered sample without replacement.
+        while (selected.length < slots) {
+          const scaled = fraction * pool.length;
+          const index = Math.floor(scaled);
+          selected.push(pool.splice(index, 1)[0]);
+          fraction = scaled - index;
+        }
+        trace.push({ step: "Hypothetical Big Ten boundary draw", ids: selected });
+        return selected;
+      }
+      return fail("2026 Big Ten tied qualification requires current full-policy confirmation");
+    }
     const set = new Set(ids),
       mini = finals.filter((g) => g.teams.every((id) => set.has(id)));
     const complete = ids.every((id) =>
