@@ -1,0 +1,3 @@
+import {hash} from './engine.ts';import {packSnapshotPair} from './storage-plan.ts';import type {Snapshot} from './types';
+/** Stable state identity, not request timestamp: unchanged polls must not create history. */
+export function retentionEnvelope(confirmed:Snapshot,provisional:Snapshot){const packed=packSnapshotPair(confirmed,provisional);return {semanticId:hash({season:confirmed.inputs.season,rulesVersion:confirmed.rulesVersion,confirmed:confirmed.id,provisional:provisional.id,modelVersion:confirmed.modelVersion}),receiptId:packed.id,encoded:packed.encoded,bytes:packed.redisValueBytes,productionTransportInstalled:false};}

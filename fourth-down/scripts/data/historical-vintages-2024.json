@@ -1,0 +1,56 @@
+[
+  {
+    "season": 2024,
+    "sha": "904147032f399311f0710de09f96c0d6e83c098f",
+    "date": "2024-10-06T10:52:31Z",
+    "blob": "567789ea51c0ec19b815e97f0a2d79cd0e9edfe4",
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/904147032f399311f0710de09f96c0d6e83c098f/schedules/csv/cfb_schedules_2024.csv",
+    "path": "schedules/csv/cfb_schedules_2024.csv",
+    "week": 6
+  },
+  {
+    "season": 2024,
+    "sha": "2e7c531bbc195fb6e6750ba5a1e172d6b7bdc00f",
+    "date": "2024-10-20T10:58:53Z",
+    "blob": "9561776f84997670b086c978f7832d0f54f2450e",
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/2e7c531bbc195fb6e6750ba5a1e172d6b7bdc00f/schedules/csv/cfb_schedules_2024.csv",
+    "path": "schedules/csv/cfb_schedules_2024.csv",
+    "week": 8
+  },
+  {
+    "season": 2024,
+    "sha": "7bdb1531ed3ae416ea0e6e80a38a3eec08e5bbb2",
+    "date": "2024-11-03T00:52:23Z",
+    "blob": "1bfe197e1c322954d5cc8b04753aaa292a99e588",
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/7bdb1531ed3ae416ea0e6e80a38a3eec08e5bbb2/schedules/csv/cfb_schedules_2024.csv",
+    "path": "schedules/csv/cfb_schedules_2024.csv",
+    "week": 10
+  },
+  {
+    "season": 2024,
+    "sha": "e9b7a7f964d70cabcb4ca5444f595ec487cb9268",
+    "date": "2024-11-17T02:01:47Z",
+    "blob": "518d3613930e71908df229adb4e4019481415e2f",
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/e9b7a7f964d70cabcb4ca5444f595ec487cb9268/schedules/csv/cfb_schedules_2024.csv",
+    "path": "schedules/csv/cfb_schedules_2024.csv",
+    "week": 12
+  },
+  {
+    "season": 2024,
+    "sha": "eef1bce3b0deb601c2f0624712901bf5694dc203",
+    "date": "2024-12-01T09:57:10Z",
+    "blob": "de9e3f7a8cf09a770b40b48df50539219137cfbc",
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/eef1bce3b0deb601c2f0624712901bf5694dc203/schedules/csv/cfb_schedules_2024.csv",
+    "path": "schedules/csv/cfb_schedules_2024.csv",
+    "week": 14
+  },
+  {
+    "season": 2024,
+    "sha": "918f53243e516ce0be5b1d5d9d6002fe1e82db99",
+    "date": "2024-12-07T09:59:51Z",
+    "blob": "b5dd5b9c641e7b74bee4a0b71b84affa6b0ccd76",
+    "download": "https://raw.githubusercontent.com/sportsdataverse/cfbfastR-data/918f53243e516ce0be5b1d5d9d6002fe1e82db99/schedules/csv/cfb_schedules_2024.csv",
+    "path": "schedules/csv/cfb_schedules_2024.csv",
+    "week": 15
+  }
+]

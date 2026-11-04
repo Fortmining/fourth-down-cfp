@@ -1,0 +1,25 @@
+# Focused hosted checkpoint retest — PASS
+
+The additional user-approved run tested the `d0f9108` decoding correction on hosted Upstash. Exact four-key ACL isolation passed, including valid in-scope access and direct/scripted denial outside the namespace. One credentialed controller used a durable reservation journal; no deployment or production data access was added.
+
+## Evidence
+
+- 34 checkpoint versions; 32 retained. Genuine archived before/after inputs reproduced explained movement. Later invented score corrections exercised retention only, not forecast accuracy.
+- Controlled lost commit acknowledgement recovered without duplicate history. 24 unchanged freshness checks renewed checkpoints; 16 separate-worker cached display reads succeeded. Evicted history was unavailable, retained comparison was available, and stale/delayed source observations were withheld.
+- Successful instrumented Lua replies: **1,595 executed commands, 824 reads, 771 conservative write charges**, including EVAL as a write charge. No Lua failures, timeouts or automatic transport retries. The one lost acknowledgement was deliberately introduced after the controller received and counted the successful reply.
+- Whole-run reservations, including isolation, cleanup and revoked-access verification: **1,847 commands / 811 write charges / 909 reads / 280 attempts / 127,559,350 reserved body bytes / one recovery**. Caps were 2,400 / 900 / 1,200 / 320 / 160 MiB / three recoveries. These upper bounds must not be called exact provider billing.
+- Actual application HTTP body traffic: approximately 39.8MB sent and 36.2MB received. Per-request median 174ms, p95 724ms. Workload elapsed 152s; local CPU 33.8s. These are not Vercel CPU or consumer page latency.
+- Four keys were verified absent, temporary ACL disabled, credential explicitly rejected, three local credential/endpoint files removed and browser secret buffers cleared. Disabled ACL metadata remains as audit evidence. Existing users/settings were not changed.
+- Final rounded account dashboard: ~62K/500K monthly commands, 32MB/250MB storage, 967MB/10GB bandwidth, $0. Dashboard values lag and include production traffic; they cannot isolate this run's billing. Physical Redis memory was not measured. No further test is authorized.
+
+## Release preparation
+
+The same `ResumeCenterService` now connects the current-season producer and current/saved display for either an injected Redis store or the private file store. The private API and capture-ingestion runner reuse this service. A prepared Next shared data-cache adapter holds signed display packets for 60 seconds, invalidates them after successful writes/freshness renewal, caches negative receipts to avoid per-visitor retry storms and applies source-age checks after each cache read. It is not connected to production and its cross-instance behavior/cost is not hosted-verified. Display-only instances cannot ingest sources; no source fetching, credentials or schedules are embedded in the service. The live-feed loader now has an optional in-process capture sink for the already-fetched verified ESPN scoreboard/rankings. No caller enables it; it introduces no new requests, callback, asynchronous work or public-response fields. It remains disconnected from production.
+
+The smallest proposed public scope is the existing 2026 Team Resume cards, explained Movers & Losers, saved confirmed updates, remaining tests and separate official poll context. Keep experimental labeling, six-minute source checks, missing-data disclosures and existing follow controls. Exclude brackets, qualification guarantees and probabilities.
+
+**GO:** hosted protocol persistence and continued release integration. **Not yet public GO:** the existing verified feed must be connected once under approved release configuration, and the public shared-cache path must prevent per-visitor Redis reads. The current Redis display path reserves seven commands per miss and has a 300/day guard; it must not be presented as unlimited visitor capacity. Vercel CPU, region/cold-start amplification and shared HTTP caching remain unmeasured. Hosted stale-CAS interleavings remain offline-tested; this run verified delayed-source withholding, not a new distributed writer-race experiment.
+
+Shortest next step: enable the prepared existing-feed capture/service connection only in a protected canary and test the shared cache in one protected integration/canary, requiring approval before any deployment or persistent production access. No broad model expansion or repeated Redis benchmark is needed. Notifications, four-minute polling, fresh-fetch behavior, credentials, subscriptions, preferences, official polls and AP issue #21 remain separate and unchanged.
+
+Focused validation covers service/cache/production gates and notification fresh-fetch/no-extra-source-request regressions, with type checking and lint, and Chromium/Firefox/iPhone-sized WebKit private-preview regressions passed. The prior complete 390-test suite remains the baseline; it was not repeated for this adapter-only change.
