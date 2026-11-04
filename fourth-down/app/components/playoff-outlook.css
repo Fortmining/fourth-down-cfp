@@ -17,3 +17,17 @@
 @media (max-width: 650px) {
   .outlookBracket { grid-template-columns: 1fr; }
 }
+
+.outlookActions{display:flex;flex-wrap:wrap;gap:.5rem;margin-block:.75rem}
+.outlookRounds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
+.outlookMatch{border:1px solid currentColor;border-radius:.5rem;padding:.4rem;margin-bottom:.6rem}
+.outlookMatch button{display:flex;align-items:center;justify-content:space-between;gap:.4rem;width:100%;min-height:44px;text-align:left}
+.outlookMatch button[aria-pressed=true]{outline:2px solid #e5a550;outline-offset:-2px}
+.outlookOdds{width:100%;border-collapse:collapse;font-size:.9rem}
+.outlookOdds th,.outlookOdds td{padding:.4rem .25rem;text-align:left;border-bottom:1px solid currentColor}
+.outlookRankControls{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin-block:.5rem}
+.outlookRankControls button{min-height:44px}
+@media(max-width:900px){.outlookRounds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.outlookRounds{grid-template-columns:1fr}.outlookOdds{font-size:.78rem}}
+.outlookSeedGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem}
+@media(max-width:650px){.outlookSeedGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
