@@ -1,4 +1,4 @@
-import {recoverRankings} from '../../../lib/ranking-recovery';
+import {recoverRankings,personalizeCfpEdition} from '../../../lib/ranking-recovery';
 import {derivePulse,pulseBudgetAllows,nationalSelected,type PulseBudget} from '../../../lib/pulse';
 import {recordNotification} from '../../../lib/notification-history';
 import {outlookSnapshot,compareOutlooks} from '../../../lib/outlook-snapshots';
@@ -65,7 +65,7 @@ export async function GET(request:Request) {
    }
   }catch{auditHealthy=false;await schedulerAudit({kind:'outlook-snapshot-unavailable'});}
   let rankingEvents:import('../../../lib/alerts').AlertEvent[]=[];
-  try{const raw=await redis('GET','fd:v08:ranking-state');const ranked=recoverRankings(prior,feed,raw?JSON.parse(raw):null,observedAt);await redis('SET','fd:v08:ranking-state',JSON.stringify(ranked.state),'EX',14*86400);rankingEvents=ranked.events;}catch{auditHealthy=false;await schedulerAudit({kind:'ranking-recovery-unavailable'});rankingEvents=deriveAlertEvents(prior,feed,[],observedAt).filter(e=>e.types.some(t=>['ap','coaches','cfp'].includes(t))&&prior?.polls.some(p=>p.id===e.types[0]&&p.status==='available'));}
+  try{const raw=await redis('GET','fd:v08:ranking-state');const ranked=recoverRankings(prior,feed,raw?JSON.parse(raw):null,observedAt);await redis('SET','fd:v08:ranking-state',JSON.stringify(ranked.state),'EX',14*86400);rankingEvents=ranked.events;}catch{auditHealthy=false;await schedulerAudit({kind:'ranking-recovery-unavailable'});rankingEvents=deriveAlertEvents(prior,feed,[],observedAt).filter(e=>e.types.some(t=>['ap','coaches'].includes(t))&&prior?.polls.some(p=>p.id===e.types[0]&&p.status==='available'));}
   let pulseEvents:import('../../../lib/alerts').AlertEvent[]=[];
   try{pulseEvents=derivePulse(feed,gameAlerts?.state??null,gameAlerts?.events||[],observedAt);}catch{auditHealthy=false;await schedulerAudit({kind:'pulse-detection-unavailable'});}
   const merged=new Map<string,import('../../../lib/alerts').AlertEvent>();
@@ -121,7 +121,8 @@ export async function GET(request:Request) {
       if(national&&!legacy)await redis('SET',pulseBudgetKey,JSON.stringify([...pulseBudget.filter(b=>b.at>Date.now()-86400000),{at:Date.now(),types,gameId:gameKey}].slice(-100)),'EX',2*86400);
       deliveryStage='provider-send';
       const title=types.includes('pulseFinal')?'Confirmed Major Upset':types.includes('pulseUpset')?'Upset Watch':types.includes('pulseClose')?'Close Game Discovery':types.includes('pulseInteresting')?'Interesting Live Game':types.includes('confirmedUpset')?'Confirmed Upset · Final':types.includes('upsetWatch')?'Upset Watch':types.includes('close')?'Close game':types.includes('halftime')?'Halftime score':types.includes('scoring')?'Scoring update':types.includes('final')&&!types.includes('upset')?'Final score':event.title;
-      const payload={...effective,title,types,receipt};
+      const {cfpRanks: _,...personalized}=personalizeCfpEdition(effective,current.preferences);
+      const payload={...personalized,title,types,receipt};
       try{await recordNotification(current.id,payload);}catch{auditHealthy=false;await deliveryAudit(current.id,{kind:'history-unavailable',eventId:event.id,runId});}
       await deliveryAudit(current.id,{kind:'provider-send-attempt',scoreboardSource:feed.sourceFetch?.scoreboard??null,eventId:event.id,runId,types,ttl,urgency,expiresAt:effective.expiresAt??null,favoriteTeamIds:current.preferences.favorites.filter(t=>event.teamIds.includes(t.id)).map(t=>t.id),myTeams:current.preferences.myTeams,favoriteChoices:current.preferences.gameAlerts?.favorites});
       const providerResponse=await webpush.sendNotification(current.subscription,JSON.stringify(payload),{TTL:ttl,urgency,timeout:5000});sent++;if(gameKey)deliveredGames.add(gameKey);deliveryStage='acceptance-storage';

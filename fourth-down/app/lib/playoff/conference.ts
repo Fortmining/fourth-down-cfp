@@ -453,7 +453,7 @@ export function resolveConference(
         group = [...new Set([...group, ...expanded])];
         if (
           new Set(group.map((id) => record(id).played)).size > 1 &&
-          group.length > 2
+          group.length > 2 && !options.scenarioFallback
         ) {
           fail(
             "ACC alternate-schedule multi-team branch requires additional reference cases",
@@ -479,7 +479,7 @@ export function resolveConference(
               );
               if (!challengers.length) break;
               const nextGroup = [contender, ...challengers];
-              if (nextGroup.length > 2) {
+              if (nextGroup.length > 2 && !options.scenarioFallback) {
                 fail(
                   "ACC alternate-schedule multi-team continuation unresolved",
                 );

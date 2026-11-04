@@ -1,0 +1,428 @@
+{
+  "generatedAt": "2026-11-03T14:46:55.877916+00:00",
+  "method": "Fixed1\u20138/9\u201316/17\u201325 published-poll bands; no result-driven rank adjustment",
+  "requests": 10,
+  "windows": [
+    {
+      "season": 2024,
+      "asOf": "2024-10-06T10:52:31Z",
+      "poll": "usa",
+      "pollDate": "2024-09-29T07:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2024&weeks=6&seasontypes=2",
+      "sha256": "8a6e967db58a5b84a33cdd51045f2018866ad0e5540484f071797e182567608a",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 6
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 2
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 1
+        }
+      },
+      "plainTop12Correct": 6,
+      "falseInclusions": [
+        "333",
+        "2390",
+        "142",
+        "130",
+        "145",
+        "99"
+      ],
+      "missed": [
+        "2567",
+        "68",
+        "228",
+        "9",
+        "87",
+        "84"
+      ]
+    },
+    {
+      "season": 2024,
+      "asOf": "2024-10-20T10:58:53Z",
+      "poll": "ap",
+      "pollDate": "2024-10-13T07:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2024&weeks=8&seasontypes=2",
+      "sha256": "ec15564a2258135fda0c1a129b7c4bed57cf3eca356f7bce675d5e52e757ce31",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 5
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 5
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 1
+        }
+      },
+      "plainTop12Correct": 8,
+      "falseInclusions": [
+        "2390",
+        "333",
+        "99",
+        "66"
+      ],
+      "missed": [
+        "2567",
+        "68",
+        "9",
+        "84"
+      ]
+    },
+    {
+      "season": 2024,
+      "asOf": "2024-11-17T02:01:47Z",
+      "poll": "cfp",
+      "pollDate": "2024-11-12T08:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2024&weeks=12&seasontypes=2",
+      "sha256": "7becf9dcabfd52aa660ce4e987cce4dc1198f90fe6bf963ccc97db01412a162e",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 7
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 3
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 1
+        }
+      },
+      "plainTop12Correct": 8,
+      "falseInclusions": [
+        "252",
+        "2390",
+        "333",
+        "145"
+      ],
+      "missed": [
+        "2567",
+        "68",
+        "228",
+        "9"
+      ]
+    },
+    {
+      "season": 2024,
+      "asOf": "2024-12-01T09:57:10Z",
+      "poll": "cfp",
+      "pollDate": "2024-11-26T08:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2024&weeks=14&seasontypes=2",
+      "sha256": "d1e308f9e72a1f7dff9bddaef5bd5c2f710ec902acafbbe09c89db92f27905ac",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 7
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 5
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 0
+        }
+      },
+      "plainTop12Correct": 11,
+      "falseInclusions": [
+        "2390"
+      ],
+      "missed": [
+        "9"
+      ]
+    },
+    {
+      "season": 2024,
+      "asOf": "2024-12-07T09:59:51Z",
+      "poll": "cfp",
+      "pollDate": "2024-12-03T08:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2024&weeks=15&seasontypes=2",
+      "sha256": "d46a359979d4a388bcb4d4f380864e04398415d99a2d30014439833fc446cd99",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 8
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 3
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 1
+        }
+      },
+      "plainTop12Correct": 10,
+      "falseInclusions": [
+        "333",
+        "2390"
+      ],
+      "missed": [
+        "228",
+        "9"
+      ]
+    },
+    {
+      "season": 2025,
+      "asOf": "2025-10-05T10:42:30Z",
+      "poll": "ap",
+      "pollDate": "2025-09-28T07:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2025&weeks=6&seasontypes=2",
+      "sha256": "12962a7de7d54d3106419fb7999aadee3adb3c3aa17be5646da034b9d8c28116",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 7
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 3
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 0
+        }
+      },
+      "plainTop12Correct": 10,
+      "falseInclusions": [
+        "213",
+        "251"
+      ],
+      "missed": [
+        "2655",
+        "256"
+      ]
+    },
+    {
+      "season": 2025,
+      "asOf": "2025-10-19T07:18:16Z",
+      "poll": "ap",
+      "pollDate": "2025-10-12T07:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2025&weeks=8&seasontypes=2",
+      "sha256": "3dd73609fe91419f151b013010a085534d2979665b1fac897d89c732580ec16b",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 8
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 2
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 0
+        }
+      },
+      "plainTop12Correct": 9,
+      "falseInclusions": [
+        "99",
+        "2633",
+        "59"
+      ],
+      "missed": [
+        "2655",
+        "201",
+        "256"
+      ]
+    },
+    {
+      "season": 2025,
+      "asOf": "2025-11-02T07:25:07Z",
+      "poll": "usa",
+      "pollDate": "2025-10-26T07:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2025&weeks=10&seasontypes=2",
+      "sha256": "4df6cfb373cfc861f4a7badbfa9a0032e59b563243ede68a57fde23be86e27cf",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 7
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 2
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 1
+        }
+      },
+      "plainTop12Correct": 8,
+      "falseInclusions": [
+        "59",
+        "252",
+        "238",
+        "87"
+      ],
+      "missed": [
+        "2655",
+        "2641",
+        "201",
+        "256"
+      ]
+    },
+    {
+      "season": 2025,
+      "asOf": "2025-11-16T07:29:18Z",
+      "poll": "cfp",
+      "pollDate": "2025-11-11T08:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2025&weeks=12&seasontypes=2",
+      "sha256": "ed2f5f655d70c4941939f3da99e9a7322d7d4ea7e79a43ec67eb8c29361bb3db",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 8
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 2
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 0
+        }
+      },
+      "plainTop12Correct": 9,
+      "falseInclusions": [
+        "87",
+        "251",
+        "252"
+      ],
+      "missed": [
+        "2655",
+        "256",
+        "2390"
+      ]
+    },
+    {
+      "season": 2025,
+      "asOf": "2025-11-23T07:34:52Z",
+      "poll": "cfp",
+      "pollDate": "2025-11-18T08:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2025&weeks=13&seasontypes=2",
+      "sha256": "c1a09c93ae5b8c4945c7ab0a6665337e3f0cf5608eae58ac700583e2bc2e4300",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 8
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 2
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 1
+        }
+      },
+      "plainTop12Correct": 9,
+      "falseInclusions": [
+        "87",
+        "252",
+        "254"
+      ],
+      "missed": [
+        "2655",
+        "256",
+        "2390"
+      ]
+    },
+    {
+      "season": 2025,
+      "asOf": "2025-11-30T07:37:29Z",
+      "poll": "cfp",
+      "pollDate": "2025-11-25T08:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2025&weeks=14&seasontypes=2",
+      "sha256": "1355f7198c56dc51b22a7eff0132444c25a43a7527a095e3dd3e1dd67097cf2d",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 8
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 2
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 1
+        }
+      },
+      "plainTop12Correct": 10,
+      "falseInclusions": [
+        "87",
+        "252"
+      ],
+      "missed": [
+        "2655",
+        "256"
+      ]
+    },
+    {
+      "season": 2025,
+      "asOf": "2025-12-06T17:16:34Z",
+      "poll": "cfp",
+      "pollDate": "2025-12-02T08:00Z",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings?seasons=2025&weeks=15&seasontypes=2",
+      "sha256": "bbdf32262d7c4f875b9f163769d8c289f6b6fe1289a477bb6b35a1da46907eb6",
+      "bands": {
+        "Likely In": {
+          "teams": 8,
+          "ultimatelySelected": 8
+        },
+        "On the Bubble": {
+          "teams": 8,
+          "ultimatelySelected": 2
+        },
+        "Outside Looking In": {
+          "teams": 9,
+          "ultimatelySelected": 2
+        }
+      },
+      "plainTop12Correct": 10,
+      "falseInclusions": [
+        "87",
+        "252"
+      ],
+      "missed": [
+        "2655",
+        "256"
+      ]
+    }
+  ],
+  "aggregate": {
+    "Likely In": {
+      "teams": 96,
+      "ultimatelySelected": 87
+    },
+    "On the Bubble": {
+      "teams": 96,
+      "ultimatelySelected": 33
+    },
+    "Outside Looking In": {
+      "teams": 108,
+      "ultimatelySelected": 9
+    }
+  },
+  "plainTop12MeanCorrect": 9.0,
+  "limitations": [
+    "Previously inspected2024/2025 seasons, not unseen validation.",
+    "Repeated weekly team observations are correlated.",
+    "Plain Top12 ignores season-specific automatic bids and is a control, not a field allocator.",
+    "Unranked teams are outside this band audit; Outside is not mathematical elimination.",
+    "No calibrated probabilities and no validation of how hypothetical future results change rankings.",
+    "2026 qualification differs from2024/2025; do not apply2026 allocation retrospectively."
+  ],
+  "publicForecastRecommendation": "NO-GO; private descriptive poll-anchored prototype only",
+  "uniqueSourceCaptures": 12
+}

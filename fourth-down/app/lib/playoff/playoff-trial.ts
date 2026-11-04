@@ -51,6 +51,7 @@ export function runPlayoffBatch(
 ) {
   const appearances: Record<string, number[]> = Object.create(null);
   const withheldReasons: Record<string, number> = Object.create(null);
+  const firstTwoOutCounts: Record<string, number> = Object.create(null);
   let total = 0;
   let resolved = 0;
 
@@ -65,6 +66,7 @@ export function runPlayoffBatch(
       return;
     }
     resolved++;
+    for (const team of trial.firstTwoOut) firstTwoOutCounts[team.id] = (firstTwoOutCounts[team.id] ?? 0) + 1;
     for (const team of trial.field) {
       const seeds = appearances[team.id] ??= Array<number>(12).fill(0);
       seeds[team.seed - 1]++;
@@ -77,6 +79,7 @@ export function runPlayoffBatch(
     withheld: total - resolved,
     withheldReasons,
     seedCounts: appearances,
+    firstTwoOutCounts,
     // Even a complete batch needs independent model validation before display.
     complete: total > 0 && total === resolved,
   };

@@ -11,8 +11,17 @@
       "feature/gamecast-possession-and-drive": false,
       "feature/conditional-game-scenarios": false,
       "fix/gamecast-horizontal-camera": false,
-      "dev/v0.8.6-live-outlook": false,
-      "codex/cfp-predictive-model": false
+      "feature/multi-game-sandbox": false,
+      "feature/ranked-scenario-discovery": false,
+      "feature/team-first-scenarios": false,
+      "feature/wins-out-discovery": false,
+      "codex/cfp-context-journey": false,
+      "codex/pulse-useful-discovery": false,
+      "codex/scenario-outcome-explanations": false,
+      "codex/pulse-rss-activation": false,
+      "codex/pulse-archive-recovery": false,
+      "codex/cfp-edition-alerts": false,
+      "codex/cfp-show-watch": false
     }
   }
 }
