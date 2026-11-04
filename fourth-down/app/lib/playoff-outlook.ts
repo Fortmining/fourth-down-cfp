@@ -20,6 +20,23 @@ export function referenceField(poll:Poll|undefined,conferences:Record<string,str
  const teams=order.filter(t=>selected.has(t.teamId)).map((t,i)=>({id:t.teamId,name:t.name,rank:t.rank,seed:i+1,reason:qualifiers.includes(t.teamId)?'Conditional automatic bid':t.teamId==='87'&&t.rank<=12?'Notre Dame top-12 rule':'Ranking-anchor at-large'}));
  return {status:'conditional' as const,reason:'2026 allocation under your champion/eligibility assumptions. Ranking order is held unchanged; this is not a forecast of future committee votes.',teams};
 }
+export function scenarioOrder(poll: Poll | undefined, catalog: SandboxCatalog,
+ choices: {gameId: string; winnerId: string}[], excluded: string[]): Poll | undefined {
+ if (!poll || !choices.length) return poll;
+ const changes = new Map(evaluateSandbox(catalog, choices, excluded).map(row => [row.id, row]));
+ const rate = (record: string | null) => {
+  const parts = /^(\d+)-(\d+)$/.exec(record ?? "");
+  return parts ? (Number(parts[1]) + 1) / (Number(parts[1]) + Number(parts[2]) + 2) : null;
+ };
+ const score = (team: Poll["teams"][number]) => {
+  const row = changes.get(team.teamId);
+  const before = row ? rate(row.before) : null;
+  const after = row ? rate(row.after) : null;
+  return before === null || after === null ? team.rank : team.rank - 36 * (after - before);
+ };
+ return {...poll, teams: [...poll.teams].sort((a,b) => score(a)-score(b) || a.rank-b.rank)
+  .map((team,index) => ({...team, rank:index+1}))};
+}
 export function teamOutlook(c:SandboxCatalog,choices:{gameId:string;winnerId:string}[],teamId:string,poll:Poll|undefined,excluded:string[]=[],now=Date.now()){
  const team=c.teams.find(t=>t.id===teamId);if(!usablePoll(poll,now))return null;if(!team||!team.overall||!Number.isFinite(Date.parse(c.at))||Date.parse(c.at)>now||now-Date.parse(c.at)>7*86400000)return null;
  if(choices.some(p=>{const g=c.games.find(g=>g.id===p.gameId);return !g||Date.parse(g.date)<=now;}))return null;
