@@ -28,6 +28,7 @@ type Options = {
   regularSeasonComplete: boolean;
   external?: ExternalEvidence;
   eligibleWins?: Record<string, number>;
+  simulatedWinners?: ReadonlyMap<string, string>;
 };
 
 /** Terminal qualification only. Midseason standing is not a championship berth. */
@@ -55,14 +56,31 @@ export function resolveConference(
   const members = input.teams.filter((t) => t.conference === conference);
   if (members.some((t) => t.eligible === null))
     issues.push("Postseason eligibility unresolved");
-  const finals = mergeLedger([], input.games).filter(
-    (g) =>
-      g.season === input.season &&
-      g.conferenceGame &&
-      validFinal(g, Date.parse(input.observedAt)) &&
-      !(input.season === 2026 && championshipSlots[g.id]) &&
-      !isPac12FlexGame(g.season, g.date, conference, conference, g.id),
+  const cutoff = Date.parse(input.observedAt);
+  const memberIds = new Set(members.map(team => team.id));
+  const conferenceGames = mergeLedger([], input.games).filter(
+    game =>
+      game.season === input.season &&
+      game.conferenceGame &&
+      game.teams.every(id => memberIds.has(id)) &&
+      !(input.season === 2026 && championshipSlots[game.id]) &&
+      !isPac12FlexGame(game.season, game.date, conference, conference, game.id),
   );
+  const finals: Pick<Inputs["games"][number], "teams" | "winner">[] =
+    conferenceGames.filter(game => validFinal(game, cutoff));
+  if (options.simulatedWinners) {
+    const pending = conferenceGames.filter(game => !validFinal(game, cutoff));
+    for (const game of pending) {
+      const winner = options.simulatedWinners.get(game.id);
+      if (game.state !== "pre" || game.completed ||
+          !(Date.parse(game.date) > cutoff) || !(Date.parse(game.observedAt) <= cutoff) ||
+          !winner || !game.teams.includes(winner)) {
+        issues.push("A verified remaining conference fixture lacks a supported outcome");
+        continue;
+      }
+      finals.push({ teams: game.teams, winner });
+    }
+  }
   const games = (id: string) => finals.filter((g) => g.teams.includes(id));
   const record = (id: string, opponents?: Set<string>) => {
     const gs = games(id).filter(
@@ -438,6 +456,7 @@ export function resolveConference(
     issues: [...new Set(issues)],
     participants: issues.length ? [] : selected,
     definitive: false,
+    hypothetical: options.simulatedWinners !== undefined,
     shadow: true,
   };
 }

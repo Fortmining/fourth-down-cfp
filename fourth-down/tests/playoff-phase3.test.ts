@@ -187,3 +187,23 @@ test("dry-run storage budget reserves notification allowance, counts reads, and 
   assert.equal(storageWriteBudget([], 500000, 0, 0).commandAllowance, 0);
   assert.throws(() => storageWriteBudget([], NaN, 0, 0));
 });
+
+test("conference scenario uses hypothetical winners without modifying confirmed games", () => {
+  const i = input("5");
+  i.games.push({
+    ...game("future", "2", "3", "3"), date: "2026-12-06T18:00:00Z",
+    state: "pre", completed: false, winner: null, scores: [null, null],
+  });
+  const original = JSON.stringify(i);
+  const options = { regularSeasonComplete: true };
+  const unresolved = resolveConference(i, "5", "bigten-2026-top-records", {
+    ...options, simulatedWinners: new Map(),
+  });
+  assert.deepEqual(unresolved.participants, []);
+  const resolved = resolveConference(i, "5", "bigten-2026-top-records", {
+    ...options, simulatedWinners: new Map([["future", "2"]]),
+  });
+  assert.deepEqual(resolved.participants, ["1", "2"]);
+  assert.equal(resolved.hypothetical, true);
+  assert.equal(JSON.stringify(i), original);
+});
