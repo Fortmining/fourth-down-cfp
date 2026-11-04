@@ -30,6 +30,7 @@ type Options = {
   eligibleWins?: Record<string, number>;
   simulatedWinners?: ReadonlyMap<string, string>;
   bigTenBoundaryDraw?: number;
+  scenarioFallback?: { ratings: ReadonlyMap<string, number>; draw: number };
 };
 
 /** Terminal qualification only. Midseason standing is not a championship berth. */
@@ -201,7 +202,7 @@ export function resolveConference(
   function tie(ids: string[], slots: number, depth = 0): string[] {
     if (depth > members.length * 5) return fail("Tiebreaker restart guard");
     if (ids.length <= slots) return ids;
-    if (policy === "bigten-2026-top-records") {
+    if (policy === "bigten-2026-top-records" && !options.scenarioFallback) {
       const draw = options.bigTenBoundaryDraw;
       if (options.simulatedWinners && draw !== undefined && draw >= 0 && draw < 1) {
         const pool = [...ids].sort();
@@ -370,6 +371,21 @@ export function resolveConference(
         if (answer) return answer;
       }
     }
+    const scenario = options.simulatedWinners ? options.scenarioFallback : undefined;
+    const drawRemaining = () => {
+      if (!scenario || !(scenario.draw >= 0 && scenario.draw < 1)) return null;
+      const pool = [...ids].sort();
+      const chosen: string[] = [];
+      let fraction = scenario.draw;
+      while (chosen.length < slots) {
+        const scaled = fraction * pool.length;
+        const index = Math.floor(scaled);
+        chosen.push(pool.splice(index, 1)[0]);
+        fraction = scaled - index;
+      }
+      trace.push({ step: "Hypothetical terminal draw", ids: chosen });
+      return chosen;
+    };
     const metric =
       policy === "acc-2026"
         ? "team-success"
@@ -384,12 +400,20 @@ export function resolveConference(
       !Number.isFinite(Date.parse(e.asOf)) ||
       Date.parse(e.asOf) > Date.parse(input.observedAt) ||
       ids.some((id) => !Number.isFinite(e.values[id]))
-    )
+    ) {
+      if (scenario && ids.every(id => Number.isFinite(scenario.ratings.get(id)))) {
+        const answer = reduced(
+          top(ids, allValues(ids, id => scenario.ratings.get(id) ?? null), "scenario rating"),
+          "Hypothetical rating proxy",
+        );
+        return answer ?? drawRemaining() ?? fail("Scenario draw unavailable");
+      }
       return fail(
         "Official SportSource " +
           metric +
           " unavailable; do not substitute model ratings",
       );
+    }
     if (!["higher", "lower"].includes(e.direction))
       return fail("External metric direction unspecified");
     const answer = reduced(
@@ -406,7 +430,7 @@ export function resolveConference(
       "SportSource " + metric,
     );
     if (answer) return answer;
-    return fail(
+    return drawRemaining() ?? fail(
       "Conference-administered draw unresolved; never synthesize coin toss",
     );
   }

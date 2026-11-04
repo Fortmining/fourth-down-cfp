@@ -18,6 +18,8 @@ export function simulateConferenceTitle(
     verifiedVenue: TitleVenue | null;
     draw: number;
     bigTenBoundaryDraw?: number;
+    scenarioTiebreakDraw?: number;
+    eligibleWins?: Record<string, number>;
   },
 ) {
   const withheld = (issues: string[]) => ({
@@ -35,6 +37,9 @@ export function simulateConferenceTitle(
     regularSeasonComplete: options.conferenceScheduleComplete,
     simulatedWinners: options.simulatedWinners,
     bigTenBoundaryDraw: options.bigTenBoundaryDraw,
+    eligibleWins: options.eligibleWins,
+    scenarioFallback: options.scenarioTiebreakDraw === undefined ? undefined :
+      { ratings: options.ratings, draw: options.scenarioTiebreakDraw },
   });
   if (qualification.participants.length !== 2) return withheld(qualification.issues);
   const [first, second] = qualification.participants;

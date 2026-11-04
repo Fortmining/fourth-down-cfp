@@ -10,7 +10,7 @@ const [source, modelFile, pairing = "published", transition = "exclude", selecti
 if (!["published", "swap"].includes(pairing) || !["include", "exclude"].includes(transition))
   throw new Error("Unknown sensitivity scenario");
 if (!["fixed-ap", "record-response"].includes(selection)) throw new Error("Unknown selection model");
-if (!["strict", "sample-boundary"].includes(bigTen)) throw new Error("Unknown Big Ten scenario");
+if (!["strict", "sample-boundary", "proxy-sequence"].includes(bigTen)) throw new Error("Unknown Big Ten scenario");
 const capture = JSON.parse(fs.readFileSync(path.join(source, "inputs.json")));
 if (capture.season !== 2026 || !capture.coverage.complete) throw new Error("Reconciled 2026 capture required");
 const models = JSON.parse(fs.readFileSync(modelFile)).models;
@@ -100,12 +100,26 @@ for (const game of input.games.filter(game => !game.completed)
     remainingByTeam.set(team, remaining);
   }
 }
+const big12Teams = new Set(input.teams.filter(team => team.conference === "4").map(team => team.id));
+const big12Games = input.games.filter(game => game.teams.some(team => big12Teams.has(team)));
 const started = performance.now();
 const result = runPlayoffBatch(fixtures, { trials: 50_000, seed }, (winners, index) => {
+  const eligibleWins = Object.fromEntries([...big12Teams].map(id => [id, 0]));
+  const crossSubdivisionWins = new Set();
+  if (bigTen === "proxy-sequence") for (const game of big12Games) {
+    const winner = game.completed ? game.winner : winners.get(game.id);
+    if (!big12Teams.has(winner)) continue;
+    const opponent = game.teams.find(id => id !== winner);
+    if (colley.has(opponent)) eligibleWins[winner]++;
+    else crossSubdivisionWins.add(winner);
+  }
+  for (const id of crossSubdivisionWins) eligibleWins[id]++;
   const titles = titleSlots.map(([fixtureId, policy], slot) => ({
     fixtureId, policy, simulatedWinners: winners, conferenceScheduleComplete: true,
     ratings: colley, strengthCoefficient: model.strength, homeCoefficient: model.home,
     verifiedVenue: { kind: "neutral" }, draw: titleDraw(index, slot),
+    eligibleWins: bigTen === "proxy-sequence" ? eligibleWins : undefined,
+    scenarioTiebreakDraw: bigTen === "proxy-sequence" ? titleDraw(index + 50_000, slot) : undefined,
     bigTenBoundaryDraw: bigTen === "sample-boundary" ? titleDraw(index + 50_000, slot) : undefined,
   }));
   const trial = resolvePlayoffTrial(input, titles, (champions, titleParticipants) => {
@@ -160,7 +174,9 @@ console.log(JSON.stringify({
     selection === "fixed-ap" ? "AP ordering is held fixed for ranked teams. Remaining records break unranked ties."
       : "Unvalidated sensitivity: AP prior adjusted by simulated change in smoothed win rate, including title games.",
     bigTen === "strict" ? "Unknown Big Ten qualification ties withhold a trial."
-      : "Big Ten boundary ties use a uniform hypothetical draw among tied teams, without asserting official tiebreakers.",
+      : bigTen === "sample-boundary"
+        ? "Big Ten boundary ties use a uniform hypothetical draw among tied teams, without asserting official tiebreakers."
+        : "Scenario applies schedule tiebreakers before Colley substitutes for unavailable proprietary metrics. Big 12 counts at most one non-FBS win. Residual ties use seeded draws.",
     "Counts are scenario diagnostics, not calibrated playoff odds. Missing decisive rules withhold the trial.",
   ],
   fixtures: fixtures.length, durationMs: performance.now() - started,
