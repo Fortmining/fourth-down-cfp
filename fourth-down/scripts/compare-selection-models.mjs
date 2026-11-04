@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { colleyReference } from "../app/lib/playoff/colley-reference.ts";
 import { gameStrengths } from "../app/lib/playoff/game-prediction.ts";
+import { currentRecords } from "../app/lib/playoff/ledger.ts";
 import { historicalFieldProxy, selectionMetrics } from "../app/lib/playoff/selection-benchmark.ts";
 
 const targets = JSON.parse(fs.readFileSync(new URL("./data/selection-targets.json", import.meta.url)));
@@ -26,7 +27,16 @@ for (const directory of process.argv.slice(2)) {
     const compareAp = (a, b) => (ap.get(a) ?? 26) - (ap.get(b) ?? 26);
     const compareRecord = (a, b) => winRate.get(b) - winRate.get(a);
     const blend = id => (ap.get(id) ?? 26) + Math.min(26, colleyRank.get(id));
+    // Apply the same record-response coefficient using only finals known after the AP anchor.
+    const anchorAt = Date.parse(edition.date);
+    const anchor = currentRecords({ ...input, games: input.games.filter(game =>
+      game.completed && Date.parse(game.date) < anchorAt) });
+    const current = currentRecords(input);
+    const smoothed = record => (record.wins + 1) / (record.games + 2);
+    const response = id => (ap.get(id) ?? 26) - 36 * (smoothed(current[id]) - smoothed(anchor[id]));
     const orders = {
+      recordResponse: [...colley.keys()].sort((a, b) => response(a) - response(b) ||
+        compareRecord(a, b) || Number(a) - Number(b)),
       colley: colleyOrder,
       ap: [...colley.keys()].sort((a, b) => compareAp(a, b) || compareRecord(a, b) || Number(a) - Number(b)),
       hybrid: [...colley.keys()].sort((a, b) => blend(a) - blend(b) || compareAp(a, b) ||
@@ -51,7 +61,7 @@ const summary = [2024, 2025].map(season => {
   };
 });
 console.log(JSON.stringify({
-  method: "AP ranks with record fallback, Colley only, and fixed equal-weight capped-rank hybrid",
+  method: "AP ranks with record fallback, Colley only, fixed equal-weight capped-rank hybrid, and record response since the AP anchor",
   allocation: "Shared historical champion proxy. Replays overlap and do not validate championship forecasts or probabilities.",
   summary, rows,
 }, null, 2));
