@@ -1,3 +1,4 @@
+import {watchDestination} from '../../../lib/game-extras';
 import {normalizeGameCenter} from '../../../lib/game-center';
 import {NextResponse} from 'next/server';
 import {espnTeamSource,normalizeTeamGame,validTeamId} from '../../../lib/team-detail';
@@ -9,6 +10,6 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
   if(String(header?.id)!==id||header.season?.year!==2026)throw Error('Unverified game');
   const c=header.competitions?.[0];const game=normalizeTeamGame({...header,date:c?.date});
   if(!game)throw Error('Game unavailable');
-  return NextResponse.json({game,center:normalizeGameCenter(raw),observedAt:new Date().toISOString()},{headers:{'Cache-Control':'public, s-maxage=60, stale-while-revalidate=60'}});
+  return NextResponse.json({game,watch:watchDestination(Array.isArray(header.links)?header.links:[],game.broadcast??''),center:normalizeGameCenter(raw),observedAt:new Date().toISOString()},{headers:{'Cache-Control':'public, s-maxage=60, stale-while-revalidate=60'}});
  }catch{return NextResponse.json({error:'Game details unavailable. Please retry.'},{status:503,headers:{'Cache-Control':'no-store'}});}
 }
