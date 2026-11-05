@@ -10,7 +10,7 @@ export async function GET(request:Request){
  if(!cronAuthorized(request))return json({error:'Not authorized'},401);
  const gameId=new URL(request.url).searchParams.get('gameId');
  if(!gameId||!/^\d{1,12}$/.test(gameId))return json({error:'A numeric gameId is required'},400);
- const limit=Math.min(2000,Math.max(1,Math.floor(Number(new URL(request.url).searchParams.get('historyLimit'))||100)));
+ const limit=Math.min(25,Math.max(1,Math.floor(Number(new URL(request.url).searchParams.get('historyLimit'))||1)));
  try{
   const devices=[];let cursor='0',scanned=0;
   do{
