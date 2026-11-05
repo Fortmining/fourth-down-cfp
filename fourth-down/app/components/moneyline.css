@@ -1,1 +1,34 @@
 .cardOddsFooter{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:3px 10px;color:var(--muted);font-size:11px;line-height:1.5;padding:4px 0 10px}.cardOddsFooter time{white-space:nowrap}.gameMoneyline .cardOddsFooter{padding-bottom:0}
+
+.gameMoneyline {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.gameMoneyline h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.detailMoneylinePrices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: .85rem;
+}
+.detailMoneylinePrices li {
+  display: flex;
+  flex: 1 1 10rem;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.detailMoneylinePrices strong {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

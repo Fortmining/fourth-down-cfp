@@ -24,5 +24,17 @@ export function MoneylineFooter({odds,stale}:{odds:ReturnType<typeof gameMoneyli
 }
 export default function GameMoneyline({id}:{id:string}){
  const {odds,stale}=useGameMoneyline(id);
- return <div className="gameMoneyline" aria-label="Moneyline odds">{odds?<><div>{odds.teams.map(team=><span key={team.id}>{team.name} <strong>{team.moneyline}</strong> </span>)}</div><MoneylineFooter odds={odds} stale={stale}/></>:<MoneylineFooter odds={odds} stale={stale}/>}</div>;
+ return (
+   <section className="gameMoneyline" aria-label="Moneyline odds">
+     <h3>Moneylines</h3>
+     {odds && (
+       <ul className="detailMoneylinePrices">
+         {odds.teams.map(team => (
+           <li key={team.id}><span>{team.name}</span><strong>{team.moneyline.replace('-', '−')}</strong></li>
+         ))}
+       </ul>
+     )}
+     <MoneylineFooter odds={odds} stale={stale}/>
+   </section>
+ );
 }

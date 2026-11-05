@@ -1,0 +1,47 @@
+.watchLivePanel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.watchLiveIcon {
+  align-self: start;
+  margin-top: 3px;
+  color: var(--muted);
+}
+.watchLiveCopy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.watchLiveCopy h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.watchLiveCopy p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.4;
+}
+.watchLiveCopy .watchLiveProvider {
+  font-weight: 650;
+  color: var(--ink);
+}
+.watchLivePanel .watchLiveAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+.watchLivePanel .watchLiveAction:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
