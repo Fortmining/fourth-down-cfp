@@ -12,7 +12,7 @@ export async function POST(request:Request) {
  try {
   const text=await request.text();if(text.length>32_000)return reply({error:'Request too large'},413);
   const data=JSON.parse(text);const {action,id,token}=data;
-  if(!['create','update','delete','following'].includes(action))return reply({error:'Invalid action'},400);
+  if(!['create','update','delete','following','verify'].includes(action))return reply({error:'Invalid action'},400);
   // Mutations use a random per-browser capability; no public subscription lookup.
   let old=null;
   if(action!=='create'){
@@ -21,6 +21,7 @@ export async function POST(request:Request) {
    if(!old){return action==='delete'?reply({ok:true}):reply({error:'Subscription expired; enable alerts again.'},404);}
    if(!sameToken(token,old.tokenHash))return reply({error:'Not authorized'},403);
   }
+  if(action==='verify')return reply({ok:true,following:old!.preferences.following});
   if(action==='delete'){await appendDeliveryAudit(id,{kind:'unsubscribed',following:old?.preferences.following});await redis('HDEL',SUBS,id);return reply({ok:true});}
   if(action==='update'&&old&&!data.subscription)data.subscription=old.subscription;
   if(action==='following'&&old){data.subscription=old.subscription;data.preferences={...old.preferences,following:data.following};}
