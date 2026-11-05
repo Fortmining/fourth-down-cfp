@@ -1,6 +1,14 @@
 import {NextResponse} from 'next/server';
 import {unstable_cache} from 'next/cache';
-import {redis} from '../../../lib/push-store';
+async function redis(...command:(string|number)[]){
+ const url=process.env.ODDS_PILOT_REDIS_URL;
+ const token=process.env.ODDS_PILOT_REDIS_TOKEN;
+ if(!url||!token)throw Error('Pilot accounting unavailable');
+ const response=await fetch(url,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(command),cache:'no-store',signal:AbortSignal.timeout(5000)});
+ const body=await response.json();
+ if(!response.ok||body.error)throw Error('Pilot accounting unavailable');
+ return body.result;
+}
 export const dynamic='force-dynamic';
 const budget='fd:{odds-pilot-20261105}:budget';
 const deadline=Date.parse('2026-11-07T00:00:00Z');
@@ -24,6 +32,13 @@ const fetchSnapshot=unstable_cache(async()=>{
 export async function GET(request:Request){
  if(process.env.VERCEL_ENV!=='preview'||process.env.VERCEL_GIT_COMMIT_REF!=='codex/playoff-outlook-prototype')return new Response(null,{status:404});
  try{if(!process.env.ODDS_API_KEY)throw Error('Pilot key unavailable');
+ if(new URL(request.url).searchParams.get('isolation')==='1'){
+  const budgetValue=await redis('GET',budget);
+  let productionDenied=false,otherKeyDenied=false;
+  try{await redis('GET','fd:v05:heartbeat');}catch{productionDenied=true;}
+  try{await redis('GET','fd:{odds-pilot-20261105}:outside-allowlist');}catch{otherKeyDenied=true;}
+  return NextResponse.json({budgetValue,productionDenied,otherKeyDenied},{headers:{'Cache-Control':'private, no-store'}});
+ }
  if(new URL(request.url).searchParams.get('quota')==='1'){
   const url=new URL('https://api.the-odds-api.com/v4/sports');
   url.searchParams.set('apiKey',process.env.ODDS_API_KEY);
