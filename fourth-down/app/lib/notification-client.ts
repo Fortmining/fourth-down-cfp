@@ -1,3 +1,4 @@
+import {verifyFollowRegistration} from './follow-registration';
 import {hasAlerts,normalizePreferences,type AlertPreferences,type TemporaryFollow,followAlertTypes,followChoices} from './alerts';
 import {PREFS,CHANGED,readPreferences} from './following-client';
 export const DRAFT='fourth-down-alert-draft-v071';
@@ -24,6 +25,7 @@ export async function persistNotifications(p:AlertPreferences,followingOnly=fals
   const saved=normalizePreferences(result.preferences);try{commit(saved);}catch{throw Error('Saved on the server, but device storage could not be updated. Keep your changes and retry.');}localStorage.removeItem('fourth-down-following-pending');
   if(!followingOnly){localStorage.removeItem(DRAFT);localStorage.removeItem('fourth-down-alert-settings-pending-v1');}
   try{await writeWorker(saved);localStorage.removeItem('fourth-down-worker-pending');}catch{localStorage.setItem('fourth-down-worker-pending','true');return 'Saved on the server. Retry saving to refresh device delivery controls.';}
+  await verifyFollowRegistration();
   return 'Saved. Your notification choices are confirmed by the server.';
  }
  if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window))throw Error('Push is unavailable here. On iPhone open the Home Screen app, or turn off notification choices to save a watchlist-only follow.');
@@ -42,6 +44,7 @@ export async function persistNotifications(p:AlertPreferences,followingOnly=fals
   localStorage.removeItem('fourth-down-following-pending');
   if(!followingOnly){localStorage.removeItem(DRAFT);localStorage.removeItem('fourth-down-alert-settings-pending-v1');}
   try{await writeWorker(saved);localStorage.removeItem('fourth-down-worker-pending');}catch{localStorage.setItem('fourth-down-worker-pending','true');return 'Saved on the server. Reopen Notifications and retry saving to refresh this device’s delivery controls.';}
+  await verifyFollowRegistration();
   return 'Saved. Your notification choices are confirmed by the server.';
  }catch(e){if(created&&!serverSaved)await created.unsubscribe().catch(()=>false);if(serverSaved)throw Error('Saved on the server, but device storage could not be updated. Retry saving on this device.');throw e;}
 }
