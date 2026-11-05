@@ -1,4 +1,6 @@
 "use client";
+import './watch-live.css';
+import {ArrowUpRight, Tv} from 'lucide-react';
 import {useEffect,useState} from 'react';
 import {watchDestination} from '../lib/game-extras';
 export default function WatchLive({id,broadcast,links=[]}:{id:string;broadcast:string;links?:{href?:string;rel?:string[]}[]}){
@@ -10,5 +12,29 @@ export default function WatchLive({id,broadcast,links=[]}:{id:string;broadcast:s
   }
  }).catch(()=>{});return()=>{active=false;};},[id]);
  const destination=verified??watchDestination(links,broadcast);
- return <section aria-label="Watch Live"><h3>Watch Live</h3>{destination?<><a className="detailButton" href={destination.url} target="_blank" rel="noopener noreferrer">{destination.label} ↗</a><p>{destination.exact?'Provider link for this event.':'Provider destination · choose this game in the provider’s schedule.'} Subscription, TV sign-in and regional availability may apply. Opens the provider’s app where supported, with its website as fallback.</p></>:<p>Streaming link unavailable{broadcast?' · Broadcast: '+broadcast:''}.</p>}</section>;
+ const provider = destination?.exact
+   ? (({
+       'espn.com': 'ESPN Watch',
+       'cbssports.com': 'CBS Sports',
+       'foxsports.com': 'FOX Sports',
+       'peacocktv.com': 'Peacock',
+     } as Record<string, string>)[new URL(destination.url).hostname.replace(/^www\./, '')] ?? 'Streaming provider')
+   : broadcast.trim() || destination?.label.replace(/^Open /, '');
+
+ return (
+   <section className="watchLivePanel" aria-label="Watch Live">
+     <Tv className="watchLiveIcon" size={18} aria-hidden="true" />
+     <div className="watchLiveCopy">
+       <h3>Watch Live</h3>
+       {provider && <p className="watchLiveProvider">{provider}</p>}
+       <p>{destination ? 'Provider sign-in may be required.' : 'Streaming link unavailable.'}</p>
+     </div>
+     {destination && (
+       <a className="detailButton watchLiveAction" href={destination.url}
+         target="_blank" rel="noopener noreferrer" aria-label={`Watch on ${provider} (opens in a new tab)`}>
+         Watch <ArrowUpRight size={14} aria-hidden="true" />
+       </a>
+     )}
+   </section>
+ );
 }
