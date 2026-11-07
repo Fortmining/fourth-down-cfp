@@ -4,11 +4,11 @@ import {Radio} from 'lucide-react';
 import './game-radio.css';
 
 type Team = {id: string; name: string; homeAway?: string};
-type Station = {id: string; name: string};
+type Station = {id: string; name: string; embed?: boolean};
 const networks: Record<string, Station[]> = {
   '2633': [{id:'s230333',name:'Tennessee Football'},{id:'s29706',name:'107.7 WIVK'},{id:'s22278',name:'101.5 WQUT'},{id:'s30987',name:'92.9 ESPN Memphis'}],
   '142': [{id:'s231151',name:'Missouri Football'}],
-  '254': [{id:'s207384',name:'Utah Football'}],
+  '254': [{id:'s207384',name:'Utah Football',embed:false}],
   '135': [{id:'s231155',name:'Minnesota Football'}],
   '239': [{id:'s230302',name:'Baylor Football'}],
   '194': [{id:'s230241',name:'Ohio State Football'}],
@@ -43,7 +43,7 @@ export default function GameRadio({teams}:{teams:Team[]}) {
           onClick={() => {setChosen(station.id);setEnabled(true);}}>{station.name}</button>)}
         <button onClick={() => setEnabled(value => !value)}>{enabled?'Stop player':'Load player'}</button>
       </div>
-      {enabled && <iframe key={selected.id} src={`https://tunein.com/embed/player/${selected.id}/`}
+      {enabled && selected.embed !== false && <iframe key={selected.id} src={`https://tunein.com/embed/player/${selected.id}/`}
         title={selected.name+' radio player'} allow="autoplay" width="100%" height="100" scrolling="no"/>}
       <a href={`https://tunein.com/radio/${selected.id}/`} target="_blank" rel="noopener noreferrer">Open {selected.name} on TuneIn ↗</a>
       <small>Tap Play to listen. Broadcasts may start near kickoff. Provider access or regional restrictions may apply. Affiliate stations may carry other programming outside games.</small>
