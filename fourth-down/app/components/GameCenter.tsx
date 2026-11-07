@@ -194,7 +194,16 @@ function Field({ play, branding,marker,referenceTeamId }: {
     <g stroke="#fff" strokeWidth=".25" opacity=".8">{Array.from({ length: 11 }, (_, i) => <line key={i} x1={10 + i * 10} x2={10 + i * 10} y1="0" y2="54"/>)}{Array.from({ length: 101 }, (_, i) => <g key={i}>{[1, 22, 31, 52].map(y => <line key={y} x1={10 + i} x2={10 + i} y1={y} y2={y + 1}/>)}</g>)}</g>{[10, 20, 30, 40, 50, 40, 30, 20, 10].map((n, i) => <g key={i} fill="#fff" opacity=".8" fontSize="3" fontWeight="700">
         <text x={20 + i * 10} y="9" textAnchor="middle">{n}</text>
         <text x={20 + i * 10} y="47" textAnchor="middle" transform={`rotate(180 ${20 + i * 10} 46)`}>{n}</text>
-        </g>)}{branding.logo ? <image href={branding.logo} x="53" y="20" width="14" height="14" opacity=".65"/> : <text x="60" y="29" textAnchor="middle" fontSize="4" fontWeight="900" fill="white" opacity=".35">4TH DOWN</text>}{lineX!==null&&<line className="gcScrimmage" x1={lineX} x2={lineX} y1="0" y2="54" stroke="#67c8ff" strokeWidth=".65"/>}{targetX!==null&&<line className="gcFirstDown" x1={targetX} x2={targetX} y1="0" y2="54" stroke="#ffdb4c" strokeWidth=".8"/>}{[0,120].map((gx,i)=><g key={gx} className="gcGoalpost" aria-hidden="true" stroke="#ffdc57" strokeWidth=".7" fill="none"><path d={`M ${gx} 30 V 20 M ${gx-2.8} 20 H ${gx+2.8} M ${gx-2.8} 20 V 11 M ${gx+2.8} 20 V 11`}/><path d={`M ${gx} 30 L ${gx+(i?-1:1)} 32`} stroke="#fff" strokeWidth=".3" opacity=".5"/></g>)}
+        </g>)}{branding.logo ? <image href={branding.logo} x="53" y="20" width="14" height="14" opacity=".65"/> : <text x="60" y="29" textAnchor="middle" fontSize="4" fontWeight="900" fill="white" opacity=".35">4TH DOWN</text>}{lineX!==null&&<line className="gcScrimmage" x1={lineX} x2={lineX} y1="0" y2="54" stroke="#67c8ff" strokeWidth=".65"/>}{targetX!==null&&<line className="gcFirstDown" x1={targetX} x2={targetX} y1="0" y2="54" stroke="#ffdb4c" strokeWidth=".8"/>}{[1,119].map((baseX,index) => {
+      const direction = index === 0 ? 1 : -1;
+      const crossX = baseX + direction * 1.5;
+      const tipX = crossX + direction * 3;
+      return <g key={baseX} className="gcGoalpost" aria-hidden="true"
+        stroke="#ffdc57" strokeWidth=".55" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <ellipse cx={baseX} cy="27" rx=".8" ry=".45" fill="#102a20" stroke="none"/>
+        <path d={`M ${baseX} 27 L ${crossX} 23 M ${crossX} 20.18 V 25.82 M ${crossX} 20.18 L ${tipX} 14.18 M ${crossX} 25.82 L ${tipX} 19.82`}/>
+      </g>;
+    })}
     {motion&&play&&<g key={`motion-${play.id}`}><path className={`gcTracer ${aerial?'gcAerialTracer':''}`} pathLength="1" d={path} stroke={aerial?'#a8e8ff':gain?'#b6ff6b':'#ff927f'} strokeWidth={aerial?'1':'2'} strokeLinecap="round" fill="none"/>
     <circle cx={x(motion.from,motion.teamId)} cy="27" r=".8" fill="white"/>
     <g className="gcBall" filter="url(#gcBallShadow)"><animateMotion path={path} dur="1.15s" fill="freeze"/><Football/></g></g>}
