@@ -87,7 +87,7 @@ export default function GameCenter({ id, fallbackGame }: {
     <div className="gcSituation">{data?.situation?.downDistance || (source?.status === 'post' ? 'Full time' : source?.status === 'pre' ? 'Kickoff ahead' : play?.kickResult ? `Kick ${play.kickResult.toLowerCase()} · awaiting next possession` : 'Waiting for the next update')}{data?.situation?.basis === 'last-play' && <small>Last reported play</small>}</div>
     </div>{error && <p className="gcNotice" role="status">{error}</p>}<div className="gcFieldStage">
     <div className="gcFieldPlane">
-    <Field play={play} branding={branding} marker={marker} referenceTeamId={data?.homeTeamId||data?.teams[0]?.id||null}/>
+    <Field key={selected || 'latest'} play={play} branding={branding} marker={marker} referenceTeamId={data?.homeTeamId||data?.teams[0]?.id||null}/>
     </div>
     <div className="gcFieldLegend">
     <span>
@@ -203,13 +203,14 @@ function Field({ play, branding,marker,referenceTeamId }: {
     </g>)}
     {motion&&play&&<g key={`motion-${play.id}`}><path className={`gcTracer ${aerial?'gcAerialTracer':''}`} pathLength="1" d={path} stroke={aerial?'#a8e8ff':gain?'#b6ff6b':'#ff927f'} strokeWidth={aerial?'1':'2'} strokeLinecap="round" fill="none"/>
     <circle cx={x(motion.from,motion.teamId)} cy="27" r=".8" fill="white"/>{['field-goal','extra-point'].includes(motion.kind)&&<circle className="gcGoalTarget" cx={x(motion.to,motion.teamId)} cy="15" r=".9" fill="#ffdc57"/>}
-    <g className="gcBall" filter="url(#gcBallShadow)"><animateMotion path={path} dur="1.15s" fill="freeze"/><Football/></g></g>}
+    <g className="gcBall" filter="url(#gcBallShadow)"><animateMotion ref={beginPlayAnimation} begin="indefinite" path={path} dur="1.15s" fill="freeze"/><Football/></g></g>}
     {restingX!==null&&<g key={`rest-${play?.id||'spot'}`} className="gcStaticBall gcRestBall" style={{transform:`translate(${restingX}px,27px)`}}><Football/></g>}
     {marker&&restingX!==null&&<g className="gcPossessionMarker" style={{transform:`translate(${restingX}px,27px)`}} role="img" aria-label={`${marker.label}: ${marker.name}, ${marker.yardsToEndzone} yards to opponent goal`}>
     <path d="M -3.4 -12 H 3.4 V -5 L 0 -2.8 L -3.4 -5 Z" fill="#fff" stroke="#edb82e" strokeWidth=".5"/>
     {marker.logo?<image href={marker.logo} x="-2.7" y="-11.4" width="5.4" height="5.4"/>:<text x="0" y="-7.5" fontSize="2.2" textAnchor="middle" fill="#14243b">{marker.name.slice(0,2).toUpperCase()}</text>}
     </g>}</svg>;
 }
+function beginPlayAnimation(animation:SVGElement|null){if(animation)(animation as SVGAnimationElement).beginElement();}
 function Football(){return <><ellipse rx="3" ry="1.8" fill="#a95126" stroke="#fff0d6" strokeWidth=".4"/><path d="M -1.2 0 H 1.2 M -.7 -.6 V .6 M 0 -.6 V .6 M .7 -.6 V .6" stroke="white" strokeWidth=".25"/></>;}
 
 function Yardage({play}:{play:FieldPlay}){const a=play.animation,kick=!!play.kickResult||!!a&&['punt','kickoff','field-goal','extra-point'].includes(a.kind),distance=a&&(a.kind==='punt'||a.kind==='kickoff')?a.from-a.to:play.yards;return <strong className={distance!==null&&distance<0?'gcLoss':''}>{distance===null?a?.result?.toUpperCase()||'—':`${!kick&&distance>0?'+':''}${distance}`}<small>{distance===null&&a?.result?'RESULT':kick?'KICK YDS':'YDS'}</small></strong>;}
