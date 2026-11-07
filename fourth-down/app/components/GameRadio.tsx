@@ -45,7 +45,7 @@ export default function GameRadio({teams}:{teams:Team[]}) {
       </div>
       {enabled && selected.embed !== false && <iframe key={selected.id} src={`https://tunein.com/embed/player/${selected.id}/`}
         title={selected.name+' radio player'} allow="autoplay" width="100%" height="100" scrolling="no"/>}
-      <a href={`https://tunein.com/radio/${selected.id}/`} target="_blank" rel="noopener noreferrer">{selected.embed === false ? 'Open Radio' : 'Open on TuneIn'} ↗</a>
+      <a className="radioOpen" href={`https://tunein.com/radio/${selected.id}/`} target="_blank" rel="noopener noreferrer">{selected.embed === false ? 'Open Radio' : 'Open on TuneIn'} ↗</a>
       <small>{selected.embed === false ? 'Embedded playback is unavailable for this channel. Open Radio to listen on the provider’s site. ' : 'Use the provider’s Play control. If it is missing or playback fails, open TuneIn. '} Broadcasts may start near kickoff. Provider access or regional restrictions may apply. Affiliate stations may carry other programming outside games.</small>
     </section>
   );
