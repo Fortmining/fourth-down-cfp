@@ -1,0 +1,10 @@
+.gameRadio{margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--panel);min-width:0}
+.gameRadio h3{display:flex;align-items:center;gap:8px;margin:0;font-size:1rem}
+.gameRadio p,.gameRadio small{color:var(--muted);font-size:.8rem;line-height:1.5}
+.gameRadio small{display:block;margin-top:8px}
+.radioStations{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.radioStations button{min-height:44px;padding:8px 10px;font-size:.8rem;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--ink)}
+.radioStations button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.gameRadio :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.gameRadio iframe{display:block;border:0;max-width:100%;margin:8px 0}
+.gameRadio>a{display:inline-block;padding:8px 0;font-size:.85rem}
