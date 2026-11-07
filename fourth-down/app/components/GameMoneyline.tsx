@@ -14,7 +14,16 @@ function load(){
 export function useGameMoneyline(id:string){
  const [packet,setPacket]=useState<Packet|null>(null);
  useEffect(()=>{let active=true;const refresh=()=>{if(document.hidden)return;void load().then(value=>{if(active)setPacket(value);}).catch(()=>{if(active)setPacket(null);});};refresh();const timer=setInterval(refresh,120000);document.addEventListener('visibilitychange',refresh);return()=>{active=false;clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};},[]);
- const odds=packet?.odds[id];const stale=!!packet&&Date.now()-Date.parse(packet.observedAt)>240000;
+ const odds = packet?.odds[id];
+ const liveExpiry = odds?.kind === 'live' ? Date.parse(odds.sourceAt ?? '') + 180000 : null;
+ const [, refreshClock] = useState(0);
+ useEffect(() => {
+  if (liveExpiry === null || !Number.isFinite(liveExpiry) || liveExpiry <= Date.now()) return;
+  const timer = setTimeout(() => refreshClock(value => value + 1), liveExpiry - Date.now() + 1);
+  return () => clearTimeout(timer);
+ }, [liveExpiry]);
+ const stale = (!!packet && Date.now() - Date.parse(packet.observedAt) > 240000) ||
+  (liveExpiry !== null && (!Number.isFinite(liveExpiry) || liveExpiry <= Date.now()));
  return {odds:stale?null:odds,stale};
 }
 export function MoneylineFooter({odds,stale}:{odds:ReturnType<typeof gameMoneyline>|undefined;stale:boolean}){
