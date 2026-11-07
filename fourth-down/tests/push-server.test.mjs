@@ -32,6 +32,7 @@ function harness({resumePublisher,releaseEnabled=false}={}) {
   if(op==='INCR'){const next=Number(values.get(key)||0)+1;values.set(key,next);return next;}
   if(op==='EXPIRE')return 1;
   if(op==='EVAL'){
+   if(args[1].includes("redis.call('LPUSH'")){if(auditError)throw Error('Isolated audit failure');const k=args[3],limit=Number(args[5]);const list=(lists.get(k)||[]).slice(0,limit-1);list.unshift(args[4]);lists.set(k,list);return 1;}
    if(args[1].includes("redis.call('hget'")){const h=hashes.get(args[3]);if(h?.get(args[4])!==args[5])return 0;h.set(args[4],args[6]);return 1;}
    values.delete(args[3]);return 1;
   }
@@ -264,8 +265,8 @@ test('missed poll, omitted game and disabled following explain missing kickoff w
  }
 });
 test('diagnostic histories are bounded and never persist endpoint, keys or token hashes',async()=>{
- const h=harness();h.lists.set('fd:v06:kickoff:device:123',Array(2005).fill('{}'));await h.store.appendKickoffAudit('device','123',{kind:'fixture'});assert.equal(h.lists.get('fd:v06:kickoff:device:123').length,2000);
- h.lists.set('fd:v06:scheduler',Array(24005).fill('{}'));await h.store.appendSchedulerAudit({kind:'fixture'});assert.equal(h.lists.get('fd:v06:scheduler').length,24000);
+ const h=harness();h.lists.set('fd:v06:kickoff:device:123',Array(2005).fill('{}'));await h.store.appendKickoffAudit('device','123',{kind:'fixture'});assert.equal(h.lists.get('fd:v06:kickoff:device:123').length,200);
+ h.lists.set('fd:v06:scheduler',Array(24005).fill('{}'));await h.store.appendSchedulerAudit({kind:'fixture'});assert.equal(h.lists.get('fd:v06:scheduler').length,512);
  const g={...match(),id:'123'};h.setFeed(snapshot([g],[],-60000));await run(h);const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};const cap=await subscribe(h,p);h.setFeed(snapshot([{...g,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:1,clock:899.95}],[],10));await run(h);
  const history=JSON.stringify([...h.lists]);for(const secret of [endpoint.endpoint,endpoint.keys.auth,endpoint.keys.p256dh,cap.token])assert.equal(history.includes(secret),false);
 });
@@ -430,4 +431,12 @@ test('provider acceptance preserves its actual status without capturing response
  const p=alerts.defaultAlertPreferences();p.favorites=[{id:'1',name:'One'}];p.myTeams={enabled:true,kickoff:true,final:true};assert.equal((await h.subscription.POST(request({action:'create',subscription:endpoint,preferences:p}))).status,200);
  h.setFeed({season:2026,updatedAt:new Date(Date.now()+10).toISOString(),games:[{...game,status:'post',providerStatus:'STATUS_FINAL',completed:true,clock:0,teams:[{...game.teams[0],winner:true},game.teams[1]]}],polls:[]});assert.equal((await run(h)).status,200);
  const audits=[...h.lists.values()].flat().map(x=>JSON.parse(x)).filter(x=>x.kind==='provider-accepted');assert.ok(audits.length>0);assert.ok(audits.some(e=>e.status===201));assert.ok(audits.every(e=>!('subscription' in e)&&!('headers' in e)&&!('receipt' in e)));
+});
+
+test('oversized audit entries are bounded without mutating source',()=>{
+ const h=harness(),entry={kind:'feed-observed',runId:'run',games:Array(138).fill({detail:'x'.repeat(10000)})};
+ const before=JSON.stringify(entry),raw=h.store.boundedAuditEntry(entry);assert.ok(Buffer.byteLength(raw)<=16384);assert.equal(JSON.parse(raw).detailOmitted,true);assert.equal(JSON.parse(raw).gameObservationCount,138);assert.equal(JSON.stringify(entry),before);
+});
+test('audit recovery and concurrent writers stay bounded',async()=>{
+ const h=harness();h.lists.set('fd:v06:scheduler',Array(10072).fill('{}'));await Promise.all(Array.from({length:12},(_,i)=>h.store.appendSchedulerAudit({kind:'concurrent',runId:String(i)})));assert.ok(h.lists.get('fd:v06:scheduler').length<=512);
 });
