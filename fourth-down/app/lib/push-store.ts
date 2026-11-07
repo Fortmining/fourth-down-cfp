@@ -50,11 +50,32 @@ export async function appendDeliveryAudit(id:string,entry:Record<string,unknown>
  const game=gameId&&relevant?await appendPrivateAudit(`fd:v083:game-delivery:${id}:${gameId}`,compact,300):true;
  return general&&game;
 }
-export const appendKickoffAudit=(id:string,gameId:string,entry:Record<string,unknown>)=>appendPrivateAudit(`fd:v06:kickoff:${id}:${gameId}`,entry,2000);
-export const appendSchedulerAudit=(entry:Record<string,unknown>)=>appendPrivateAudit('fd:v06:scheduler',entry,24000);
+export const appendKickoffAudit=(id:string,gameId:string,entry:Record<string,unknown>)=>appendPrivateAudit(`fd:v06:kickoff:${id}:${gameId}`,entry,200);
+export const appendSchedulerAudit=(entry:Record<string,unknown>)=>appendPrivateAudit('fd:v06:scheduler',entry,512);
+export const AUDIT_ENTRY_BYTES=16*1024;
+export function boundedAuditEntry(entry:Record<string,unknown>){
+ const value={...entry,at:new Date().toISOString()},raw=JSON.stringify(value);
+ if(Buffer.byteLength(raw,'utf8')<=AUDIT_ENTRY_BYTES)return raw;
+ // Only diagnostic detail is omitted; subscription and delivery state is separate.
+ const summary:Record<string,unknown>={at:value.at,detailOmitted:true,originalBytes:Buffer.byteLength(raw,'utf8')};
+ for(const key of ['kind','runId','startedAt','gameId','eventId','stage','decision','sent','failed','events','scanned','durationMs','currentGameCount','previousGameCount','sourceFetch']){
+  if(entry[key]!==undefined){const next={...summary,[key]:entry[key]};if(Buffer.byteLength(JSON.stringify(next),'utf8')<=AUDIT_ENTRY_BYTES-128)summary[key]=entry[key];}
+ }
+ if(Array.isArray(entry.games))summary.gameObservationCount=entry.games.length;
+ return JSON.stringify(summary);
+}
+export const APPEND_AUDIT_SCRIPT=`
+redis.call('LTRIM',KEYS[1],0,tonumber(ARGV[2])-2)
+redis.call('LPUSH',KEYS[1],ARGV[1])
+redis.call('EXPIRE',KEYS[1],ARGV[3])
+return 1`;
 async function appendPrivateAudit(key:string,entry:Record<string,unknown>,limit:number){
- try{await redis('LPUSH',key,JSON.stringify({at:new Date().toISOString(),...entry}));await redis('LTRIM',key,0,limit-1);await redis('EXPIRE',key,60*60*24*30);return true;}
- catch{console.warn('Notification audit write unavailable',JSON.stringify({kind:entry.kind,runId:entry.runId,gameId:entry.gameId,decision:entry.decision}));return false;}
+ try{
+  // Standalone shrinking command recovers an oversized key before EVAL can access it.
+  await redis('LTRIM',key,0,limit-2);
+  await redis('EVAL',APPEND_AUDIT_SCRIPT,1,key,boundedAuditEntry(entry),limit,60*60*24*30);
+  return true;
+ }catch{console.warn('Notification audit write unavailable',JSON.stringify({kind:entry.kind,runId:entry.runId,gameId:entry.gameId,decision:entry.decision}));return false;}
 }
 
 // Opt-in independent publisher. Existing notification redis() remains unchanged.
