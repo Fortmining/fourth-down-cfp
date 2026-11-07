@@ -11,7 +11,7 @@ async function redis(...command:(string|number)[]){
 }
 export const dynamic='force-dynamic';
 const budget='fd:{odds-pilot-20261105}:budget';
-const deadline=Date.parse('2026-11-07T00:00:00Z');
+const deadline=Date.parse('2026-11-07T06:00:00Z');
 const fetchSnapshot=unstable_cache(async()=>{
  if(Date.now()>deadline)throw Error('Pilot expired');
  // Each reserved attempt can cost at most one credit: one market, two books.
