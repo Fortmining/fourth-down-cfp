@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {normalizeFieldPlay,normalizeGameCenter} from '../app/lib/game-center.ts';
+import {fieldMotionPath} from '../app/lib/gamecast-field.ts';
+const raw=JSON.parse(fs.readFileSync(new URL('./fixtures/arkansas-auburn-field-goal.json',import.meta.url),'utf8'));
+const kick=raw.drives.previous[0].plays[0];
+test('captured 46-yard kick is Arkansas at AUB28; launch accounts for endzone and holder',()=>{const p=normalizeFieldPlay(kick)!;assert.equal(p.teamId,'8');assert.equal(p.start,28);assert.equal(p.animation?.from,36);assert.equal(p.animation?.to,-10);assert.equal(p.kickResult,'Good');});
+test('made-kick paths reach elevated uprights in either fixed field orientation',()=>{const a=normalizeFieldPlay(kick)!.animation!;assert.equal(fieldMotionPath(a,'2'),'M 46 27 Q 23 4 0 15');assert.equal(fieldMotionPath({...a,teamId:'2'},'2'),'M 74 27 Q 97 4 120 15');assert.equal(fieldMotionPath(a,'8'),'M 74 27 Q 97 4 120 15');});
+test('missed and blocked kicks disclose result and never invent destination',()=>{for(const result of ['Missed','Blocked']){const p=normalizeFieldPlay({...kick,type:{text:'Field Goal '+result},text:'Field goal '+result})!;assert.equal(p.animation,null);assert.equal(p.kickResult,result);}});
+test('post-kick missing or stale pre-kick possession is not presented as current fourth down',()=>{assert.equal(normalizeGameCenter(raw).situation,null);const stale=structuredClone(raw);stale.header.competitions[0].situation={possession:'8',downDistanceText:kick.start.downDistanceText,yardsToEndzone:28};const n=normalizeGameCenter(stale);assert.equal(n.situation,null);assert.equal(n.ballPosition,null);assert.equal(n.currentDrive,null);});
