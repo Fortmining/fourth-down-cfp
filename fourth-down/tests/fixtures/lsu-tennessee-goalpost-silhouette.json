@@ -1,0 +1,154 @@
+{
+  "sourceCheckedAt": null,
+  "progress": {
+    "period": null
+  },
+  "game": {
+    "id": "401856754",
+    "name": "Tennessee Volunteers vs. LSU Tigers",
+    "date": "2026-11-21T05:00Z",
+    "status": "pre",
+    "providerStatus": "STATUS_SCHEDULED",
+    "completed": false,
+    "detail": "TBD",
+    "period": null,
+    "clock": null,
+    "kickoffTbd": true,
+    "neutralSite": false,
+    "venue": "",
+    "conferenceGame": true,
+    "broadcast": "",
+    "teams": [
+      {
+        "id": "2633",
+        "name": "Tennessee Volunteers",
+        "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png",
+        "homeAway": "home",
+        "winner": false
+      },
+      {
+        "id": "99",
+        "name": "LSU Tigers",
+        "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/99.png",
+        "homeAway": "away",
+        "winner": false
+      }
+    ]
+  },
+  "watch": null,
+  "center": {
+    "stoppage": null,
+    "latestPlayAt": null,
+    "ballPosition": null,
+    "currentDrive": null,
+    "situation": null,
+    "branding": {
+      "kind": "home",
+      "teamName": "Tennessee Volunteers",
+      "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png",
+      "color": "#ff8200"
+    },
+    "teams": [
+      {
+        "id": "2633",
+        "name": "Tennessee Volunteers",
+        "score": "\u2014",
+        "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png"
+      },
+      {
+        "id": "99",
+        "name": "LSU Tigers",
+        "score": "\u2014",
+        "logo": "https://a.espncdn.com/i/teamlogos/ncaa/500/99.png"
+      }
+    ],
+    "neutral": false,
+    "venue": "Neyland Stadium",
+    "homeTeamId": "2633",
+    "drives": [],
+    "teamStats": [
+      {
+        "teamId": "99",
+        "name": "LSU Tigers",
+        "stats": [
+          {
+            "label": "Points Per Game",
+            "value": "37.1"
+          },
+          {
+            "label": "Total Yards",
+            "value": "504.1"
+          },
+          {
+            "label": "Yards Passing",
+            "value": "324.9"
+          },
+          {
+            "label": "Yards Rushing",
+            "value": "179.2"
+          },
+          {
+            "label": "Points Allowed Per Game",
+            "value": "17.7"
+          },
+          {
+            "label": "Yards Allowed",
+            "value": "261.1"
+          },
+          {
+            "label": "Pass Yards Allowed",
+            "value": "176.4"
+          },
+          {
+            "label": "Rush Yards Allowed",
+            "value": "84.7"
+          }
+        ]
+      },
+      {
+        "teamId": "2633",
+        "name": "Tennessee Volunteers",
+        "stats": [
+          {
+            "label": "Points Per Game",
+            "value": "32.4"
+          },
+          {
+            "label": "Total Yards",
+            "value": "393.9"
+          },
+          {
+            "label": "Yards Passing",
+            "value": "177.9"
+          },
+          {
+            "label": "Yards Rushing",
+            "value": "216.0"
+          },
+          {
+            "label": "Points Allowed Per Game",
+            "value": "15.1"
+          },
+          {
+            "label": "Yards Allowed",
+            "value": "296.4"
+          },
+          {
+            "label": "Pass Yards Allowed",
+            "value": "172.1"
+          },
+          {
+            "label": "Rush Yards Allowed",
+            "value": "124.3"
+          }
+        ]
+      }
+    ],
+    "playerStats": []
+  },
+  "observedAt": "2026-11-08T15:59:16.417Z",
+  "evidence": {
+    "source": "https://fourth-down-cfp.vercel.app/api/games/401856754",
+    "purpose": "Captured upcoming LSU\u2013Tennessee rendering regression; no simulated game events."
+  }
+}
