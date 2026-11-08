@@ -13,7 +13,7 @@ for(const [engine,mobile]of [[chromium,false],[webkit,true]]){
  assert.match(await page.locator('.gcAerialTracer').getAttribute('d'),/0 15$/);assert.equal(await page.locator('.gcStandingGoal').count(),2);assert.match(await page.locator('.gcSituation').innerText(),/awaiting next possession/);assert.match(await page.locator('.gcPlayHeadline').innerText(),/Before kick · 4th & 6 at AUB 28/);assert.match(await page.locator('.gcPlayMeta').innerText(),/PREVIOUS PLAY/);
  await page.locator('.gcCast').screenshot({path:out+`/captured-kick-${mobile?'iphone':'desktop'}.png`});
  await page.locator('.gcPlays button').first().click();
- async function animationPosition(seconds){return page.locator('.gcFieldPlane svg').evaluate(async(svg,seconds)=>{svg.pauseAnimations();svg.setCurrentTime(seconds);await new Promise(requestAnimationFrame);const matrix=svg.querySelector('.gcBall').getCTM();return {x:matrix.e,y:matrix.f};},seconds);}
+ async function animationPosition(seconds){return page.locator('.gcFieldPlane > svg').evaluate(async(svg,seconds)=>{svg.pauseAnimations();svg.setCurrentTime(seconds);await new Promise(requestAnimationFrame);const matrix=svg.querySelector('.gcBall').getCTM();return {x:matrix.e,y:matrix.f};},seconds);}
  const startTime=await page.locator('.gcBall animateMotion').evaluate(n=>n.getStartTime());
  const early=await animationPosition(startTime+.1),late=await animationPosition(startTime+1.05);assert.ok(late.x<early.x-10,'Football must advance toward left uprights');
  await page.getByRole('button',{name:'Latest play',exact:true}).click();
