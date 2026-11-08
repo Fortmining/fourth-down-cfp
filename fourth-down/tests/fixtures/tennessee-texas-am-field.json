@@ -1,0 +1,668 @@
+{
+  "header": {
+    "id": "401856888",
+    "uid": "s:20~l:23~e:401856888",
+    "season": {
+      "year": 2026,
+      "current": true,
+      "type": 2
+    },
+    "timeValid": false,
+    "competitions": [
+      {
+        "id": "401856888",
+        "uid": "s:20~l:23~e:401856888~c:401856888",
+        "date": "2026-11-14T05:00Z",
+        "dateValid": true,
+        "neutralSite": false,
+        "conferenceCompetition": true,
+        "boxscoreAvailable": false,
+        "commentaryAvailable": false,
+        "liveAvailable": false,
+        "onWatchESPN": false,
+        "recent": false,
+        "wallclockAvailable": false,
+        "boxscoreSource": "none",
+        "playByPlaySource": "none",
+        "competitors": [
+          {
+            "id": "245",
+            "uid": "s:20~l:23~t:245",
+            "order": 0,
+            "homeAway": "home",
+            "team": {
+              "id": "245",
+              "guid": "014788cd-231c-e33e-32c3-7e8d9a1e530f",
+              "uid": "s:20~l:23~t:245",
+              "location": "Texas A&M",
+              "name": "Aggies",
+              "nickname": "Texas A&M",
+              "abbreviation": "TA&M",
+              "displayName": "Texas A&M Aggies",
+              "color": "500000",
+              "alternateColor": "ffffff",
+              "logos": [
+                {
+                  "href": "https://a.espncdn.com/i/teamlogos/ncaa/500/245.png",
+                  "width": 500,
+                  "height": 500,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "default"
+                  ],
+                  "lastUpdated": "2025-12-19T23:48Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/i/teamlogos/ncaa/500-dark/245.png",
+                  "width": 500,
+                  "height": 500,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "dark"
+                  ],
+                  "lastUpdated": "2025-12-19T23:47Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/primary_logo_on_white_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_white_color"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/primary_logo_on_black_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_black_color"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/primary_logo_on_primary_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_primary_color"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/primary_logo_on_secondary_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_secondary_color"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/primary_logo_black.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_black"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/primary_logo_white.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_white"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/secondary_logo_on_white_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_white_color"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/secondary_logo_on_black_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_black_color"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/secondary_logo_on_primary_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_primary_color"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/secondary_logo_on_secondary_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_secondary_color"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/secondary_logo_black.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_black"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/014788cd-231c-e33e-32c3-7e8d9a1e530f/logos/secondary_logo_white.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_white"
+                  ],
+                  "lastUpdated": "2026-07-23T17:44Z"
+                }
+              ],
+              "groups": {
+                "id": "8"
+              },
+              "links": [
+                {
+                  "rel": [
+                    "clubhouse",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/college-football/team/_/id/245/texas-am-aggies",
+                  "text": "Clubhouse"
+                }
+              ]
+            },
+            "record": [
+              {
+                "type": "total",
+                "summary": "4-5",
+                "displayValue": "4-5"
+              },
+              {
+                "type": "vsconf",
+                "summary": "1-5",
+                "displayValue": "1-5"
+              }
+            ],
+            "possession": false
+          },
+          {
+            "id": "2633",
+            "uid": "s:20~l:23~t:2633",
+            "order": 1,
+            "homeAway": "away",
+            "team": {
+              "id": "2633",
+              "guid": "de276cc4-dc02-159f-0c1c-67ddaf02a9ea",
+              "uid": "s:20~l:23~t:2633",
+              "location": "Tennessee",
+              "name": "Volunteers",
+              "nickname": "Tennessee",
+              "abbreviation": "TENN",
+              "displayName": "Tennessee Volunteers",
+              "color": "ff8200",
+              "alternateColor": "ffffff",
+              "logos": [
+                {
+                  "href": "https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png",
+                  "width": 500,
+                  "height": 500,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "default"
+                  ],
+                  "lastUpdated": "2025-12-19T23:48Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/i/teamlogos/ncaa/500-dark/2633.png",
+                  "width": 500,
+                  "height": 500,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "dark"
+                  ],
+                  "lastUpdated": "2026-01-05T20:06Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/de276cc4-dc02-159f-0c1c-67ddaf02a9ea/logos/primary_logo_on_white_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_white_color"
+                  ],
+                  "lastUpdated": "2024-11-11T01:38Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/de276cc4-dc02-159f-0c1c-67ddaf02a9ea/logos/primary_logo_on_black_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_black_color"
+                  ],
+                  "lastUpdated": "2024-11-11T01:38Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/de276cc4-dc02-159f-0c1c-67ddaf02a9ea/logos/primary_logo_on_primary_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_primary_color"
+                  ],
+                  "lastUpdated": "2024-11-11T01:38Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/de276cc4-dc02-159f-0c1c-67ddaf02a9ea/logos/primary_logo_on_secondary_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_secondary_color"
+                  ],
+                  "lastUpdated": "2024-11-11T01:38Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/de276cc4-dc02-159f-0c1c-67ddaf02a9ea/logos/secondary_logo_on_white_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_white_color"
+                  ],
+                  "lastUpdated": "2024-11-11T01:38Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/de276cc4-dc02-159f-0c1c-67ddaf02a9ea/logos/secondary_logo_on_black_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_black_color"
+                  ],
+                  "lastUpdated": "2024-11-11T01:38Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/de276cc4-dc02-159f-0c1c-67ddaf02a9ea/logos/secondary_logo_on_primary_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_primary_color"
+                  ],
+                  "lastUpdated": "2024-11-11T01:38Z"
+                },
+                {
+                  "href": "https://a.espncdn.com/guid/de276cc4-dc02-159f-0c1c-67ddaf02a9ea/logos/secondary_logo_on_secondary_color.png",
+                  "width": 4096,
+                  "height": 4096,
+                  "alt": "",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_secondary_color"
+                  ],
+                  "lastUpdated": "2024-11-11T01:38Z"
+                }
+              ],
+              "groups": {
+                "id": "8"
+              },
+              "links": [
+                {
+                  "rel": [
+                    "clubhouse",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/college-football/team/_/id/2633/tennessee-volunteers",
+                  "text": "Clubhouse"
+                }
+              ]
+            },
+            "record": [
+              {
+                "type": "total",
+                "summary": "7-2",
+                "displayValue": "7-2"
+              },
+              {
+                "type": "vsconf",
+                "summary": "4-2",
+                "displayValue": "4-2"
+              }
+            ],
+            "possession": false,
+            "rank": 13
+          }
+        ],
+        "status": {
+          "type": {
+            "id": "1",
+            "name": "STATUS_SCHEDULED",
+            "state": "pre",
+            "completed": false,
+            "description": "Scheduled",
+            "detail": "11/14 - TBD",
+            "shortDetail": "TBD"
+          }
+        },
+        "broadcasts": [],
+        "groups": {
+          "id": "8",
+          "name": "Southeastern Conference",
+          "abbreviation": "sec",
+          "shortName": "SEC",
+          "midsizeName": "SEC"
+        },
+        "boxscoreMinutes": false
+      }
+    ],
+    "links": [
+      {
+        "rel": [
+          "summary",
+          "desktop",
+          "event"
+        ],
+        "href": "https://www.espn.com/college-football/game/_/gameId/401856888/tennessee-texas-am",
+        "text": "Gamecast",
+        "shortText": "Summary",
+        "isExternal": false,
+        "isPremium": false
+      },
+      {
+        "rel": [
+          "tickets",
+          "desktop"
+        ],
+        "href": "https://www.vividseats.com/texas-am-aggies-football-tickets-kyle-field-9-4-2026--sports-ncaa-football/production/6070609?wsUser=717",
+        "text": "Tickets",
+        "shortText": "Tickets",
+        "isExternal": true,
+        "isPremium": false
+      }
+    ],
+    "week": 11,
+    "league": {
+      "id": "23",
+      "uid": "s:20~l:23",
+      "name": "NCAA - Football",
+      "abbreviation": "NCAAF",
+      "shortName": "NCAA Football",
+      "midsizeName": "NCAA Football",
+      "slug": "college-football",
+      "isTournament": false,
+      "links": [
+        {
+          "rel": [
+            "index",
+            "desktop",
+            "league"
+          ],
+          "href": "https://www.espn.com/college-football/",
+          "text": "Index"
+        },
+        {
+          "rel": [
+            "index",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:20~l:23",
+          "text": "Index"
+        },
+        {
+          "rel": [
+            "schedule",
+            "desktop",
+            "league"
+          ],
+          "href": "https://www.espn.com/college-football/schedule",
+          "text": "Schedule"
+        },
+        {
+          "rel": [
+            "schedule",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:20~l:23&section=scores",
+          "text": "Schedule"
+        },
+        {
+          "rel": [
+            "standings",
+            "desktop",
+            "league"
+          ],
+          "href": "https://www.espn.com/college-football/standings",
+          "text": "Standings"
+        },
+        {
+          "rel": [
+            "standings",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:20~l:23&section=standings",
+          "text": "Standings"
+        },
+        {
+          "rel": [
+            "rankings",
+            "desktop",
+            "league"
+          ],
+          "href": "https://www.espn.com/college-football/rankings",
+          "text": "Rankings"
+        },
+        {
+          "rel": [
+            "rankings",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:20~l:23&section=rankings",
+          "text": "Rankings"
+        },
+        {
+          "rel": [
+            "scores",
+            "desktop",
+            "league"
+          ],
+          "href": "https://www.espn.com/college-football/scoreboard",
+          "text": "Scores"
+        },
+        {
+          "rel": [
+            "scores",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:20~l:23&section=scores",
+          "text": "Scores"
+        },
+        {
+          "rel": [
+            "stats",
+            "desktop",
+            "league"
+          ],
+          "href": "https://www.espn.com/college-football/stats",
+          "text": "Stats"
+        },
+        {
+          "rel": [
+            "stats",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:20~l:23&section=stats",
+          "text": "Stats"
+        },
+        {
+          "rel": [
+            "teams",
+            "desktop",
+            "league"
+          ],
+          "href": "https://www.espn.com/college-football/teams",
+          "text": "Teams"
+        },
+        {
+          "rel": [
+            "odds",
+            "desktop",
+            "league"
+          ],
+          "href": "https://www.espn.com/college-football/odds",
+          "text": "Odds"
+        },
+        {
+          "rel": [
+            "odds",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:20~l:23&section=odds",
+          "text": "Odds"
+        }
+      ],
+      "logos": [
+        {
+          "href": "https://a.espncdn.com/redesign/assets/img/icons/NCAASports_Football.png",
+          "rel": [
+            "full",
+            "default"
+          ]
+        },
+        {
+          "href": "https://a.espncdn.com/redesign/assets/img/icons/NCAASports_Football.png",
+          "rel": [
+            "full",
+            "dark"
+          ]
+        }
+      ]
+    },
+    "gameNote": "FLEX: 3:30 - 4:30pm OR 6 - 8pm ET start"
+  },
+  "gameInfo": {
+    "venue": {
+      "id": "3795",
+      "guid": "ed368c25-4c25-396a-bbc3-2290a6356034",
+      "fullName": "Kyle Field",
+      "address": {
+        "city": "College Station",
+        "state": "TX",
+        "zipCode": "77840",
+        "country": "USA"
+      },
+      "grass": true,
+      "images": [
+        {
+          "href": "https://a.espncdn.com/i/venues/college-football/day/3795.jpg",
+          "width": 2000,
+          "height": 1125,
+          "alt": "",
+          "rel": [
+            "full",
+            "day"
+          ]
+        },
+        {
+          "href": "https://a.espncdn.com/i/venues/college-football/day/interior/3795.jpg",
+          "width": 2000,
+          "height": 1125,
+          "alt": "",
+          "rel": [
+            "full",
+            "day",
+            "interior"
+          ]
+        }
+      ]
+    },
+    "weather": {
+      "temperature": 52,
+      "highTemperature": 52,
+      "lowTemperature": 52,
+      "conditionId": "33",
+      "gust": 7,
+      "precipitation": 0,
+      "link": {
+        "language": "en-US",
+        "rel": [
+          "77840"
+        ],
+        "href": "http://www.accuweather.com/en/us/kyle-field-tx/77840/hourly-weather-forecast/53650_poi?day=6&hbhhour=23&lang=en-us",
+        "text": "Weather",
+        "shortText": "Weather",
+        "isExternal": true,
+        "isPremium": false
+      }
+    }
+  },
+  "evidence": {
+    "source": "ESPN summary event 401856888 captured November 8, 2026",
+    "note": "Upcoming Tennessee at Texas A&M; used only as a rendering regression fixture."
+  }
+}
