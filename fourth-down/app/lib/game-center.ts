@@ -1,15 +1,25 @@
 /** ESPN summary adapter. Coordinates are offense-relative yards to goal, never ball tracking. */
 type Raw = Record<string, any>;
 export type PlayAnimation={kind:'pass'|'rush'|'punt'|'kickoff'|'field-goal'|'extra-point'|'ground';from:number;to:number;teamId:string;basis:'reported-spots'|'reported-kick-distance'|'confirmed-scoring-kick';result:string|null};
-export type FieldPlay = {id:string; text:string; clock:string; period:number|null; teamId:string|null; start:number|null; end:number|null; yards:number|null; downDistance:string|null; firstDown:number|null; trace:boolean;animation?:PlayAnimation|null;kickResult?:'Good'|'Missed'|'Blocked'|null;endTeamId?:string|null;endPosition?:number|null};
+export type FieldPlay = {id:string; text:string; clock:string; period:number|null; teamId:string|null; start:number|null; end:number|null; yards:number|null; downDistance:string|null; firstDown:number|null; trace:boolean;animation?:PlayAnimation|null;kickResult?:'Good'|'Missed'|'Blocked'|null;endTeamId?:string|null;endPosition?:number|null;stoppage?:string|null;wallclock?:string|null};
 export type GameSituation = {downDistance:string|null;possessionTeamId:string|null;basis:'provider'|'last-play'};
 export type FieldBranding = {kind:'home'|'neutral'|'unknown';teamName:string|null;logo:string|null;color:string|null};
-export type GameCenterData = {ballPosition?:{teamId:string;yardsToEndzone:number;firstDown:number|null;basis:'provider'|'last-play'}|null;currentDrive?:{id:string;teamId:string;description:string;plays:number|null;yards:number|null;elapsed:string|null}|null;situation:GameSituation|null;branding:FieldBranding;neutral:boolean|null; venue:string|null; homeTeamId:string|null; teams:{id:string;name:string;score:string;logo:string|null}[]; drives:{id:string;team:string;result:string;description:string;plays:FieldPlay[]}[]; teamStats:{teamId:string;name:string;stats:{label:string;value:string}[]}[]; playerStats:{teamId:string;groups:{name:string;labels:string[];players:{name:string;values:string[]}[]}[]}[]};
+export type GameCenterData = {stoppage?:string|null;latestPlayAt?:string|null;ballPosition?:{teamId:string;yardsToEndzone:number;firstDown:number|null;basis:'provider'|'last-play'}|null;currentDrive?:{id:string;teamId:string;description:string;plays:number|null;yards:number|null;elapsed:string|null}|null;situation:GameSituation|null;branding:FieldBranding;neutral:boolean|null; venue:string|null; homeTeamId:string|null; teams:{id:string;name:string;score:string;logo:string|null}[]; drives:{id:string;team:string;result:string;description:string;plays:FieldPlay[]}[]; teamStats:{teamId:string;name:string;stats:{label:string;value:string}[]}[]; playerStats:{teamId:string;groups:{name:string;labels:string[];players:{name:string;values:string[]}[]}[]}[]};
 const list=(v:unknown):any[]=>Array.isArray(v)?v:[];
 const rows=(v:unknown):Raw[]=>list(v).filter(x=>x!==null&&typeof x==='object');
 const id=(v:unknown):string|null=>/^[1-9]\d{0,11}$/.test(String(v))?String(v):null;
 const numericScore=(v:unknown):string=>{const x=typeof v==='object'&&v!==null?(v as Raw).value:v;return (typeof x==='number'||(typeof x==='string'&&/^\d+$/.test(x)))&&Number.isInteger(Number(x))&&Number(x)>=0?String(Number(x)):'—';};
-const administrative=(p:Raw)=>/end of|timeout|kick|punt|penalty/i.test(str(p?.type?.text));
+export function stoppageLabel(type:string,text:string):string|null {
+ const value=type+' '+text;
+ if(/injur(?:y|ed).*timeout|timeout.*injur/i.test(value))return 'Injury timeout';
+ if(/official.*timeout|TV timeout|media timeout/i.test(value))return 'Official timeout';
+ if(/timeout|time out/i.test(value))return text.trim()||'Team timeout';
+ if(/review|replay official/i.test(type)||/^(?:official review|replay review|play (?:is )?under review)\b/i.test(text))return 'Replay review';
+ if(/halftime|half time|end of (?:the )?(?:2nd|second) quarter|end of half/i.test(value))return 'Halftime';
+ if(/end of (?:the )?(?:quarter|[1-4](?:st|nd|rd|th) quarter)|end period/i.test(value))return 'End of quarter';
+ return null;
+}
+const administrative=(p:Raw)=>!!stoppageLabel(str(p?.type?.text),str(p?.text))||/end of|kick|punt|penalty/i.test(str(p?.type?.text));
 function downText(s:Raw){const supplied=str(s?.downDistanceText)||str(s?.shortDownDistanceText);if(supplied)return supplied;return Number.isInteger(s?.down)&&s.down>=1&&s.down<=4&&typeof s?.distance==='number'&&s.distance>=0&&s.distance<=100?`${['','1st','2nd','3rd','4th'][s.down]} & ${s.distance}`:null;}
 
 const str=(v:unknown)=>typeof v==='string'?v.slice(0,1200):'';
@@ -23,7 +33,7 @@ export function normalizeFieldPlay(p:Raw):FieldPlay|null {
  // Administrative plays, penalties and possession changes cannot safely describe a gain trajectory.
  const consistent=typeof p.statYardage!=='number'||(start!==null&&end!==null&&Math.abs(start-end-p.statYardage)<0.01);
  const trace=consistent&&start!==null&&end!==null&&sameTeam&&p.isTurnover!==true&&p.isPenalty!==true&&!!str(p.type?.text)&&!administrative(p);
- return {id:p.id,text:str(p.text),clock:str(p.clock?.displayValue),period:Number.isInteger(p.period?.number)?p.period.number:null,teamId,start,end,
+ return {stoppage:stoppageLabel(str(p.type?.text),str(p.text)),wallclock:Number.isFinite(Date.parse(p.wallclock))?p.wallclock:null,id:p.id,text:str(p.text),clock:str(p.clock?.displayValue),period:Number.isInteger(p.period?.number)?p.period.number:null,teamId,start,end,
  yards:typeof p.statYardage==='number'&&Number.isFinite(p.statYardage)?p.statYardage:null,downDistance:downText(p.start),
  animation:normalizePlayAnimation(p,trace,start,end,teamId),kickResult:/^(Field Goal|Extra Point) Good$/i.test(str(p.type?.text))?'Good':/field goal|extra point/i.test(str(p.type?.text))?(/block/i.test(str(p.type?.text)+' '+str(p.text))?'Blocked':/miss|no good|failed/i.test(str(p.type?.text)+' '+str(p.text))?'Missed':null):null,endTeamId:id(p.end?.team?.id),endPosition:Number.isInteger(p.end?.down)&&p.end.down>=1&&p.end.down<=4?end:null,
  firstDown:!administrative(p)&&start!==null&&distance!==null?Math.max(0,start-distance):null,trace};
@@ -32,7 +42,7 @@ export function normalizeFieldPlay(p:Raw):FieldPlay|null {
 /** Arcs are decorative. Only reported spots/distances or a confirmed goal-plane crossing supply endpoints. */
 function normalizePlayAnimation(p:Raw,trace:boolean,start:number|null,end:number|null,teamId:string|null):PlayAnimation|null {
  const type=str(p.type?.text),text=str(p.text);
- if(start===null||!teamId||p.isPenalty===true||p.isTurnover===true||/\bpenalty\b/i.test(text))return null;
+ if(stoppageLabel(type,text)||start===null||!teamId||p.isPenalty===true||p.isTurnover===true||/\bpenalty\b/i.test(text))return null;
  const base={from:start,teamId,result:null as string|null};
  if(/^(Field Goal|Extra Point) Good$/i.test(type)){
   const fieldGoal=/^Field Goal/i.test(type),reported=text.match(/(?:attempt from|field goal from) (\d{1,3}) yards?/i);
@@ -75,10 +85,19 @@ export function normalizeGameCenter(raw:Raw):GameCenterData {
   if(!situation){const last=all.flatMap(d=>rows(d?.plays)).at(-1);if(last&&normalizeFieldPlay(last)?.trace&&downText(last.end)){const endTeam=id(last.end?.team?.id);situation={downDistance:downText(last.end),possessionTeamId:teams.some(t=>t.id===endTeam)?endTeam:null,basis:'last-play'};}}
  }
  const latest=drives.flatMap(d=>d.plays).at(-1);
+ const status=c?.status||raw.header?.status;
+ const stoppage=stoppageLabel(str(status?.type?.name),str(status?.type?.detail))||latest?.stoppage||null;
+ // A timeout/review can omit situation coordinates. Retain only the last reported
+ // end spot for the same possession, never a kick/turnover's old snap spot.
+ const contextPlay=all.flatMap(d=>rows(d?.plays)).filter(p=>!stoppageLabel(str(p?.type?.text),str(p?.text))).at(-1);
+ if(!situation&&stoppage&&status?.type?.state==='in'&&contextPlay&&normalizeFieldPlay(contextPlay)?.trace&&downText(contextPlay.end)){
+ const endTeam=id(contextPlay.end?.team?.id);if(teams.some(t=>t.id===endTeam))situation={downDistance:downText(contextPlay.end),possessionTeamId:endTeam,basis:'last-play'};
+ }
+
  if(latest?.kickResult&&situation?.possessionTeamId===latest.teamId&&situation.downDistance===latest.downDistance)situation=null;
  let ballPosition:GameCenterData['ballPosition']=null,currentDrive:GameCenterData['currentDrive']=null;
  if(situation?.possessionTeamId){
-  const teamId=situation.possessionTeamId,source=c?.situation||raw.situation,last=all.flatMap(d=>rows(d?.plays)).at(-1);
+  const teamId=situation.possessionTeamId,source=c?.situation||raw.situation,last=stoppage?contextPlay:all.flatMap(d=>rows(d?.plays)).at(-1);
   const direct=yard(source?.yardsToEndzone),lastEnd=yard(last?.end?.yardsToEndzone);
   const target=(spot:number,d:unknown)=>typeof d==='number'&&Number.isFinite(d)&&d>=0&&d<=100?Math.max(0,spot-d):null;
   if(direct!==null)ballPosition={teamId,yardsToEndzone:direct,firstDown:target(direct,source?.distance),basis:'provider'};
@@ -86,5 +105,5 @@ export function normalizeGameCenter(raw:Raw):GameCenterData {
   const d=raw.drives?.current;
   if(d?.id&&id(d.team?.id)===teamId)currentDrive={id:String(d.id),teamId,description:str(d.description),plays:Number.isInteger(d.offensivePlays)&&d.offensivePlays>=0?d.offensivePlays:null,yards:typeof d.yards==='number'&&Number.isFinite(d.yards)?d.yards:null,elapsed:str(d.timeElapsed?.displayValue)||null};
  }
- return {ballPosition,currentDrive,situation,branding,teams,neutral,venue:str(raw.gameInfo?.venue?.fullName)||null,homeTeamId:rows(c?.competitors).find((t:Raw)=>t.homeAway==='home')?.team?.id||null,drives,teamStats,playerStats};
+ return {stoppage,latestPlayAt:latest?.wallclock||null,ballPosition,currentDrive,situation,branding,teams,neutral,venue:str(raw.gameInfo?.venue?.fullName)||null,homeTeamId:rows(c?.competitors).find((t:Raw)=>t.homeAway==='home')?.team?.id||null,drives,teamStats,playerStats};
 }
