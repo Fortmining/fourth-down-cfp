@@ -3,20 +3,28 @@ import {useEffect,useState,type RefObject} from 'react';
 type Point={x:number;y:number};
 type Goal={end:'left'|'right';anchor:Point;scale:number;heightScale:number};
 type Layout={width:number;height:number;goals:Goal[]};
-// A deliberately flat, recognizable football-goal silhouette. Every member uses
-// the same screen coordinates. No diagonal rear supports or perspective distortion.
+// Rotate the existing assembly around its vertical (height) axis. Camera depth
+// foreshortens the crossbar; upright members remain vertical in the image.
 const halfWidth=18.5/6,crossbarHeight=10/3,uprightHeight=10;
 export default function Goalpost({anchor,scale,heightScale,end}:Goal){
- const barY=anchor.y-crossbarHeight*heightScale,topY=anchor.y-uprightHeight*heightScale;
- const left=anchor.x-halfWidth*scale,right=anchor.x+halfWidth*scale;
+ const facing=end==='left'?-85:85;
+ const yaw=facing*Math.PI/180;
+ const project=(across:number,height:number)=>{
+  const depth=across*Math.sin(yaw),perspective=80/(80+depth);
+  return {x:anchor.x+across*Math.cos(yaw)*scale*perspective,
+   y:anchor.y+(depth*.35*scale-height*heightScale)*perspective};
+ };
+ const a=project(-halfWidth,crossbarHeight),b=project(halfWidth,crossbarHeight);
+ const topA=project(-halfWidth,uprightHeight),topB=project(halfWidth,uprightHeight);
+ const joint=project(0,crossbarHeight);
  const thickness=Math.max(2,.5*scale);
- return <g className="gcGoalpost" data-end={end} aria-hidden="true">
+ return <g className="gcGoalpost" data-end={end} data-facing-angle={facing} aria-hidden="true">
   <ellipse cx={anchor.x} cy={anchor.y} rx={scale*.7} ry={scale*.15} fill="#071b14" opacity=".7"/>
   <g fill="none" stroke="#ffdb4b" strokeWidth={thickness} strokeLinecap="round" strokeLinejoin="round">
-   <line className="gcGoalpostSupport" x1={anchor.x} y1={barY} x2={anchor.x} y2={anchor.y} strokeWidth={thickness}/>
-   <line className="gcGoalpostCrossbar" x1={left} y1={barY} x2={right} y2={barY}/>
-   <line className="gcGoalpostUpright" x1={left} y1={barY} x2={left} y2={topY}/>
-   <line className="gcGoalpostUpright" x1={right} y1={barY} x2={right} y2={topY}/>
+   <line className="gcGoalpostSupport" x1={joint.x} y1={joint.y} x2={anchor.x} y2={anchor.y} strokeWidth={thickness}/>
+   <line className="gcGoalpostCrossbar" x1={a.x} y1={a.y} x2={b.x} y2={b.y}/>
+   <line className="gcGoalpostUpright" x1={a.x} y1={a.y} x2={topA.x} y2={topA.y}/>
+   <line className="gcGoalpostUpright" x1={b.x} y1={b.y} x2={topB.x} y2={topB.y}/>
   </g>
  </g>;
 }
