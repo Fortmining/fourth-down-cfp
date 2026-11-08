@@ -23,7 +23,7 @@ export default function GameCenter({ id, fallbackGame }: {
     fallbackGame?: HeaderGame;
 }) {
     const [data, setData] = useState<GameCenterData | null>(null), [game, setGame] = useState<HeaderGame | null>(null), [error, setError] = useState(''), [selected, setSelected] = useState<string | null>(null), [observedAt, setObservedAt] = useState<string | null>(null), [tab, setTab] = useState<number>(0);
-    useEffect(() => { const controller = new AbortController(); let running = false; async function refresh() { if (running)
+    useEffect(() => { const controller = new AbortController(); let running = false, completed = false; async function refresh() { if (running)
         return; running = true; try {
         const r = await fetch(`/api/games/${encodeURIComponent(id)}`, { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12000)]) });
         if (!r.ok)
@@ -33,6 +33,7 @@ export default function GameCenter({ id, fallbackGame }: {
             throw Error();
         if (controller.signal.aborted)
             return;
+        completed = body.game.status === 'post';
         setData(body.center);
         setGame(body.game);
         setObservedAt(Number.isFinite(Date.parse(body.observedAt)) ? body.observedAt : null);
@@ -44,7 +45,7 @@ export default function GameCenter({ id, fallbackGame }: {
     }
     finally {
         running = false;
-    } } void refresh(); const stop = subscribeLiveRefresh(refresh); return () => { controller.abort(); stop(); }; }, [id]);
+    } } void refresh(); const stop = subscribeLiveRefresh(refresh,document,window,{intervalMs:15000,enabled:()=>!completed}); return () => { controller.abort(); stop(); }; }, [id]);
     const source = game || fallbackGame;
     const teams = [...(source?.teams || data?.teams || [])].sort((a, b) => ('homeAway' in a && a.homeAway === 'away' ? -1 : 'homeAway' in a && a.homeAway === 'home' ? 1 : 0) - ('homeAway' in b && b.homeAway === 'away' ? -1 : 'homeAway' in b && b.homeAway === 'home' ? 1 : 0));
     const plays = data?.drives.flatMap(d => d.plays) || [];
@@ -67,7 +68,7 @@ export default function GameCenter({ id, fallbackGame }: {
     <div>
     <strong>About this Gamecast</strong>
     <p>Schematic field with verified home-team branding where available, not actual stadium artwork. Spots are relative to the offense. Ground tracers connect reported spots. Aerial arcs are illustrative, never tracked flight: pass endpoints include the full play, kicks use reported kick distance, and successful scoring kicks target the goal plane. Returns and touchbacks are separate post-play spots. The field keeps a fixed team orientation.</p>
-    <p>{data?.situation?.basis === 'last-play' ? 'Situation is from the last reported play.' : 'ESPN data may be delayed or corrected.'} Updates every minute while visible and when you return.</p>
+    <p>{data?.situation?.basis === 'last-play' ? 'Situation is from the last reported play.' : 'ESPN data may be delayed or corrected.'} Checks every 15 seconds during live games while visible, and when you return.</p>
     <p>{observedAt ? `Checked ${new Date(observedAt).toLocaleTimeString(undefined, { timeZoneName: 'short' })}` : 'Check time unavailable'}</p>
     <a href={`https://www.espn.com/college-football/game/_/gameId/${id}`}>ESPN game coverage ↗</a>
     </div>
