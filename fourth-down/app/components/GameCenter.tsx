@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
+import {isOlderGamePacket} from '../lib/gamecast-freshness';
 import { subscribeLiveRefresh } from '../lib/live-refresh';
 import type { GameCenterData, FieldPlay, FieldBranding } from '../lib/game-center';
 import './game-center.css';
@@ -18,48 +19,58 @@ type HeaderGame = {
     }[];
 };
 const tabs = ['Plays', 'Drives', 'Team Stats', 'Players'] as const;
-export default function GameCenter({ id, fallbackGame }: {
+export default function GameCenter({ id, fallbackGame, refreshRevision=0 }: {
     id: string;
-    fallbackGame?: HeaderGame;
+    fallbackGame?: HeaderGame;refreshRevision?:number;
 }) {
     const [data, setData] = useState<GameCenterData | null>(null), [game, setGame] = useState<HeaderGame | null>(null), [error, setError] = useState(''), [selected, setSelected] = useState<string | null>(null), [observedAt, setObservedAt] = useState<string | null>(null), [tab, setTab] = useState<number>(0);
-    useEffect(() => { const controller = new AbortController(); let running = false, completed = false; async function refresh() { if (running)
-        return; running = true; try {
-        const r = await fetch(`/api/games/${encodeURIComponent(id)}`, { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12000)]) });
-        if (!r.ok)
-            throw Error();
-        const body = await r.json();
-        if (body.game?.id !== id || !body.center || !Array.isArray(body.center.drives) || !Array.isArray(body.center.teams) || !Array.isArray(body.center.teamStats) || !Array.isArray(body.center.playerStats))
-            throw Error();
-        if (controller.signal.aborted)
-            return;
-        completed = body.game.status === 'post';
-        setData(body.center);
-        setGame(body.game);
-        setObservedAt(Number.isFinite(Date.parse(body.observedAt)) ? body.observedAt : null);
-        setError('');
-    }
-    catch {
-        if (!controller.signal.aborted)
-            setError('Play details could not refresh. Any earlier plays remain visible.');
-    }
-    finally {
-        running = false;
-    } } void refresh(); const stop = subscribeLiveRefresh(refresh,document,window,{intervalMs:15000,enabled:()=>!completed}); return () => { controller.abort(); stop(); }; }, [id]);
+    const [checkedAt,setCheckedAt]=useState<number|null>(null),[recovering,setRecovering]=useState(false),[sourceCheckedAt,setSourceCheckedAt]=useState<string|null>(null);
+    useEffect(() => {
+      let running=false,completed=false,failures=0,lastRecovery=0,lastSuccess=Date.now();let previous:{period:number|null;latestPlayAt:string|null}|null=null;
+      const controller=new AbortController();
+      const refresh=async()=>{
+        if(running)return;running=true;
+        // Periodic shared-cache bypass verifies the source even if an old cache keeps
+        // returning HTTP 200. Unchanged plays during breaks are not labelled stale.
+        const recover=Date.now()-lastRecovery>=120000;
+        if(recover){lastRecovery=Date.now();setRecovering(true);}
+        const timeout=setTimeout(()=>controllerForRequest.abort(),12000);
+        const controllerForRequest=new AbortController();
+        const abort=()=>controllerForRequest.abort();controller.signal.addEventListener('abort',abort,{once:true});
+        try{
+          const r=await fetch(`/api/games/${encodeURIComponent(id)}${recover?'?recover=1':''}`,{cache:'no-store',signal:controllerForRequest.signal});
+          if(!r.ok)throw Error();const body=await r.json();
+          if(body.game?.id!==id||!body.center||!['drives','teams','teamStats','playerStats'].every(k=>Array.isArray(body.center[k])))throw Error();
+          if(controller.signal.aborted)return;
+          if(body.sourceCheckedAt&&(!Number.isFinite(Date.parse(body.sourceCheckedAt))||Date.now()-Date.parse(body.sourceCheckedAt)>90000))throw Error('Source verification is too old');
+          const progress={period:body.progress?.period??null,latestPlayAt:body.center.latestPlayAt??null};
+          if(!body.sourceCheckedAt&&isOlderGamePacket(previous,progress)){lastRecovery=0;throw Error('Regressed source snapshot');}
+          if(Date.now()-lastSuccess>90000||(previous?.period!==null&&previous?.period!==undefined&&progress.period!==null&&progress.period>previous.period))setSelected(null);
+          lastSuccess=Date.now();previous=progress;if(body.sourceCheckedAt)setSourceCheckedAt(body.sourceCheckedAt);
+          completed=body.game.status==='post';failures=0;
+          setData(body.center);setGame(body.game);setObservedAt(Number.isFinite(Date.parse(body.observedAt))?body.observedAt:null);setCheckedAt(Date.now());setError('');
+        }catch{if(!controller.signal.aborted){failures++;if(recover||failures>=2)lastRecovery=0;setError('Live update could not be verified. Showing the last received game data; retrying automatically.');}}
+        finally{clearTimeout(timeout);controller.signal.removeEventListener('abort',abort);running=false;if(!controller.signal.aborted)setRecovering(false);}
+      };
+      void refresh();const stop=subscribeLiveRefresh(refresh,document,window,{intervalMs:15000,enabled:()=>!completed});
+      const resume=()=>{if(!document.hidden){setSelected(null);completed=false;lastRecovery=0;void refresh();}};
+      document.addEventListener('visibilitychange',resume);window.addEventListener('pageshow',resume);
+      return()=>{controller.abort();stop();document.removeEventListener('visibilitychange',resume);window.removeEventListener('pageshow',resume);};
+    },[id,refreshRevision]);
     const source = game || fallbackGame;
     const teams = [...(source?.teams || data?.teams || [])].sort((a, b) => ('homeAway' in a && a.homeAway === 'away' ? -1 : 'homeAway' in a && a.homeAway === 'home' ? 1 : 0) - ('homeAway' in b && b.homeAway === 'away' ? -1 : 'homeAway' in b && b.homeAway === 'home' ? 1 : 0));
     const plays = data?.drives.flatMap(d => d.plays) || [];
-    const play = plays.find(p => p.id === selected) || plays.filter(p => p.animation || p.trace || p.kickResult).at(-1);
+    const play = source?.status==='pre'?undefined:plays.find(p => p.id === selected) || plays.at(-1);
     const branding = data?.branding || { kind: 'unknown', teamName: null, logo: null, color: null } as FieldBranding;
 
     const replay = Boolean(selected);
     const replaySpot=play?.endPosition!==null&&play?.endPosition!==undefined?{teamId:play.endTeamId||play.teamId,yardsToEndzone:play.endPosition}:play?.trace&&play.end!==null?{teamId:play.teamId,yardsToEndzone:play.end}:null;
-    const spot=replay||source?.status==='post'?replaySpot:data?.ballPosition||null;
+    const spot=source?.status==='pre'?null:replay||source?.status==='post'?replaySpot:data?.ballPosition||null;
     const markerTeam=data?.teams.find(t=>t.id===spot?.teamId);
     const marker=spot?.teamId?{...spot,teamId:spot.teamId,logo:markerTeam?.logo||null,name:markerTeam?.name||'Possession',firstDown:!replay&&source?.status==='in'?data?.ballPosition?.firstDown??null:null,label:replay||source?.status==='post'?'Replay possession':'Possession'}:null;
     const drive=!replay?data?.currentDrive:null;
     return <section className="gameCenter gcCast" aria-label="Gamecast">
-    <h2 className="gcSrOnly">Gamecast</h2>
+    <h2 className="gcSrOnly">Gamecast</h2><p className="gcRefreshStatus" role="status">{error|| (recovering?'Checking latest game data…':checkedAt?`Response received ${new Date(checkedAt).toLocaleTimeString()}${sourceCheckedAt?` · Source checked ${new Date(sourceCheckedAt).toLocaleTimeString()}`:''}`:'Connecting to game data…')}</p>
     <div className="gcBroadcast">
     <div className="gcKicker">
     <span>{data?.venue || 'GAMECAST'}{data?.neutral === true ? ' · NEUTRAL SITE' : ''}</span>
@@ -69,7 +80,7 @@ export default function GameCenter({ id, fallbackGame }: {
     <strong>About this Gamecast</strong>
     <p>Schematic field with verified home-team branding where available, not actual stadium artwork. Spots are relative to the offense. Ground tracers connect reported spots. Aerial arcs are illustrative, never tracked flight: pass endpoints include the full play, kicks use reported kick distance, and successful scoring kicks target the goal plane. Returns and touchbacks are separate post-play spots. The field keeps a fixed team orientation.</p>
     <p>{data?.situation?.basis === 'last-play' ? 'Situation is from the last reported play.' : 'ESPN data may be delayed or corrected.'} Checks every 15 seconds during live games while visible, and when you return.</p>
-    <p>{observedAt ? `Checked ${new Date(observedAt).toLocaleTimeString(undefined, { timeZoneName: 'short' })}` : 'Check time unavailable'}</p>
+    <p>{data?.latestPlayAt?`Latest provider play timestamp: ${new Date(data.latestPlayAt).toLocaleString()}. This is not the source publication time.`:'Provider play timestamp unavailable.'}</p><p>{observedAt ? `Checked ${new Date(observedAt).toLocaleTimeString(undefined, { timeZoneName: 'short' })}` : 'Check time unavailable'}</p>
     <a href={`https://www.espn.com/college-football/game/_/gameId/${id}`}>ESPN game coverage ↗</a>
     </div>
     </details>
@@ -77,7 +88,7 @@ export default function GameCenter({ id, fallbackGame }: {
     <div className="gcScoreboard">{teams.map((t, i) => <div className={`gcTeam gcTeam${i}`} key={t.id}>
         <a href={`/team/${t.id}`}>{t.logo && /^https:\/\/(?:[a-z0-9-]+\.)*espncdn\.com\//i.test(t.logo) ? <img src={t.logo} width="56" height="56" alt=""/> : <span className="gcMonogram">{t.name.slice(0, 2)}</span>}<span>
         <small>{'homeAway' in t ? t.homeAway || 'TEAM' : 'TEAM'}</small>
-        <b>{t.name}</b>{data?.situation?.possessionTeamId === t.id && <em>● Possession</em>}</span>
+        <b>{t.name}</b>{source?.status==='in'&&data?.situation?.possessionTeamId === t.id && <em>● Possession</em>}</span>
         </a>
         <strong>{source?.status === 'pre' ? '—' : t.score ?? '—'}</strong>
         </div>)}<div className="gcClock">
@@ -85,7 +96,8 @@ export default function GameCenter({ id, fallbackGame }: {
     <b>{source?.status === 'pre' ? (source.kickoffTbd ? 'Time TBD' : new Date(source.date).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) : source?.status === 'post' ? 'Game complete' : source?.detail || 'Status unavailable'}</b>
     </div>
     </div>
-    <div className="gcSituation">{data?.situation?.downDistance || (source?.status === 'post' ? 'Full time' : source?.status === 'pre' ? 'Kickoff ahead' : play?.kickResult ? `Kick ${play.kickResult.toLowerCase()} · awaiting next possession` : 'Waiting for the next update')}{data?.situation?.basis === 'last-play' && <small>Last reported play</small>}</div>
+    {selected&&<div className="gcReplayNotice">Viewing an earlier play — live score above <button onClick={()=>setSelected(null)}>Return to live</button></div>}
+    <div className="gcSituation">{source?.status==='pre'?'Awaiting Kickoff':data?.stoppage || data?.situation?.downDistance || (source?.status === 'post' ? 'Full time' : source?.status === 'pre' ? 'Awaiting Kickoff' : play?.kickResult ? `Kick ${play.kickResult.toLowerCase()} · awaiting next possession` : 'Waiting for the next update')}{data?.situation?.basis === 'last-play' && <small>Last reported play</small>}</div>
     </div>{error && <p className="gcNotice" role="status">{error}</p>}<div className="gcFieldStage">
     <div className="gcFieldPlane">
     <Field key={selected || 'latest'} play={play} branding={branding} marker={marker} referenceTeamId={data?.homeTeamId||data?.teams[0]?.id||null}/>
@@ -98,7 +110,7 @@ export default function GameCenter({ id, fallbackGame }: {
     <b>{branding.kind === 'home' ? branding.teamName : branding.kind === 'neutral' ? 'Neutral field' : 'Fourth Down'}</b>
     </div>
     </div>
-    <div className="gcSelected"><div className="gcDriveCard"><div><span>{replay?'SELECTED PLAY':drive?'CURRENT DRIVE':source?.status==='post'?'GAME COMPLETE':play?.kickResult&&!data?.situation?'AFTER THE KICK':'DRIVE UPDATE'}</span><b>{replay?play?.downDistance||'Reported play':data?.situation?.downDistance||(play?.kickResult?'Awaiting next possession':'Down & distance unavailable')}</b></div>{drive?<div className="gcDriveNumbers">{drive.plays!==null&&<span><b>{drive.plays}</b> plays</span>}{drive.yards!==null&&<span><b>{drive.yards}</b> yards</span>}{drive.elapsed&&<span><b>{drive.elapsed}</b> elapsed</span>}</div>:null}{drive?.description&&<p>{drive.description}</p>}</div>
+    <div className="gcSelected"><div className="gcDriveCard"><div><span>{replay?'SELECTED PLAY':drive?'CURRENT DRIVE':source?.status==='post'?'GAME COMPLETE':play?.kickResult&&!data?.situation?'AFTER THE KICK':'DRIVE UPDATE'}</span><b>{replay?play?.stoppage||play?.downDistance||'Reported play':source?.status==='pre'?'Awaiting Kickoff':data?.stoppage||data?.situation?.downDistance||(play?.kickResult?'Awaiting next possession':source?.status==='post'?'Game complete':'Awaiting provider game situation')}</b></div>{drive?<div className="gcDriveNumbers">{drive.plays!==null&&<span><b>{drive.plays}</b> plays</span>}{drive.yards!==null&&<span><b>{drive.yards}</b> yards</span>}{drive.elapsed&&<span><b>{drive.elapsed}</b> elapsed</span>}</div>:null}{drive?.description&&<p>{drive.description}</p>}{!replay&&data?.stoppage&&data.situation?.downDistance&&<p>Last reported situation: {data.situation.downDistance}</p>}</div>
     <div className="gcPlayMeta">
     <span>{selected ? 'REPLAY' : 'PREVIOUS PLAY'}{play ? ` · Q${play.period ?? '—'} ${play.clock}` : ''}</span>{selected && <button onClick={() => setSelected(null)}>Latest play</button>}</div>{play ? <>
         <div className="gcPlayHeadline">
@@ -179,7 +191,7 @@ function Field({ play, branding,marker,referenceTeamId }: {
     const restingX=marker?x(marker.yardsToEndzone,marker.teamId):null;
     const lineX=marker?.label==='Possession'?restingX:play?.start!==null&&play?.start!==undefined?x(play.start):null;
     const targetX=marker?.firstDown!==null&&marker?.firstDown!==undefined?x(marker.firstDown,marker.teamId):play?.firstDown!==null&&play?.firstDown!==undefined?x(play.firstDown):null;
-    return <svg viewBox="-5 -4 130 62" role="img" aria-label={play ? `Schematic field positions for selected play. ${play.animation ? 'Illustrative play path, not tracked ball flight.' : play.trace ? 'Reported start and end spots.' : 'Position data unavailable.'}` : 'Football field. Awaiting verified play positions.'}>
+    return <><svg viewBox="-5 -4 130 62" role="img" aria-label={play ? `Schematic field positions for selected play. ${play.animation ? 'Illustrative play path, not tracked ball flight.' : play.trace ? 'Reported start and end spots.' : 'Position data unavailable.'}` : 'Football field. Awaiting verified play positions.'}>
     <defs>
     <linearGradient id="gcTurf" x2="0" y2="1">
     <stop stopColor="#237c4e"/>
@@ -196,12 +208,7 @@ function Field({ play, branding,marker,referenceTeamId }: {
     <g stroke="#fff" strokeWidth=".25" opacity=".8">{Array.from({ length: 11 }, (_, i) => <line key={i} x1={10 + i * 10} x2={10 + i * 10} y1="0" y2="54"/>)}{Array.from({ length: 101 }, (_, i) => <g key={i}>{[1, 22, 31, 52].map(y => <line key={y} x1={10 + i} x2={10 + i} y1={y} y2={y + 1}/>)}</g>)}</g>{[10, 20, 30, 40, 50, 40, 30, 20, 10].map((n, i) => <g key={i} fill="#fff" opacity=".8" fontSize="3" fontWeight="700">
         <text x={20 + i * 10} y="9" textAnchor="middle">{n}</text>
         <text x={20 + i * 10} y="47" textAnchor="middle" transform={`rotate(180 ${20 + i * 10} 46)`}>{n}</text>
-        </g>)}{branding.logo ? <image href={branding.logo} x="53" y="20" width="14" height="14" opacity=".65"/> : <text x="60" y="29" textAnchor="middle" fontSize="4" fontWeight="900" fill="white" opacity=".35">4TH DOWN</text>}{lineX!==null&&<line className="gcScrimmage" x1={lineX} x2={lineX} y1="0" y2="54" stroke="#67c8ff" strokeWidth=".65"/>}{targetX!==null&&<line className="gcFirstDown" x1={targetX} x2={targetX} y1="0" y2="54" stroke="#ffdb4c" strokeWidth=".8"/>}{[0,120].map(goalX => <g key={goalX} className="gcGoalpost" aria-hidden="true"
-      data-goal-x={goalX} stroke="#ffdc57" strokeWidth=".65" strokeLinecap="round" strokeLinejoin="round" fill="none">
-      <ellipse cx={goalX} cy="27" rx="1" ry=".45" fill="#102a20" stroke="none"/>
-      <path className="gcGoalSupport" d={`M ${goalX} 27 V 20`}/>
-      <path className="gcGoalUprights" d={`M ${goalX-2.82} 10 V 20 H ${goalX+2.82} V 10`}/>
-    </g>)}
+        </g>)}{branding.logo ? <image href={branding.logo} x="53" y="20" width="14" height="14" opacity=".65"/> : <text x="60" y="29" textAnchor="middle" fontSize="4" fontWeight="900" fill="white" opacity=".35">4TH DOWN</text>}{lineX!==null&&<line className="gcScrimmage" x1={lineX} x2={lineX} y1="0" y2="54" stroke="#67c8ff" strokeWidth=".65"/>}{targetX!==null&&<line className="gcFirstDown" x1={targetX} x2={targetX} y1="0" y2="54" stroke="#ffdb4c" strokeWidth=".8"/>}
     {motion&&play&&<g key={`motion-${play.id}`}><path className={`gcTracer ${aerial?'gcAerialTracer':''}`} pathLength="1" d={path} stroke={aerial?'#a8e8ff':gain?'#b6ff6b':'#ff927f'} strokeWidth={aerial?'1':'2'} strokeLinecap="round" fill="none"/>
     <circle cx={x(motion.from,motion.teamId)} cy="27" r=".8" fill="white"/>{['field-goal','extra-point'].includes(motion.kind)&&<circle className="gcGoalTarget" cx={x(motion.to,motion.teamId)} cy="15" r=".9" fill="#ffdc57"/>}
     <g className="gcBall" filter="url(#gcBallShadow)"><animateMotion ref={beginPlayAnimation} begin="indefinite" path={path} dur="1.15s" fill="freeze"/><Football/></g></g>}
@@ -209,7 +216,7 @@ function Field({ play, branding,marker,referenceTeamId }: {
     {marker&&restingX!==null&&<g className="gcPossessionMarker" style={{transform:`translate(${restingX}px,27px)`}} role="img" aria-label={`${marker.label}: ${marker.name}, ${marker.yardsToEndzone} yards to opponent goal`}>
     <path d="M -3.4 -12 H 3.4 V -5 L 0 -2.8 L -3.4 -5 Z" fill="#fff" stroke="#edb82e" strokeWidth=".5"/>
     {marker.logo?<image href={marker.logo} x="-2.7" y="-11.4" width="5.4" height="5.4"/>:<text x="0" y="-7.5" fontSize="2.2" textAnchor="middle" fill="#14243b">{marker.name.slice(0,2).toUpperCase()}</text>}
-    </g>}</svg>;
+    </g>}</svg>{['left','right'].map(side=><div key={side} className={`gcStandingGoal gcStandingGoal-${side}`} aria-hidden="true"><svg viewBox="0 0 20 40"><path className="gcGoalSupport" d={side==='left'?'M 5 39 V 34 Q 5 30 10 28':'M 15 39 V 34 Q 15 30 10 28'}/><path className="gcGoalUprights" d="M 1 2 V 28 H 19 V 2"/></svg></div>)}</>;
 }
 function beginPlayAnimation(animation:SVGElement|null){if(animation)(animation as SVGAnimationElement).beginElement();}
 function Football(){return <><ellipse rx="3" ry="1.8" fill="#a95126" stroke="#fff0d6" strokeWidth=".4"/><path d="M -1.2 0 H 1.2 M -.7 -.6 V .6 M 0 -.6 V .6 M .7 -.6 V .6" stroke="white" strokeWidth=".25"/></>;}
