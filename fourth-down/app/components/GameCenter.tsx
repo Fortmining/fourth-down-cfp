@@ -194,7 +194,7 @@ function Field({ play, branding,marker,referenceTeamId }: {
     const restingX=marker?x(marker.yardsToEndzone,marker.teamId):null;
     const lineX=marker?.label==='Possession'?restingX:play?.start!==null&&play?.start!==undefined?x(play.start):null;
     const targetX=marker?.firstDown!==null&&marker?.firstDown!==undefined?x(marker.firstDown,marker.teamId):play?.firstDown!==null&&play?.firstDown!==undefined?x(play.firstDown):null;
-    return <svg viewBox="-5 -4 130 62" role="img" aria-label={play ? `Schematic field positions for selected play. ${play.animation ? 'Illustrative play path, not tracked ball flight.' : play.trace ? 'Reported start and end spots.' : 'Position data unavailable.'}` : 'Football field. Awaiting verified play positions.'}>
+    return <svg viewBox="-10 -4 140 62" role="img" aria-label={play ? `Schematic field positions for selected play. ${play.animation ? 'Illustrative play path, not tracked ball flight.' : play.trace ? 'Reported start and end spots.' : 'Position data unavailable.'}` : 'Football field. Awaiting verified play positions.'}>
     <defs>
     <linearGradient id="gcTurf" x2="0" y2="1">
     <stop stopColor="#237c4e"/>
@@ -219,7 +219,7 @@ function Field({ play, branding,marker,referenceTeamId }: {
     {marker&&restingX!==null&&<g className="gcPossessionMarker" style={{transform:`translate(${restingX}px,27px)`}} role="img" aria-label={`${marker.label}: ${marker.name}, ${marker.yardsToEndzone} yards to opponent goal`}>
     <path d="M -3.4 -12 H 3.4 V -5 L 0 -2.8 L -3.4 -5 Z" fill="#fff" stroke="#edb82e" strokeWidth=".5"/>
     {marker.logo?<image href={marker.logo} x="-2.7" y="-11.4" width="5.4" height="5.4"/>:<text x="0" y="-7.5" fontSize="2.2" textAnchor="middle" fill="#14243b">{marker.name.slice(0,2).toUpperCase()}</text>}
-    </g>}{[0,120].map((goal,i)=><g key={goal} aria-hidden="true"><circle data-goal-anchor={i===0?'left':'right'} cx={goal} cy="27" r=".001" opacity="0"/><circle data-goal-air={i===0?'left':'right'} cx={goal} cy="15" r=".001" opacity="0"/><circle data-goal-foot={i===0?'left':'right'} cx={goal+(i===0?-2.4:2.4)} cy="27" r=".001" opacity="0"/></g>)}</svg>;
+    </g>}{[0,120].map((goal,i)=><g key={goal} aria-hidden="true"><circle data-goal-anchor={i===0?'left':'right'} cx={goal} cy="27" r=".001" opacity="0"/><circle data-goal-air={i===0?'left':'right'} cx={goal} cy="15" r=".001" opacity="0"/></g>)}</svg>;
 }
 function beginPlayAnimation(animation:SVGElement|null){if(animation)(animation as SVGAnimationElement).beginElement();}
 function Football(){return <><ellipse rx="3" ry="1.8" fill="#a95126" stroke="#fff0d6" strokeWidth=".4"/><path d="M -1.2 0 H 1.2 M -.7 -.6 V .6 M 0 -.6 V .6 M .7 -.6 V .6" stroke="white" strokeWidth=".25"/></>;}
