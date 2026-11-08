@@ -18,6 +18,7 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
   if(String(header?.id)!==id||header.season?.year!==2026)throw Error('Unverified game');
   const c=header.competitions?.[0];const game=normalizeTeamGame({...header,date:c?.date});
   if(!game)throw Error('Game unavailable');
-  return NextResponse.json({sourceCheckedAt:verified?.sourceCheckedAt||null,progress:{period:Number.isInteger(c?.status?.period)?c.status.period:null},game,watch:watchDestination(Array.isArray(header.links)?header.links:[],game.broadcast??''),center:normalizeGameCenter(raw),observedAt:new Date().toISOString()},{headers:{'Cache-Control':recovery?'public, s-maxage=10, stale-while-revalidate=5':game.status==='post'?'public, s-maxage=300, stale-while-revalidate=60':'public, s-maxage=10, stale-while-revalidate=5'}});
+  const center=normalizeGameCenter(raw);const period=Number.isInteger(c?.status?.period)?c.status.period:center.drives.flatMap(d=>d.plays).at(-1)?.period??null;
+  return NextResponse.json({sourceCheckedAt:verified?.sourceCheckedAt||null,progress:{period},game,watch:watchDestination(Array.isArray(header.links)?header.links:[],game.broadcast??''),center,observedAt:new Date().toISOString()},{headers:{'Cache-Control':recovery?'public, s-maxage=10, stale-while-revalidate=5':game.status==='post'?'public, s-maxage=300, stale-while-revalidate=60':'public, s-maxage=10, stale-while-revalidate=5'}});
  }catch{return NextResponse.json({error:'Game details unavailable. Please retry.'},{status:503,headers:{'Cache-Control':'no-store'}});}
 }
