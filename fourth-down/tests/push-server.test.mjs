@@ -16,11 +16,12 @@ const require=createRequire(import.meta.url);
 const env={UPSTASH_REDIS_REST_URL:'https://test-redis.invalid',UPSTASH_REDIS_REST_TOKEN:'test-only',VAPID_PUBLIC_KEY:'test',VAPID_PRIVATE_KEY:'test',VAPID_SUBJECT:'https://fourth-down-cfp.vercel.app',CRON_SECRET:'test-secret'};
 function harness({resumePublisher,releaseEnabled=false}={}) {
  let sendError=null,auditError=false,feedError=false;const news=[];
- const values=new Map(),hashes=new Map(),lists=new Map();const sent=[];
+ const values=new Map(),hashes=new Map(),lists=new Map();const sent=[], commands=[];
  let feed={season:2026,updatedAt:new Date().toISOString(),games:[],polls:[]};
  const json=(body,init)=>new Response(JSON.stringify(body),{status:init?.status||200,headers:init?.headers});
  function command(args){
   const [raw,key,...rest]=args,op=raw.toUpperCase();
+  commands.push({op,key,operations:1+(op==='EVAL'?(key.match(/redis\.call\(/gi)||[]).length:0)});
   if(op==='LPUSH'){if(auditError)throw Error('Isolated audit failure');const list=lists.get(key)||[];list.unshift(rest[0]);lists.set(key,list);return list.length;}
   if(op==='LTRIM'){lists.set(key,(lists.get(key)||[]).slice(Number(rest[0]),Number(rest[1])+1));return 'OK';}
   if(op==='LRANGE')return (lists.get(key)||[]).slice(Number(rest[0]),Number(rest[1])+1);
@@ -61,7 +62,7 @@ function harness({resumePublisher,releaseEnabled=false}={}) {
  const testDelivery=load('app/api/alerts/test/route.ts',sender);
  const receipt=load('app/api/alerts/receipt/route.ts');
  const verification=load('app/api/alerts/verification/route.ts');
- return {inbox,verification,news,setFeedError(value){feedError=value;},setAuditError(value){auditError=value;},setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,lists,sent,setFeed(next){feed=next;},command};
+ return {inbox,verification,news,setFeedError(value){feedError=value;},setAuditError(value){auditError=value;},setSendError(error){sendError=error;},testDelivery,receipt,store,subscription,config,dispatcher,values,hashes,lists,sent,commands,setFeed(next){feed=next;},command};
 }
 const request=(data,origin='https://fourth-down-cfp.vercel.app')=>new Request('https://fourth-down-cfp.vercel.app/api/alerts/subscription',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(data)});
 const endpoint={endpoint:'https://fcm.googleapis.com/fcm/send/test',keys:{p256dh:'B'.repeat(87),auth:'A'.repeat(22)}};
@@ -91,7 +92,7 @@ test('protected dispatch coalesces favorite final and breaking upset, dedupes re
  h.setFeed({season:2026,updatedAt:new Date(Date.now()+10).toISOString(),games:[{...game,status:'post',completed:true,providerStatus:'STATUS_FINAL',teams:[{...game.teams[0],winner:true},game.teams[1]]}],polls:[]});
  assert.equal((await run(h)).status,200);assert.equal(h.sent.length,1);assert.equal(h.sent[0].payload.id,'game:g1:final');
  // Simulate overlapping/repeated checks with the same preceding snapshot.
- h.values.set('fd:v05:baseline',JSON.stringify({season:2026,updatedAt:new Date(baselineTime).toISOString(),games:[game],polls:[]}));await run(h);assert.equal(h.sent.length,1);
+ h.values.set('fd:v05:baseline',JSON.stringify({season:2026,updatedAt:new Date(baselineTime).toISOString(),games:[game],polls:[]}));h.commands.length=0;await run(h);printCommandCount('duplicate final',h);assert.equal(h.sent.length,1);
  await h.subscription.POST(request({action:'delete',...created}));
  h.values.set('fd:v05:baseline',JSON.stringify({season:2026,updatedAt:new Date(baselineTime).toISOString(),games:[game],polls:[]}));await run(h);assert.equal(h.sent.length,1);
 });
@@ -376,7 +377,7 @@ test('Tennessee permanent-favorite pipeline sends each opted-in game type withou
   const record=await h.store.loadSubscription(cap.id);record.kickoffAccess.favorites['2633']=now-86400000;record.kickoffAccess.favoriteEnabledAt=now-86400000;h.hashes.get(h.store.SUBS).set(cap.id,JSON.stringify(record));
   const live={...base,status:'in',providerStatus:'STATUS_IN_PROGRESS',period:type==='kickoff'?1:type==='close'?4:2,clock:type==='kickoff'?899.95:type==='close'?299:480};
   const next=type==='final'?{...live,status:'post',providerStatus:'STATUS_FINAL',completed:true}:type==='halftime'?{...live,providerStatus:'STATUS_HALFTIME',clock:0}:type==='scoring'?{...live,teams:[{...teams[0],score:'7'},teams[1]]}:live;
-  h.setFeed(snapshot([next],[],10));assert.equal((await run(h)).status,200,type);assert.equal(h.sent.length,1,type);assert.deepEqual(h.sent[0].payload.types,[type]);assert.equal(h.sent[0].options.urgency,type==='kickoff'?'high':'normal');assert.ok(h.sent[0].options.TTL>0&&h.sent[0].options.TTL<=300);
+  h.commands.length=0;h.setFeed(snapshot([next],[],10));assert.equal((await run(h)).status,200,type);printCommandCount(type,h);assert.equal(h.sent.length,1,type);assert.deepEqual(h.sent[0].payload.types,[type]);assert.equal(h.sent[0].options.urgency,type==='kickoff'?'high':'normal');assert.ok(h.sent[0].options.TTL>0&&h.sent[0].options.TTL<=300);
   const saved=await h.store.loadSubscription(cap.id);assert.equal(saved.preferences.following.enabled,false);assert.equal(saved.preferences.following.items.length,0);
   const attempt=h.lists.get(`fd:v083:game-delivery:${cap.id}:401856731`).map(JSON.parse).find(e=>e.kind==='provider-send-attempt');assert.deepEqual(attempt.favoriteTeamIds,['2633']);assert.equal(attempt.myTeams.enabled,true);
  }
@@ -439,4 +440,36 @@ test('oversized audit entries are bounded without mutating source',()=>{
 });
 test('audit recovery and concurrent writers stay bounded',async()=>{
  const h=harness();h.lists.set('fd:v06:scheduler',Array(10072).fill('{}'));await Promise.all(Array.from({length:12},(_,i)=>h.store.appendSchedulerAudit({kind:'concurrent',runId:String(i)})));assert.ok(h.lists.get('fd:v06:scheduler').length<=512);
+});
+
+function printCommandCount(label,h){
+ const operations=h.commands.reduce((sum,command)=>sum+command.operations,0);
+ console.log(`Redis ${label}: ${h.commands.length} requests, ${operations} operations including Lua calls (conservative)`);
+ return operations;
+}
+test('quiet, scheduled and overlapping dispatches have bounded Redis usage',async()=>{
+ for(const scheduled of [false,true]){
+  const h=harness(),now=Date.now();
+  const games=scheduled?[{id:'123456789',date:new Date(now+600000).toISOString(),status:'pre',providerStatus:'STATUS_SCHEDULED',teams:[{id:'1',name:'Favorite'},{id:'2',name:'Rival'}]}]:[];
+  h.values.set('fd:v05:heartbeat',String(now));
+  for(const suffix of ['a','b','c']){
+   const preferences=alerts.defaultAlertPreferences();
+   preferences.favorites=[{id:'1',name:'Favorite'}];
+   preferences.myTeams={enabled:true,kickoff:true,final:true};
+   await subscribe(h,preferences,suffix);
+  }
+  h.values.set('fd:v05:baseline',JSON.stringify(snapshot(games,[],-5000)));
+  h.values.set('fd:v05:last-check',JSON.stringify({at:new Date().toISOString()}));
+  h.setFeed(snapshot(games));
+  h.commands.length=0;
+  assert.equal((await run(h)).status,200);
+  assert.ok(printCommandCount(scheduled?'scheduled unchanged':'quiet',h)<=19);
+  assert.ok(h.values.has('fd:v05:heartbeat'));
+  assert.equal(h.sent.length,0);
+  h.commands.length=0;
+  h.values.set('fd:v05:dispatch-lock','another-worker');
+  const skipped=await run(h);
+  assert.equal((await skipped.json()).skipped,'Already running');
+  assert.equal(printCommandCount('overlapping',h),6);
+ }
 });
