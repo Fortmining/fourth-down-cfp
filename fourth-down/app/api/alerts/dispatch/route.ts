@@ -38,6 +38,9 @@ export async function GET(request:Request) {
   const previous=await redis('GET','fd:v05:baseline');
   const prior=previous?JSON.parse(previous) as AlertFeed:null;const observedAt=Date.now();
   const precedingCheck=await redis('GET','fd:v05:last-check');
+  const previousRun=precedingCheck?JSON.parse(precedingCheck):null;
+  const auditInterval=30*60_000;
+  const periodicAudit=!Number.isFinite(Date.parse(previousRun?.at))||Math.floor(observedAt/auditInterval)!==Math.floor(Date.parse(previousRun.at)/auditInterval);
   const context={sourceFetch:feed.sourceFetch??null,previousFeedAt:prior?.updatedAt??null,currentFeedAt:feed.updatedAt,baselineAgeMs:prior?observedAt-Date.parse(prior.updatedAt):null,currentFeedAgeMs:observedAt-Date.parse(feed.updatedAt),pollGapMs:precedingCheck?observedAt-Date.parse(JSON.parse(precedingCheck).at):null,feedGate:alertFeedGate(prior,feed,observedAt),warnings:feed.warnings??[],scoreboardAvailable:feed.scoreboardAvailable??null,scoreboardDate:feed.scoreboardDate??null};
   stage='kickoff-recovery';
   let recovery:ReturnType<typeof recoverKickoffs>|null=null;
@@ -74,7 +77,11 @@ export async function GET(request:Request) {
    merged.set(e.id,!old?e:e.types.some(t=>t.startsWith('pulse'))?{...old,discovery:e.discovery??old.discovery,pulseContent:{title:e.title,body:e.body,url:e.url,expiresAt:e.expiresAt},types:combined}:{...old,...e,types:combined});
   }
   const events=[...merged.values()].sort((a,b)=>Number(b.types.includes('final')||b.types.includes('confirmedUpset'))-Number(a.types.includes('final')||a.types.includes('confirmedUpset')));
-  stage='record-feed';await schedulerAudit({kind:'feed-observed',gameAlertGate:gameAlerts?.gate??'storage-unavailable',kickoffRecoveryGate:recovery?.gate??'storage-unavailable',kickoffRecovery:recovery?.decisions??{},...context,currentGameCount:feed.games.length,previousGameCount:prior?.games.length??0,games:kickoffFeedObservations(prior,feed,observedAt),eventIds:events.map(e=>e.id)});
+  stage='record-feed';
+  const feedObservations=kickoffFeedObservations(prior,feed,observedAt);
+  const statusChanged=feedObservations.some(({previous,current})=>previous?.status!==current?.status||previous?.providerStatus!==current?.providerStatus);
+  const recordDetailedRun=periodicAudit||statusChanged||events.length>0||!auditHealthy||context.feedGate!=='ready'||context.warnings.length>0;
+  if(recordDetailedRun)await schedulerAudit({kind:'feed-observed',gameAlertGate:gameAlerts?.gate??'storage-unavailable',kickoffRecoveryGate:recovery?.gate??'storage-unavailable',kickoffRecovery:recovery?.decisions??{},...context,currentGameCount:feed.games.length,previousGameCount:prior?.games.length??0,games:feedObservations,eventIds:events.map(e=>e.id)});
   if(previous&&Date.now()-Date.parse(JSON.parse(previous).updatedAt)>300_000)await deliveryAudit('_scheduler',{kind:'baseline-gap',previousAt:JSON.parse(previous).updatedAt,currentAt:feed.updatedAt});
   webpush.setVapidDetails(process.env.VAPID_SUBJECT!,process.env.VAPID_PUBLIC_KEY!,process.env.VAPID_PRIVATE_KEY!);
   let sent=0,failed=0;
@@ -85,7 +92,10 @@ export async function GET(request:Request) {
    const [next,items]=await redis('HSCAN',SUBS,cursor,'COUNT',100);cursor=next;
    for(let i=0;i<items.length;i+=2){
     const record=JSON.parse(items[i+1]) as SavedSubscription;scanned++;const deliveredGames=new Set<string>();
-    for(const observation of kickoffObservations(prior,feed,record,observedAt)){if(!await appendKickoffAudit(record.id,observation.gameId,{kind:'kickoff-observed',runId,...context,...observation,recovery:recovery?.decisions[observation.gameId]??null}))auditHealthy=false;}
+    for(const observation of kickoffObservations(prior,feed,record,observedAt)){
+     const {previous,current}=observation;
+     if(!periodicAudit&&previous?.status===current?.status&&previous?.providerStatus===current?.providerStatus&&!events.some(event=>event.id===`game:${observation.gameId}:kickoff`))continue;
+     if(!await appendKickoffAudit(record.id,observation.gameId,{kind:'kickoff-observed',runId,...context,...observation,recovery:recovery?.decisions[observation.gameId]??null}))auditHealthy=false;}
     for(const event of events){
      // Re-read immediately before delivery so settings/unsubscribe take effect.
      const current=await loadSubscription(record.id);if(!current)continue;
@@ -137,6 +147,8 @@ export async function GET(request:Request) {
       // a notification that a provider may already have accepted.
      }
     }
+    const follows=record.preferences.following;
+    if(!follows?.items.length||remainingFollows(record.preferences,feed.games).length===follows.items.length)continue;
     const latest=await loadSubscription(record.id);
     if(latest?.preferences.following){
      const items=remainingFollows(latest.preferences,feed.games);
@@ -156,9 +168,9 @@ export async function GET(request:Request) {
   stage='save-baseline';
   await redis('SET','fd:v05:baseline',JSON.stringify(feed),'EX',60*60*24*14);
   await redis('SET','fd:v05:heartbeat',String(Date.now()),'EX',420);
-  await schedulerAudit({kind:'run-completed',...context,sent,failed,events:events.length,scanned,durationMs:Date.now()-startedAt});
+  if(recordDetailedRun||!auditHealthy||failed||backgroundTests.sent||backgroundTests.failed)await schedulerAudit({kind:'run-completed',...context,sent,failed,events:events.length,scanned,durationMs:Date.now()-startedAt});
   let resumeSync:unknown;
-  if(resumeCapture){try{const {publishReleasedResumes}=await import('../../../lib/playoff/resume-production');resumeSync=await publishReleasedResumes(resumeCapture.batch,precedingCheck?JSON.parse(precedingCheck).resumeSync:undefined,startedAt);}catch{resumeSync={status:'failed',at:Date.now()};}}
+  if(resumeCapture){try{const {publishReleasedResumes}=await import('../../../lib/playoff/resume-production');resumeSync=await publishReleasedResumes(resumeCapture.batch,previousRun?.resumeSync,startedAt);}catch{resumeSync={status:'failed',at:Date.now()};}}
   await redis('SET','fd:v05:last-check',JSON.stringify({at:new Date().toISOString(),runId,sent,failed,backgroundTests,events:events.length,diagnosticsHealthy:auditHealthy,...(resumeCapture?{resumeSync}:{})}),'EX',86400);
   return json({sent,failed,backgroundTests,events:events.length,baseline:!previous},failed||backgroundTests.failed?502:200);
  }catch{await schedulerAudit({kind:'run-failed',stage,durationMs:Date.now()-startedAt});return json({error:'Background check did not complete. No unverified alerts were issued.'},503);}
