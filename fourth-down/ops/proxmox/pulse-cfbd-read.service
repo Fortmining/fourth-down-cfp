@@ -1,0 +1,25 @@
+[Unit]
+Description=Fourth Down private team view publisher
+After=network.target
+
+[Service]
+User=pulse-cfbd-read
+Group=pulse-cfbd-read
+Environment=CFBD_READ_PORT=8765 CFBD_READ_HEALTH_PORT=8766
+EnvironmentFile=-/etc/pulse-cfbd-read/ports.conf
+Environment=PYTHONDONTWRITEBYTECODE=1
+LoadCredential=read.key:/etc/pulse-cfbd-read/read.key
+ExecStart=/usr/bin/python3 /opt/fourth-down-reader/team_views_http.py --views /srv/pulse-cfbd-read --registry /opt/fourth-down-reader/pulse-teams-2026.json --port ${CFBD_READ_PORT} --health-port ${CFBD_READ_HEALTH_PORT} --credential ${CREDENTIALS_DIRECTORY}/read.key
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=yes
+UMask=0077
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+InaccessiblePaths=/var/lib/pulse-cfbd /etc/pulse-cfbd
+RestrictAddressFamilies=AF_INET
+TasksMax=24
+
+[Install]
+WantedBy=multi-user.target

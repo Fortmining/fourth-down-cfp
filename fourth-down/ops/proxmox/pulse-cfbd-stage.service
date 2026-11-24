@@ -1,0 +1,17 @@
+[Unit]
+Description=Validate and atomically refresh Fourth Down published team views
+After=pulse-cfbd.service
+
+[Service]
+Type=oneshot
+User=root
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/usr/bin/python3 /opt/fourth-down-reader/stage_team_views.py /var/lib/pulse-cfbd/views /srv/pulse-cfbd-read /opt/fourth-down-reader/pulse-teams-2026.json --worker-lock /var/lib/pulse-cfbd/worker.sqlite.lock
+TimeoutStartSec=2min
+UMask=0027
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/srv/pulse-cfbd-read /var/lib/pulse-cfbd
+InaccessiblePaths=/etc/pulse-cfbd /etc/pulse-cfbd-read

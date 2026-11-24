@@ -1,0 +1,22 @@
+[Unit]
+Description=Fourth Down private CFBD collection
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=pulse-cfbd
+Group=pulse-cfbd
+WorkingDirectory=/opt/fourth-down
+EnvironmentFile=/etc/pulse-cfbd/season.conf
+LoadCredential=cfbd.key:/etc/pulse-cfbd/cfbd.key
+ExecStart=/bin/sh /opt/fourth-down/ops/proxmox/run-worker.sh
+TimeoutStartSec=5min
+Restart=no
+StateDirectory=pulse-cfbd
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes

@@ -1,0 +1,4 @@
+# Persistent worker only. Install separately after secret, storage, and resource approval.
+# Set FOURTH_DOWN_APP, CFBD_DB, CFBD_SEASON, and CFBD_CLASS_YEAR on the worker.
+# Inject CFBD_API_KEY through its secret manager. Week is unused by the national schedule.
+14 */4 * * * cd "$FOURTH_DOWN_APP" && python3 scripts/pulse-cfbd.py --db "$CFBD_DB" --season "$CFBD_SEASON" --class-year "$CFBD_CLASS_YEAR" --week 1

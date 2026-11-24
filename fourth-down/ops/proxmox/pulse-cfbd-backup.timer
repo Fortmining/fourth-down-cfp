@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily private CFBD SQLite backup
+
+[Timer]
+OnCalendar=*-*-* 03:35:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
