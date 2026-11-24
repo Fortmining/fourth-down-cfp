@@ -1,4 +1,4 @@
-import {privateRssReviewEnabled,sportsRss,readableSourcePermission} from './pulse-rss-policy.ts';
+import {privateRssReviewEnabled,readableSourcePermission} from './pulse-rss-policy.ts';
 import {pulseSources} from './pulse-source-registry.ts';
 import {pulseTeamNames,pulseTeams} from './pulse-teams.ts';
 // News discovery is independent of score-based GameDay Pulse and never sends push.
@@ -137,6 +137,5 @@ export function pulseViewItems(items:NewsItem[],audience:NewsAudience,now:number
  if(view==='for-you')return pulseDiscovery(items,audience,now);
  if(view==='fcs')return {items:items.filter(i=>i.competition==='fcs'||i.sourceId==='ncaa-fcs'),fallback:false};
  const fbs=items.filter(i=>i.competition!=='fcs'&&i.sourceId!=='ncaa-fcs');
- const national=fbs.filter(i=>sportsRss(i.sourceId));
- return {items:view==='national'&&national.length?national:fbs,fallback:false};
+ return {items:fbs,fallback:false};
 }

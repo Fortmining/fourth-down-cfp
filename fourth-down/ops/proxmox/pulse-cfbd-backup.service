@@ -1,0 +1,16 @@
+[Unit]
+Description=Take an online backup of the private CFBD database
+
+[Service]
+Type=oneshot
+User=pulse-cfbd
+Group=pulse-cfbd
+ExecStart=/usr/bin/python3 /opt/fourth-down/ops/proxmox/backup.py /var/lib/pulse-cfbd/worker.sqlite /var/lib/pulse-cfbd/backups
+TimeoutStartSec=2min
+StateDirectory=pulse-cfbd
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
