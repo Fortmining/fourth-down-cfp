@@ -1,5 +1,6 @@
 "use client";
 import {GoalpostsLayer} from './Goalpost';
+import AccessibleDialog from './AccessibleDialog';
 import { useEffect, useState, useRef } from 'react';
 import {isOlderGamePacket} from '../lib/gamecast-freshness';
 import { subscribeLiveRefresh } from '../lib/live-refresh';
@@ -19,11 +20,12 @@ type HeaderGame = {
         homeAway?: string;
     }[];
 };
-const tabs = ['Plays', 'Drives', 'Team Stats', 'Players'] as const;
+const tabs = ['Feed', 'Drives', 'Stats', 'Players'] as const;
 export default function GameCenter({ id, fallbackGame, refreshRevision=0 }: {
     id: string;
     fallbackGame?: HeaderGame;refreshRevision?:number;
 }) {
+    const [playerProfile,setPlayerProfile]=useState<{teamId:string;name:string}|null>(null);
     const fieldRef=useRef<HTMLDivElement>(null);
     const [data, setData] = useState<GameCenterData | null>(null), [game, setGame] = useState<HeaderGame | null>(null), [error, setError] = useState(''), [selected, setSelected] = useState<string | null>(null), [observedAt, setObservedAt] = useState<string | null>(null), [tab, setTab] = useState<number>(0);
     const [checkedAt,setCheckedAt]=useState<number|null>(null),[recovering,setRecovering]=useState(false),[sourceCheckedAt,setSourceCheckedAt]=useState<string|null>(null);
@@ -170,10 +172,11 @@ export default function GameCenter({ id, fallbackGame, refreshRevision=0 }: {
             <th scope="col">Player</th>{g.labels.map(l => <th scope="col" key={l}>{l}</th>)}</tr>
             </thead>
             <tbody>{g.players.map(p => <tr key={p.name}>
-                <th scope="row">{p.name}</th>{p.values.map((v, i) => <td key={i}>{v}</td>)}</tr>)}</tbody>
+                <th scope="row"><button className="gcPlayerLink" onClick={()=>setPlayerProfile({teamId:t.teamId,name:p.name})}>{p.name} ↗</button></th>{p.values.map((v, i) => <td key={i}>{v}</td>)}</tr>)}</tbody>
             </table>
             </div>)}</section>) : <Empty text="Player statistics are not available yet."/>)}
  </div>
+    {playerProfile&&<AccessibleDialog id="game-player-profile" className="playerProfile" label={playerProfile.name+' game statistics'} onClose={()=>setPlayerProfile(null)}><button className="profileClose" onClick={()=>setPlayerProfile(null)} aria-label="Close player profile">×</button><span className="playerAvatar profileAvatar" aria-hidden="true">{playerProfile.name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span><p className="eyebrow">GAME PERFORMANCE · {data?.teams.find(t=>t.id===playerProfile.teamId)?.name}</p><h2>{playerProfile.name}</h2>{data?.playerStats.find(t=>t.teamId===playerProfile.teamId)?.groups.map(g=>{const player=g.players.find(p=>p.name===playerProfile.name);return player?<section key={g.name}><h3>{g.name}</h3><dl className="gamePlayerMetrics">{g.labels.map((label,i)=><div key={label+':'+i}><dt>{label}</dt><dd>{player.values[i]??'—'}</dd></div>)}</dl></section>:null;})}<p className="snapshotLabel">ESPN game statistics · {observedAt?'Retrieved '+new Date(observedAt).toLocaleString():'Retrieval time unavailable'}. Values may be delayed or revised.</p></AccessibleDialog>}
     </section>;
 }
 function Empty({ text }: {

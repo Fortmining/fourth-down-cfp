@@ -25,7 +25,7 @@ test('recent means thirty calendar dates by event date; future, month-only and r
 });
 
 test('favorites and currently active temporary TEAM follows set scope independently of notification opt-in',()=>{
- const audience:NewsAudience={favorites:[{id:'61',name:'Georgia Bulldogs'}],following:{enabled:false,items:[
+ const audience:NewsAudience & {following:{enabled:boolean;items:NonNullable<NewsAudience['following']>['items']}}={favorites:[{id:'61',name:'Georgia Bulldogs'}],following:{enabled:false,items:[
   {kind:'team',id:'2483',createdAt:now-1000,expiresAt:now+1000},
   {kind:'team',id:'2633',createdAt:now-2000,expiresAt:now-1},
   {kind:'team',id:'333',createdAt:now+1,expiresAt:now+2000},

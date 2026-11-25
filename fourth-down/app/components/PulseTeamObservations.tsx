@@ -1,5 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
+import Link from 'next/link';
+import AccessibleDialog from './AccessibleDialog';
 import type {NewsAudience} from '../lib/news-pulse';
 import {pulseTeams} from '../lib/pulse-teams';
 
@@ -31,7 +33,7 @@ export default function PulseTeamObservations({desk,team,setTeam,audience}:{desk
  const data=primary?.data;
  const recruiting=desk==='signing'||desk==='recruiting';
  const available=recruiting?data?.recruits||data?.classRank:desk==='portal'?data?.transfers:data?.analytics||data?.roster||data?.teamStats||data?.playerStats;
- return <section className="newsEmpty" aria-label="Team observations">
+ return <section className="newsEmpty scoutingPanel" aria-label="Team observations">
   <h2>{recruiting?'Reported recruiting class':desk==='portal'?'Transfer records by season':'Team scouting'}</h2>
   <label>Scouting team <select value={selected} onChange={event=>setTeam(event.target.value)}>
     <option value="">Choose a team</option>{pulseTeams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
@@ -39,13 +41,13 @@ export default function PulseTeamObservations({desk,team,setTeam,audience}:{desk
   {primary?.stale&&<p role="status">Showing the last verified team records while updates are unavailable. Check each observation date below.</p>}
   {selected&&!available&&<p role="status">{!primary?'Loading team records…':'No sourced edition available for this team and view.'}</p>}
   {recruiting&&data?.recruits&&<><p>{data.recruits.value.reported} reported commitments. See the separate confirmed-signing timeline for official signings.</p>
-   <ul>{data.recruits.value.prospects.map(p=><li key={p.id}>{p.name} · {p.position||'Position unlisted'} {p.rank? `· No. ${p.rank} recruit`:''} {p.stars? `· ${p.stars} stars`:''}</li>)}</ul><Credit row={data.recruits}/></>}
+   <div className="prospectGrid">{data.recruits.value.prospects.map(p=><article className="prospectCard" key={p.id}><span className="statusTag">Reported commitment</span><div className="prospectIdentity"><span className="playerAvatar" aria-hidden="true">{p.name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span><div><h3>{p.name}</h3><small>{p.position||'Position unlisted'}</small></div></div><div className="prospectMetrics"><span>{p.stars?`${p.stars} ★`:'Stars unavailable'}</span><span>{p.rank?`No. ${p.rank} recruit`:'Rank unavailable'}</span></div></article>)}</div><Credit row={data.recruits}/></>}
   {recruiting&&selected&&primary&&!data?.classRank?.value.rank&&<p>Class ranking is currently unavailable{data?.recruits?.year?` for ${data.recruits.year}`:''}. Reported commitments remain separate from official signings.</p>}
   {recruiting&&data?.classRank?.value.rank&&<p>Class ranking · No. {data.classRank.value.rank} <Credit row={data.classRank}/></p>}
   {desk==='portal'&&data?.transfers&&<>{(['incoming','outgoing'] as const).map(key=>{
    const group=data.transfers!.value[key];return <div key={key}><h3>{key==='incoming'?'Reported destinations':'Reported departures'} · {group.count}</h3>
     {group.positions&&<p>{positionSummary(group.positions)}</p>}
-    <ol>{group.examples.map((p,i)=><li key={i}>{p.name} · {p.position||'Position unlisted'} · {p.origin} → {p.destination||'Destination undisclosed'}{p.date&&<> · <time>{p.date.slice(0,10)}</time></>}</li>)}</ol></div>;
+    <div className="transferRows">{group.examples.map((p,i)=><article key={i}><span className="playerAvatar" aria-hidden="true">{p.name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span><div><h4>{p.name} <small>{p.position||'Position unlisted'}</small></h4><p>{p.origin} <span aria-label="to">→</span> {p.destination||'Destination undisclosed'}</p><small className="statusTag">Reported · {p.date?p.date.slice(0,10):'Date unavailable'}</small></div></article>)}</div></div>;
   })}<p>Historical season records. Portal entry, withdrawal and enrollment require separate evidence.</p><Credit row={data.transfers}/></>}
   {desk==='team'&&data?.roster&&<><p>{data.roster.value.listed} players listed on the roster</p>
     <p>{Object.entries(data.roster.value.positions).sort((a,b)=>b[1]-a[1]).map(([p,n])=>p+' '+n).join(' · ')}</p><Credit row={data.roster}/></>}
@@ -64,12 +66,12 @@ export default function PulseTeamObservations({desk,team,setTeam,audience}:{desk
  </section>;
 }
 
-function useTeamObservation(id:string){
+export function useTeamObservation(id:string){
  const [packet,setPacket]=useState<{id:string;data:Data|null;stale?:boolean}|null>(null);
  useEffect(()=>{
    if(!id)return;
    const controller=new AbortController();
-   fetch('/api/news-pulse/intelligence/'+encodeURIComponent(id),{signal:controller.signal})
+   fetch('/api/news-pulse/intelligence/'+encodeURIComponent(id),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(10000)])})
     .then(async response=>{if(!response.ok)throw Error();return response.json();})
     .then(result=>{if(!controller.signal.aborted)setPacket({id,data:result?.view?.datasets||null,stale:result?.stale===true});})
     .catch(()=>{if(!controller.signal.aborted)setPacket({id,data:null});});
@@ -94,4 +96,11 @@ function StatLine({team,data}:{team:string;data?:Data|null}){
   })}</dl><Credit row={data.teamStats}/></>}
   {!data?.analytics&&!data?.teamStats&&<p>No comparable statistics available.</p>}
  </div>;
+}
+
+export function TeamPlayerLeaders({team}:{team:string}){
+ const packet=useTeamObservation(team),edition=packet?.data?.playerStats;
+ const [selected,setSelected]=useState<string|null>(null);
+ const leaders=edition?.value.leaders||[],player=leaders.find(p=>p.id===selected);
+ return <section className="homeSection playerLeaders" id="players" aria-labelledby="player-leaders-title"><div className="sectionHeading"><div><p className="eyebrow">THE PLAYMAKERS</p><h2 id="player-leaders-title">Season yardage leaders</h2></div><Link href={'/recruiting?team='+team}>Recruiting ↗</Link></div>{packet?.stale&&<p role="status">Last verified records. Check the season and observation date.</p>}<div className="leaderGrid">{leaders.map(p=><button className="leaderCard" key={p.id+':'+p.category} onClick={()=>setSelected(p.id)}><span className="playerAvatar" aria-hidden="true">{p.name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span><span><small>{edition?.year} · {p.category}</small><b>{p.name}</b></span><strong>{p.yards.toLocaleString()}<small>yards ↗</small></strong></button>)}</div>{edition?<Credit row={edition}/>:<p className="fanEmpty" role="status">{!packet?'Loading sourced season leaders…':'Season player statistics are unavailable for this program. Team statistics and schedules remain below.'}</p>}{player&&edition&&<AccessibleDialog id="player-profile" className="playerProfile" label={player.name+' player statistics'} onClose={()=>setSelected(null)}><button className="profileClose" onClick={()=>setSelected(null)} aria-label="Close player profile">×</button><span className="playerAvatar profileAvatar" aria-hidden="true">{player.name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span><p className="eyebrow">{edition.year} · {pulseTeams.find(t=>t.id===team)?.name}</p><h2>{player.name}</h2><div className="profileMetrics">{leaders.filter(p=>p.id===selected).map(p=><article key={p.category}><small>{p.category} yards</small><strong>{p.yards.toLocaleString()}</strong></article>)}</div><Credit row={edition}/><p className="snapshotLabel">Season totals from the supplied dataset. Game logs and a licensed player portrait are not available in this record.</p><Link href={'/team/'+team}>Team center →</Link></AccessibleDialog>}</section>;
 }
