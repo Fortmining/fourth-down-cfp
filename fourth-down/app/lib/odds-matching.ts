@@ -1,6 +1,6 @@
 import type {OddsEventSummary} from './odds-provider';
 export type MatchGame={id:string;date:string;status:string;kickoffTbd?:boolean;teams:{id:string;name:string;homeAway?:string}[]};
-const aliases:Record<string,string>={southernmississippigoldeneagles:'southernmissgoldeneagles',appalachianstatemountaineers:'appstatemountaineers',samhoustonstatebearkats:'samhoustonbearkats',mississippirebels:'olemissrebels',connecticuthuskies:'uconnhuskies',northcarolinastatewolfpack:'ncstatewolfpack',texassanantonioroadrunners:'utsaroadrunners',miamiflhurricanes:'miamihurricanes'};
+const aliases:Record<string,string>={southernmississippigoldeneagles:'southernmissgoldeneagles',appalachianstatemountaineers:'appstatemountaineers',samhoustonstatebearkats:'samhoustonbearkats',mississippirebels:'olemissrebels',connecticuthuskies:'uconnhuskies',northcarolinastatewolfpack:'ncstatewolfpack',texassanantonioroadrunners:'utsaroadrunners',miamiflhurricanes:'miamihurricanes',unlvrunninrebels:'unlvrebels'};
 export function oddsTeamIdentity(name:string){const value=name.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]/g,'');return aliases[value]||value;}
 export function easternGameDate(at:string){return new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(at));}
 export function easternOffset(date:string){const noon=new Date(date+'T12:00:00Z');const local=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'2-digit',hourCycle:'h23'}).format(noon);return (12-Number(local))*60;}
