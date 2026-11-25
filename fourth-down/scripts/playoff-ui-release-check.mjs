@@ -13,9 +13,12 @@ for(const [engine,mobile] of [[chromium,false],[webkit,true]]){
  const context=await browser.newContext(mobile?devices['iPhone 13']:{viewport:{width:1440,height:1100}});
  // Keep captured fixture games future-facing when this regression is run later.
  if(!real)await context.clock.setFixedTime(new Date(capture.sandbox.catalog.at));
- const page=await context.newPage();page.setDefaultTimeout(30000);const errors=[],writes=[];console.log(engine.name(), 'starting',real?'live':'fixture');
- page.on('pageerror',e=>errors.push(e.message));
- await page.route('**/api/**',async route=>{
+ const page=await context.newPage();page.setDefaultTimeout(30000);const errors=[],writes=[],cancelled=[];console.log(engine.name(), 'starting',real?'live':'fixture');
+ page.on('pageerror',e=>errors.push({message:e.message,at:Date.now()}));
+ page.on('requestfailed',request=>{const url=new URL(request.url());if(url.origin===new URL(base).origin&&url.pathname.startsWith('/api/')&&/^cancelled$|^canceled$/i.test(request.failure()?.errorText||''))cancelled.push({url,at:Date.now()});});
+ // Observe live traffic without changing browser networking; mock only fixture traffic.
+ if(real)page.on('request',request=>{if(request.url().includes('/api/')&&request.method()!=='GET')writes.push(request.url());});
+ if(!real)await page.route('**/api/**',async route=>{
   const request=route.request();if(request.method()!=='GET'){writes.push(request.url());return route.abort();}
   if(!real){const path=new URL(request.url()).pathname;
    if(path==='/api/live')return route.fulfill({json:capture.live});
@@ -28,6 +31,12 @@ for(const [engine,mobile] of [[chromium,false],[webkit,true]]){
  await page.getByRole('navigation',{name:'Playoff analysis'}).getByRole('link',{name:'What If & bracket',exact:true}).click();
  const lab=page.getByRole('region',{name:'Playoff predictor',exact:true});
  await lab.getByRole('region',{name:'Interactive playoff bracket'}).waitFor({timeout:45000});
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('.outlookRounds')).display==='grid');
+ if(mobile){
+  await lab.evaluate(el=>el.scrollIntoView({block:'start',behavior:'instant'}));
+  const visible=await lab.locator('.outlookWorkspace .sandboxGame').first().getByRole('button').last().evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight-(document.querySelector('.mobileTrackerNav')?.getBoundingClientRect().height||0));
+  assert.equal(visible,true,'both first-game outcomes should appear above the mobile navigation');
+ }
  assert.equal(await lab.locator('.outlookField li').count(),12);
  assert.equal(await lab.getByLabel('SEC champion assumption',{exact:true}).isVisible(),true);
  const initial=await lab.locator('.outlookField').innerText();
@@ -113,8 +122,10 @@ for(const [engine,mobile] of [[chromium,false],[webkit,true]]){
   assert.match(await lab.innerText(),/A complete, untied published Top 25/);
   assert.equal(await lab.getByLabel('SEC champion assumption',{exact:true}).isVisible(),true);
  }
- assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);
- results.push({engine:engine.name(),mobile,real,field:12,gamePick:true,championDisplacement:true,dependentPicksCleared:true,reset:true,persistence:true,blueLightDark:true,axeViolations:0,errors,writes});
+ // Ignore only WebKit access-control messages paired with an explicitly canceled API request at the same time.
+ const unexpectedErrors=errors.filter(e=>!(/due to access control checks\.$/.test(e.message)&&cancelled.some(r=>Math.abs(r.at-e.at)<2000&&e.message.includes(r.url.host+r.url.pathname)))).map(e=>e.message);
+ assert.deepEqual(unexpectedErrors,[]);assert.deepEqual(writes,[]);
+ results.push({engine:engine.name(),mobile,real,field:12,gamePick:true,championDisplacement:true,dependentPicksCleared:true,reset:true,persistence:true,blueLightDark:true,axeViolations:0,errors:unexpectedErrors,cancelledNavigationWarnings:errors.length-unexpectedErrors.length,writes});
  await browser.close();
 }
 fs.writeFileSync(out+`/${real?'production':'fixture'}-results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results));
