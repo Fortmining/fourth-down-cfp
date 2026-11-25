@@ -3,7 +3,7 @@ import Link from 'next/link';
 import {useEffect,useMemo,useState} from 'react';
 import {ArrowUpRight,ArrowDownRight} from 'lucide-react';
 import Following from './Following';import MoreSettings from './MoreSettings';
-import AppFrame from './AppFrame';import {useLiveFeed,useResumePacket} from './useTrackerData';import GamesExplorer from './GamesExplorer';import FavoriteTeams from './FavoriteTeams';
+import AppFrame from './AppFrame';import PlayoffNavigation from './PlayoffNavigation';import {useLiveFeed,useResumePacket} from './useTrackerData';import GamesExplorer from './GamesExplorer';import FavoriteTeams from './FavoriteTeams';
 import {displayRecord} from '../lib/playoff/record-view';import {movement,type Ranked} from '../lib/model';import {comparisonRows,type SourceId} from '../lib/rankings';
 function publicationDate(value: string, short = false) {
   return new Date(value).toLocaleDateString(undefined, {
@@ -71,7 +71,7 @@ export default function TrackerViews({view}:{view:'games'|'rankings'|'following'
  const recordFor=(t:{record:string;teamId?:string;id?:string})=>data?.currentRecords?displayRecord(t.teamId??t.id??'',data.currentRecords):t.record;
  const titles={games:'Every game. One place.',rankings:'The official polls.',following:'Your game day.',settings:'Make it yours.'};
  return <AppFrame title={titles[view]} eyebrow={view==='following'?'FOLLOWING':view.toUpperCase()} description={{games:'Live scores, kickoff times and the full scoreboard.',rankings:'AP, Coaches and CFP editions, exactly as published.',following:'Your favorites and temporary Watchlist, together for game day.',settings:'Notifications, favorites and the way Fourth Down looks.'}[view]}>
- <div className="pageFeedStatus"><span role="status">{busy?'Refreshing…':data?`Updated ${new Date(data.updatedAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`:'Feed unavailable'}</span><button onClick={refresh} disabled={busy}>Refresh</button></div>{error&&<p className="teamWarning" role="status">{error} Last available data stays visible.</p>}
+{view==='rankings'&&<PlayoffNavigation/>} <div className="pageFeedStatus"><span role="status">{busy?'Refreshing…':data?`Updated ${new Date(data.updatedAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`:'Feed unavailable'}</span><button onClick={refresh} disabled={busy}>Refresh</button></div>{error&&<p className="teamWarning" role="status">{error} Last available data stays visible.</p>}
  {view==='rankings'&&<>          <section
             className="publishedRankings"
             aria-labelledby="rankings-heading"

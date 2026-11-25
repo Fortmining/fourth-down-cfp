@@ -27,7 +27,7 @@ export function useGameMoneyline(id:string){
  return {odds:stale?null:odds,stale};
 }
 export function MoneylineFooter({odds,stale}:{odds:ReturnType<typeof gameMoneyline>|undefined;stale:boolean}){
- if(!odds)return <div className="cardOddsFooter">{stale?'Moneylines stale · refreshing':'Moneylines unavailable'}</div>;
+ if(!odds)return null;
  const at=odds.sourceAt||odds.observedAt;
  return <div className="cardOddsFooter"><span>{odds.kind==='live'?'Live':'Pregame'} ML · {odds.provider}</span><time dateTime={at}>{odds.sourceAt?'Updated':'Fetched'} {new Date(at).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</time></div>;
 }

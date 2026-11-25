@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState} from 'react';
+import {TeamPlayerLeaders} from './PulseTeamObservations';
 import NewsReviewNotice from './NewsReviewNotice';
 import TrackerNavigation from './TrackerNavigation';
 import {NEWS_PILOT_UI} from '../lib/news-pulse';
@@ -28,7 +29,7 @@ function ScheduleCard({game:g,teamId,next=false}:{game:TeamGame;teamId:string;ne
 const prefsKey='fourth-down-alert-preferences-v1';
 export default function TeamPage({id}:{id:string}) {
  const [data,setData]=useState<TeamDetail|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(true),[revision,setRevision]=useState(0);
- const [appearance,setAppearance]=useState<Appearance>('light'),[theme,setTheme]=useState('stadium'),[favorite,setFavorite]=useState(false),[message,setMessage]=useState('');
+ const [appearance,setAppearance]=useState<Appearance>('dark'),[theme,setTheme]=useState('stadium'),[favorite,setFavorite]=useState(false),[message,setMessage]=useState('');
  useEffect(()=>{setAppearance(readAppearance());try{const t=localStorage.getItem('fourth-down-theme');if(t&&['stadium','turf','prime'].includes(t))setTheme(t);setFavorite(normalizePreferences(JSON.parse(localStorage.getItem(prefsKey)||'null')).favorites.some(t=>t.id===id));}catch{}},[id]);
  useEffect(()=>{
   const controller=new AbortController();let running=false;
@@ -50,7 +51,7 @@ export default function TeamPage({id}:{id:string}) {
    <header className="teamHero">{data?.logo&&<img src={data.logo} width="88" height="88" alt=""/>}<div><p className="eyebrow">2026 TEAM CENTER</p><h1>{data?.name||(busy?'Loading team…':'Team unavailable')}</h1><p>{data?.conference||'Conference unavailable'}{data?.nickname&&` · ${data.nickname}`}</p></div></header>
    {error&&<p role="alert" className="teamWarning">{error}</p>}
    {!data&&!busy&&<p><a href="/games">Browse games</a> or retry this team.</p>}
-   {data&&<><nav className="teamSections" aria-label="Team sections"><a href="#overview">Overview</a><a href="#schedule">Schedule</a><a href="#stats">Stats</a>{process.env.NEXT_PUBLIC_FOURTH_DOWN_RESUMES==='true'&&<a href={`/scenarios?team=${id}`}>What If? remaining games</a>}</nav>
+   {data&&<><nav className="teamSections" aria-label="Team sections"><a href="#overview">Overview</a><a href="#schedule">Schedule</a><a href="#stats">Stats</a><a href="#players">Players</a><a href={'/recruiting?team='+id}>Recruiting</a><a href={'/transfers?team='+id}>Portal</a>{process.env.NEXT_PUBLIC_FOURTH_DOWN_RESUMES==='true'&&<a href={`/scenarios?team=${id}`}>What If? remaining games</a>}</nav>
     <p className="teamFreshness">Updated {new Date(data.observedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})} · ESPN</p>
     {data.warnings.length>0&&<details className="teamWarning"><summary>Some team data is unavailable</summary><ul>{data.warnings.map(w=><li key={w}>{w}</li>)}</ul></details>}
     <section id="overview" aria-labelledby="overview-heading"><h2 id="overview-heading">Overview</h2><div className="teamRecordGrid"><article><h3>Overall</h3><strong>{data.record?.status==='available'?data.record.overall:'Unavailable'}</strong></article><article><h3>Conference</h3><strong>{data.record?.status==='available'?data.record.conference||'Unavailable':'Unavailable'}</strong></article></div>
@@ -65,7 +66,7 @@ export default function TeamPage({id}:{id:string}) {
      <h3>Live & upcoming</h3>{upcoming.filter(g=>g.id!==next?.id).map(g=><ScheduleCard key={g.id} game={g} teamId={id}/>)}{!upcoming.length&&<p>No live or upcoming fixtures supplied by ESPN.</p>}
      <h3>Completed games</h3>{completed.map(g=><ScheduleCard key={g.id} game={g} teamId={id}/>)}{!completed.length&&<p>No verified completed games available.</p>}
     </section>
-    <section id="stats" aria-labelledby="stats-heading"><h2 id="stats-heading">Team statistics</h2><p>2026 regular season{data.statisticsGames!==null&&data.statisticsGames!==undefined?` · ${data.statisticsGames} games in ESPN statistics`:''}. Statistics can lag behind confirmed game results.</p><div className="teamStatsGrid">{data.stats.map(s=><article key={s.id}><h3>{s.label}</h3><strong>{s.value??'Unavailable'}</strong><p>{s.espnRank?`ESPN rank: ${s.espnRank}`:'ESPN rank unavailable'}</p><small>{s.basis}</small></article>)}</div><details><summary>Statistics sources & ranking scope</summary><p>Values and ranks are supplied by ESPN. Its statistics feed does not identify the FBS/FCS ranking scope; those ranks are shown as ESPN ranks only. Verified FBS national and conference statistical ranks are unavailable. No ranks or missing statistics are estimated.</p><p>Defensive sacks, tackles and interceptions are season totals. Points and yards per game are explicitly supplied averages.</p></details></section>
+    <TeamPlayerLeaders team={id}/><section id="stats" aria-labelledby="stats-heading"><h2 id="stats-heading">Team statistics</h2><p>2026 regular season{data.statisticsGames!==null&&data.statisticsGames!==undefined?` · ${data.statisticsGames} games in ESPN statistics`:''}. Statistics can lag behind confirmed game results.</p><div className="teamStatsGrid">{data.stats.map(s=><article key={s.id}><h3>{s.label}</h3><strong>{s.value??'Unavailable'}</strong><p>{s.espnRank?`ESPN rank: ${s.espnRank}`:'ESPN rank unavailable'}</p><small>{s.basis}</small></article>)}</div><details><summary>Statistics sources & ranking scope</summary><p>Values and ranks are supplied by ESPN. Its statistics feed does not identify the FBS/FCS ranking scope; those ranks are shown as ESPN ranks only. Verified FBS national and conference statistical ranks are unavailable. No ranks or missing statistics are estimated.</p><p>Defensive sacks, tackles and interceptions are season totals. Points and yards per game are explicitly supplied averages.</p></details></section>
     {NEWS_PILOT_UI&&<NewsPulsePanel teamId={id}/>}
     <details className="teamSources"><summary>Data sources & freshness</summary><p>Assembled {new Date(data.observedAt).toLocaleString(undefined,{timeZoneName:'short'})}. Refreshes every minute while visible. ESPN updates may be delayed. Overview and schedules cache for up to one minute; statistics for five minutes. Website responses can serve the previous minute while refreshing. These are retrieval/assembly timestamps, not ESPN publication times.</p><ul>{data.sources.map(s=><li key={s.url}><a href={s.url} target="_blank" rel="noreferrer">ESPN {s.label} ↗</a></li>)}</ul></details>
    </>}
