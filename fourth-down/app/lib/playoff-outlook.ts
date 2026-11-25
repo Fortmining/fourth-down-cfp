@@ -3,22 +3,29 @@ import {evaluateSandbox,type SandboxCatalog} from './multi-game-sandbox.ts';
 export type Outlook='Likely In'|'On the Bubble'|'Outside Looking In';
 export const outlookBand=(rank:number|null):Outlook=>rank!==null&&rank<=8?'Likely In':rank!==null&&rank<=16?'On the Bubble':'Outside Looking In';
 export const CFP_2026_PROTOCOL='https://collegefootballplayoff.com/sports/2016/10/24/selection-committee-protocol';
-export type QualificationAssumptions={champions:Record<string,string>;eligibilityAssumed:boolean};
+export type QualificationAssumptions={champions:Record<string,string>;eligibilityAssumed:boolean; reserveUnknownRepresentative?:boolean; reserveUnknownChampions?:boolean;championNames?:Record<string,string>; representative?:{id:string;name:string}};
 export function conferenceLabel(value:string){const names:Record<string,string>={'Atlantic Coast Conference':'ACC','Big Ten Conference':'Big Ten','Big 12 Conference':'Big 12','Southeastern Conference':'SEC','American Conference':'American','Mid-American Conference':'MAC','Mountain West Conference':'Mountain West','Pac-12 Conference':'Pac-12','Sun Belt - East':'Sun Belt','Sun Belt - West':'Sun Belt'};return names[value]||value;}
 function usablePoll(p:Poll|undefined,now:number):p is Poll{return !!p&&p.season===2026&&!!p.date&&Number.isFinite(Date.parse(p.date))&&Date.parse(p.date)<=now&&['available','awaiting_update'].includes(p.status)&&(p.id!=='cfp'||(now>=Date.parse('2026-11-03T19:00:00-05:00')&&Date.parse(p.date)>=Date.parse('2026-11-03T00:00:00Z')));}
 const power=['ACC','Big Ten','Big 12','SEC'],other=['American','Conference USA','MAC','Mountain West','Pac-12','Sun Belt'];
 /** A conditional allocation, NOT a learned committee forecast. No invented game-driven rank jumps. */
 export function referenceField(poll:Poll|undefined,conferences:Record<string,string>,assumptions:QualificationAssumptions){
- const withheld=(reason:string)=>({status:'withheld' as const,reason,teams:[] as {id:string;name:string;seed:number;rank:number;reason:string}[]});
+ const withheld=(reason:string)=>({status:'withheld' as const,reason,teams:[] as {id:string;name:string;seed:number;rank:number|null;reason:string}[]});
  if(!usablePoll(poll,Date.now())||poll.teams.length!==25||new Set(poll.teams.map(t=>t.teamId)).size!==25||new Set(poll.teams.map(t=>t.rank)).size!==25||poll.teams.some(t=>!Number.isInteger(t.rank)||t.rank<1||t.rank>25))return withheld('A complete, untied published Top 25 is required for this reference field.');
  if(!assumptions.eligibilityAssumed)return withheld('Acknowledge that postseason eligibility is assumed for this illustration.');
- const order=[...poll.teams].sort((a,b)=>a.rank-b.rank),qualifiers:string[]=[];
- for(const conf of power){const id=assumptions.champions[conf];if(!id||conferences[id]!==conf)return withheld(`Choose a hypothetical ${conf} champion. Winning out does not establish a championship berth.`);if(!order.some(t=>t.teamId===id))return withheld('An assumed champion is outside the captured Top 25; its relative seeding is unknown.');qualifiers.push(id);}
- const representative=order.find(t=>other.includes(conferences[t.teamId]));if(!representative)return withheld('The required six-conference representative is not established by this Top 25.');qualifiers.push(representative.teamId);
+ const order=[...poll.teams].sort((a,b)=>a.rank-b.rank),qualifiers:string[]=[],unknown:{id:string;name:string}[]=[];
+ for(const conf of power){const id=assumptions.champions[conf];if(!id||conferences[id]!==conf)return withheld(`Choose a hypothetical ${conf} champion. Winning out does not establish a championship berth.`);if(!order.some(t=>t.teamId===id)){if(!assumptions.reserveUnknownChampions)return withheld('An assumed champion is outside the captured Top 25; its relative seeding is unknown.');unknown.push({id,name:assumptions.championNames?.[id]||`${conf} champion`});}else qualifiers.push(id);}
+ const requested=assumptions.representative;
+ if(requested&&!other.includes(conferences[requested.id]))return withheld('Choose a representative from the other six conferences.');
+ const representative=requested?order.find(t=>t.teamId===requested.id):order.find(t=>other.includes(conferences[t.teamId]));
+ const reserved=!representative&&(assumptions.reserveUnknownRepresentative||!!requested);
+ if(!representative&&!reserved)return withheld('The required six-conference representative is not established by this Top 25.');
+ if(representative)qualifiers.push(representative.teamId);
+ if(reserved)unknown.push({id:requested?.id||'unresolved-qualifier',name:requested?.name||'Six-conference qualifier · TBD'});
  const selected=new Set(qualifiers);const nd=order.find(t=>t.teamId==='87');if(nd&&nd.rank<=12)selected.add(nd.teamId);
- for(const t of order){if(selected.size===12)break;selected.add(t.teamId);}
- const teams=order.filter(t=>selected.has(t.teamId)).map((t,i)=>({id:t.teamId,name:t.name,rank:t.rank,seed:i+1,reason:qualifiers.includes(t.teamId)?'Conditional automatic bid':t.teamId==='87'&&t.rank<=12?'Notre Dame top-12 rule':'Ranking-anchor at-large'}));
- return {status:'conditional' as const,reason:'2026 allocation under your champion/eligibility assumptions. Ranking order is held unchanged; this is not a forecast of future committee votes.',teams};
+ for(const t of order){if(selected.size===12-unknown.length)break;selected.add(t.teamId);}
+ const teams:{id:string;name:string;rank:number|null;seed:number;reason:string}[]=order.filter(t=>selected.has(t.teamId)).map((t,i)=>({id:t.teamId,name:t.name,rank:t.rank,seed:i+1,reason:qualifiers.includes(t.teamId)?'Conditional automatic bid':t.teamId==='87'&&t.rank<=12?'Notre Dame top-12 rule':'Ranking-anchor at-large'}));
+ for(const t of unknown)teams.push({...t,rank:null,seed:teams.length+1,reason:t.id==='unresolved-qualifier'?'Reserved automatic bid · team and seeding unknown':'Your qualifier assumption · seeding unknown'});
+ return {status:'conditional' as const,reason:unknown.length?'Provisional layout: unresolved qualifiers occupy the last slots for exploration only. Their actual seed is unknown; all matchups depend on that placement.':'2026 allocation under your champion/eligibility assumptions. Allocation follows the scenario order; this is not a forecast of future committee votes.',teams};
 }
 export function scenarioOrder(poll: Poll | undefined, catalog: SandboxCatalog,
  choices: {gameId: string; winnerId: string}[], excluded: string[]): Poll | undefined {

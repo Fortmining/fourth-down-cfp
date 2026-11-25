@@ -13,3 +13,32 @@ test('Notre Dame final-top12 rule is separately retained even with outside-top12
 
 test('ranking sensitivity computes the extra qualifier squeeze without forecasting a rank jump',()=>{const before=JSON.stringify(fake),path=rankingAssumptionPath(fake,conf,a,'16')!;assert.equal(path.currentRank,16);assert.equal(path.illustratedRank,10);assert.equal(path.positions,6);assert.ok(path.entering.includes('Team 16'));assert.equal(path.field.length,12);const lessSqueeze=rankingAssumptionPath(fake,{...conf,'4':'SEC'},{...a,champions:{...a.champions,SEC:'4'}},'16')!;assert.equal(lessSqueeze.illustratedRank,11);assert.equal(lessSqueeze.positions,5);assert.equal(JSON.stringify(fake),before);});
 test('already-included and withheld fields do not invent additional ranking requirements',()=>{assert.equal(rankingAssumptionPath(fake,conf,a,'1')?.positions,0);assert.equal(rankingAssumptionPath(fake,conf,{...a,eligibilityAssumed:false},'16'),null);assert.equal(rankingAssumptionPath(fake,conf,a,'999'),null);});
+
+test('missing six-conference identity reserves a visible slot without a fabricated rank',()=>{
+ const conferences={...conf};delete conferences['25'];
+ const before=JSON.stringify(fake);
+ const f=referenceField(fake,conferences,{...a,reserveUnknownRepresentative:true});
+ assert.equal(f.status,'conditional');assert.equal(f.teams.length,12);
+ assert.equal(f.teams.at(-1)?.id,'unresolved-qualifier');assert.equal(f.teams.at(-1)?.rank,null);
+ assert.match(f.reason,/actual seed is unknown/);assert.ok(f.teams.some(t=>t.id==='20'));
+ assert.equal(f.teams.some(t=>t.id==='11'),false);assert.equal(JSON.stringify(fake),before);
+});
+test('explicit unranked representative is an assumption with unknown seed; invalid conference is rejected',()=>{
+ const f=referenceField(fake,{...conf,'99':'American'},{...a,representative:{id:'99',name:'User choice'}});
+ assert.equal(f.teams.at(-1)?.id,'99');assert.equal(f.teams.at(-1)?.rank,null);
+ assert.match(f.teams.at(-1)?.reason||'',/Your qualifier assumption/);
+ assert.equal(f.teams.some(t=>t.id==='25'),false);
+ assert.equal(referenceField(fake,conf,{...a,representative:{id:'1',name:'Wrong conference'}}).status,'withheld');
+});
+test('ranked representative remains fully ordered; eligibility and incomplete polls still guard partial layout',()=>{
+ const f=referenceField(fake,conf,{...a,reserveUnknownRepresentative:true});
+ assert.equal(f.teams.length,12);assert.ok(f.teams.every(t=>t.rank!==null));
+ assert.equal(referenceField(undefined,conf,{...a,reserveUnknownRepresentative:true}).status,'withheld');
+ assert.equal(referenceField(fake,conf,{...a,eligibilityAssumed:false,reserveUnknownRepresentative:true}).status,'withheld');
+});
+test('unranked Power Four champion keeps its reserved bid visible with unknown seeding',()=>{
+ const f=referenceField(fake,{...conf,'99':'SEC'},{...a,champions:{...a.champions,SEC:'99'},reserveUnknownChampions:true,championNames:{'99':'Chosen SEC team'}});
+ assert.equal(f.status,'conditional');assert.equal(f.teams.length,12);
+ assert.equal(f.teams.at(-1)?.name,'Chosen SEC team');assert.equal(f.teams.at(-1)?.rank,null);
+ assert.ok(f.teams.some(t=>t.id==='25'));assert.equal(f.teams.some(t=>t.id==='20'),false);
+});
