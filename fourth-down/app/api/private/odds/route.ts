@@ -13,7 +13,7 @@ export async function GET(request:Request){
  const query=new URL(request.url).searchParams,date=query.get('date')||'',gameId=query.get('game')||'';
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return NextResponse.json({error:'Choose an authorized Eastern game date'},{status:400,headers});
  try{
-  const snapshot=await privateOddsSnapshot(date,undefined,query.get('cachedOnly')==='1'||!!gameId);
+  const snapshot=await privateOddsSnapshot(date,undefined,query.get('cachedOnly')==='1'||!!gameId,!gameId&&query.get('retryTransport')==='1');
   const publicSnapshot={...snapshot};delete publicSnapshot.source;
   const visible={...publicSnapshot,quotes:snapshot.quotes.filter(q=>Date.parse(q.startsAt)>Date.now())};
   if(!gameId)return NextResponse.json(visible,{headers});
