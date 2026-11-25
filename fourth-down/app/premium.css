@@ -68,3 +68,4 @@ body:has(.shell[data-appearance="light"]){background:#f2f4f8}
 .shell .compactTeam img,.shell .fanTeamMark img,.shell .gcTeam img,.shell .teamHero>img{background:#edf1f6;border-radius:10px;padding:4px}.tickerGame img{background:#edf1f6;border-radius:4px;padding:1px}
 .personnelLayout>.programPicker{min-width:0;max-width:100%}.programList{min-width:0;max-width:100%}
 @media(max-width:650px){.personnelLayout{grid-template-columns:minmax(0,1fr)}.shell input:not([type=checkbox]):not([type=radio]),.shell select{font-size:16px!important}}
+@media(max-width:650px){.shell .teamStatsGrid strong{font-size:24px;max-width:100%;overflow-wrap:anywhere}.shell.fanApp .pageHeading h1{font-size:32px;max-width:100%;margin:8px 0 12px}.shell.fanApp .pageHeading{padding:22px 0 16px}}
