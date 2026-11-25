@@ -19,7 +19,7 @@ export function parseRundown(raw:unknown,now=Date.now()):OddsQuote[]{
 }
 function count(value:string|null){return value!==null&&/^\d+$/.test(value)?Number(value):null;}
 export const therundownProvider:OddsProvider={id:'therundown',async fetchPregame(date){
- const key=process.env.THERUNDOWN_API_KEY;if(!key)throw Error('Configure THERUNDOWN_API_KEY');
+ const key=process.env.THERUNDOWN_API_KEY||process.env.rundown;if(!key)throw Error('Configure THERUNDOWN_API_KEY');
  const query=new URLSearchParams({market_ids:'1,2,3',affiliate_ids:'19,23,22',main_line:'true',hide_closed:'true',odds_format:'american'});
  const response=await fetch(`https://therundown.io/api/v2/sports/1/events/${date}?${query}`,{headers:{'X-TheRundown-Key':key},cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000)});
  const datapoints=count(response.headers.get('X-Datapoints')),remaining=count(response.headers.get('X-Datapoints-Remaining'));

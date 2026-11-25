@@ -10,6 +10,7 @@ async function redis(...command:(string|number)[]){const url=process.env.ODDS_PI
  * Actual X-Datapoints are recorded separately. No cron, background polling or new service.
  */
 export async function privateOddsSnapshot(date:string,provider:OddsProvider=therundownProvider){
+ if(provider.id==='therundown'&&!(process.env.THERUNDOWN_API_KEY||process.env.rundown))throw Error('Configure the server-side TheRundown key before fetching odds');
  const key=scope+':'+provider.id+':'+date,cached=await redis('GET',key);if(cached)return {...JSON.parse(cached) as OddsSnapshot,cached:true};
  const now=new Date().toISOString(),day=scope+':day:'+now.slice(0,10),month=scope+':month:'+now.slice(0,7);
  const granted=await redis('EVAL',`if redis.call('EXISTS',KEYS[1])==1 then return 0 end
