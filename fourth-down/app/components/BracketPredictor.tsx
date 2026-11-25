@@ -40,7 +40,7 @@ export default function BracketPredictor({ field, order, settings, update }: {
   const percent = (count: number) => (100 * count / draws).toFixed(1) + "%";
   const names = new Map(field.map(team => [team.id, team.name]));
 
-  return <section id="interactive-bracket" aria-label="Interactive playoff bracket" className="outlookInteractive">
+  return <section id="playoff-rounds" aria-label="Interactive playoff bracket" className="outlookInteractive">
     <h3>Tap a team to advance it</h3><a href="#scenario-controls">↑ Change game outcomes & champions</a>
     <p>First-round winners fill the quarterfinals instantly. Continue to the final. Change an earlier pick to clear any dependent winners.</p>
     {!complete&&<p className="outlookUnknown">An automatic qualifier or its seeding is unresolved. Unresolved slots are illustrative; picks explore this layout only. Simulations and odds are unavailable until every team has a ranking anchor.</p>}
