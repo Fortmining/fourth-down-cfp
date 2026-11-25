@@ -66,3 +66,5 @@ body:has(.shell[data-appearance="light"]){background:#f2f4f8}
 @media(max-width:650px){.shell .destinationCards{margin:24px -16px}.shell .programHero{padding:20px}.shell .programHero h2{font-size:22px}.shell .teamHero{min-height:0}}
 .shell .programHero,.shell .teamHero,.shell.gamecastShell main>header{color:var(--ink)}.shell .programHero p:not(.eyebrow),.shell .teamHero p:not(.eyebrow){color:var(--muted)}
 .shell .compactTeam img,.shell .fanTeamMark img,.shell .gcTeam img,.shell .teamHero>img{background:#edf1f6;border-radius:10px;padding:4px}.tickerGame img{background:#edf1f6;border-radius:4px;padding:1px}
+.personnelLayout>.programPicker{min-width:0;max-width:100%}.programList{min-width:0;max-width:100%}
+@media(max-width:650px){.personnelLayout{grid-template-columns:minmax(0,1fr)}.shell input:not([type=checkbox]):not([type=radio]),.shell select{font-size:16px!important}}
