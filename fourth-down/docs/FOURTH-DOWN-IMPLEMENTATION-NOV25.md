@@ -12,6 +12,10 @@
 - Private provider-swappable TheRundown adapter: NCAAF sport 1, pregame full-game main moneyline/spread/total, books 19/23/22, source timestamps and five-minute minimum delay. Filters live/started games, closed/off-board/non-main/future-dated prices and unsupported books. Server-only API key; authenticated one-hour HttpOnly session. Both API and page return 404 in production regardless of the enable flag. A development-only link from Game Center opens the lab; no name-based cross-provider game join is attempted.
 - Private cache uses the existing Redis service, a separate namespace and 15-minute expiry. One provider attempt per UTC day and ten per UTC month across all dates/instances, reserving the full free daily allowance before any upstream work. X-Datapoints actual usage tracked separately; missing header halts refresh; failed/uncertain attempts remain reserved. Manual fetch only; no schedules, purchases, paid plan changes or overages enabled.
 
+## Validation
+
+Production build, strict type checking and focused lint passed. Seven existing bracket/Home/theme tests and four new official-final/private-odds contract tests passed. Chromium desktop and iPhone WebKit passed overflow, national Home structure, bracket picks/reset, pending official field, Alabama logo, article fallback/back/scroll restoration, light/blue persistence, and production-mode private API 404. Checks used captured genuine production feeds; synthetic test data stayed in unit tests. No notification or follow preference was changed. Final compact-layout refinement is checked in the deployment smoke test.
+
 ## External data and setup still required
 
 1. The CFP's official field is scheduled for December 6. `app/data/official-playoff-2026.json` deliberately remains empty. After publication, review source URL/publication/verification times, the twelve seeds and exact provider game IDs. Weekly poll positions must never be copied as official seeds. Today only conditional projections and isolated simulations can populate the bracket.
