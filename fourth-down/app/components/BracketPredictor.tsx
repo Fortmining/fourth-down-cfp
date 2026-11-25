@@ -7,7 +7,7 @@ import {
 } from "../lib/bracket-predictor";
 
 type RankedTeam = { id: string; name: string; rank: number };
-type Team = Omit<RankedTeam,"rank"> & {rank:number|null};
+type Team = Omit<RankedTeam,"rank"> & {rank:number|null;record?:string};
 export type PlayoffSettings = {
   picks: BracketPicks;
   adjustments: Record<string, number>;
