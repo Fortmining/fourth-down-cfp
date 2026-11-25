@@ -8,7 +8,7 @@ export async function GET(request:Request){
  const headers={'Cache-Control':'private, no-store','Vary':'Cookie'};
  if(!privateOddsEnabled())return new Response(null,{status:404,headers});
  const secret=process.env.ODDS_DEV_ACCESS_TOKEN;
- if(!secret||secret.length<32||!validOddsSession((await cookies()).get('fd-private-odds')?.value,secret))return NextResponse.json({error:'Private developer sign-in required'},{status:401,headers});
+ if(!secret||secret.length<32||!validOddsSession((await cookies()).get('fd-private-odds')?.value,secret))return NextResponse.json({error:'Private odds sign-in required'},{status:401,headers});
  if(new URL(request.url).searchParams.get('probe')==='cache'){try{return NextResponse.json(await probePrivateOddsCache(),{headers});}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Private cache probe failed',providerCalled:false},{status:503,headers});}}
  const query=new URL(request.url).searchParams,date=query.get('date')||'',gameId=query.get('game')||'';
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return NextResponse.json({error:'Choose an authorized Eastern game date'},{status:400,headers});
