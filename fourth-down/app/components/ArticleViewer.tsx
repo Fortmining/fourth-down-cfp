@@ -1,0 +1,12 @@
+'use client';
+import {useEffect,useRef,useState} from 'react';
+import AccessibleDialog from './AccessibleDialog';
+/** Loads the publisher's page directly. No article proxy, scraping or republication. */
+export default function ArticleViewer({url,title,publisher,children}:{url:string;title:string;publisher:string;children?:React.ReactNode}){
+ const [open,setOpen]=useState(false),[state,setState]=useState<'loading'|'loaded'|'fallback'>('loading');
+ const pushed=useRef(false);
+ useEffect(()=>{if(!open)return;const previous=document.body.style.overflow;document.body.style.overflow='hidden';const back=()=>{pushed.current=false;setOpen(false);};window.addEventListener('popstate',back);const timer=setTimeout(()=>setState(s=>s==='loading'?'fallback':s),8000);return()=>{clearTimeout(timer);document.body.style.overflow=previous;window.removeEventListener('popstate',back);};},[open]);
+ function show(){setState('loading');history.pushState({...history.state,fdArticleViewer:true},'',location.href);pushed.current=true;setOpen(true);}
+ function close(){if(pushed.current){pushed.current=false;history.back();}else setOpen(false);}
+ return <><button type="button" className="articleReadButton" onClick={show}>{children||'Read in Fourth Down'}</button>{open&&<AccessibleDialog label={title} className="articleViewer" onClose={close}><header className="articleViewerHeader"><button onClick={close} aria-label="Close article">← Back</button><div><small>{publisher}</small><h2>{title}</h2></div><a href={url} target="_blank" rel="noopener noreferrer">Open Original ↗</a></header><div className="articleViewerNotice" role="status">{state==='loading'?'Opening the publisher…':state==='fallback'?'Publisher preview is unavailable. Open Original to read the article.':'Publisher page loaded. If it is blank or blocked, use Open Original.'} <button onClick={()=>setState('fallback')}>Preview not working?</button></div>{state!=='fallback'&&<iframe src={url} title={publisher+' · '+title} referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" onLoad={()=>setState(s=>s==='loading'?'loaded':s)} onError={()=>setState('fallback')}/>}{state==='fallback'&&<div className="articleViewerFallback"><h3>Continue with {publisher}</h3><p>Some publishers block embedded pages or require their own sign-in. Your place in Fourth Down is saved.</p><a href={url} target="_blank" rel="noopener noreferrer">Open Original ↗</a><button onClick={close}>Back to Fourth Down</button></div>}</AccessibleDialog>}</>;
+}

@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import {usePathname,useRouter} from 'next/navigation';import {useEffect,useRef,useState} from 'react';import AccessibleDialog from './AccessibleDialog';import './navigation-sheet.css';import {Home,Radio,Trophy,Menu,ListChecks} from 'lucide-react';
 const primary=[{label:'Home',href:'/',Icon:Home},{label:'Games',href:'/games',Icon:Radio},{label:'Playoffs',href:'/playoffs',Icon:Trophy},{label:'Teams',href:'/teams',Icon:ListChecks},{label:'More',href:'/more',Icon:Menu}];
-const desktop=[{label:'Game day',href:'/',Icon:Home},{label:'Games',href:'/games',Icon:Radio},{label:'Teams',href:'/teams',Icon:ListChecks},{label:'Recruiting',href:'/recruiting',Icon:ListChecks},{label:'Portal',href:'/transfers',Icon:ListChecks},{label:'Playoffs',href:'/playoffs',Icon:Trophy},{label:'Pulse',href:'/pulse',Icon:Radio},{label:'Settings',href:'/settings',Icon:Menu}];
+const desktop=[{label:'Home',href:'/',Icon:Home},{label:'Games',href:'/games',Icon:Radio},{label:'Teams',href:'/teams',Icon:ListChecks},{label:'Recruiting',href:'/recruiting',Icon:ListChecks},{label:'Portal',href:'/transfers',Icon:ListChecks},{label:'Playoffs',href:'/playoffs',Icon:Trophy},{label:'Pulse',href:'/pulse',Icon:Radio},{label:'Settings',href:'/settings',Icon:Menu}];
 export default function TrackerNavigation({mobile=false}:{mobile?:boolean;detail?:boolean;contentReady?:boolean}){
  const path=usePathname(),router=useRouter();const [open,setOpen]=useState(false);const opened=useRef(false),trigger=useRef<HTMLButtonElement>(null);
  useEffect(()=>{const back=()=>{if(!opened.current)return;opened.current=false;setOpen(false);};window.addEventListener('popstate',back);return()=>window.removeEventListener('popstate',back);},[router]);
