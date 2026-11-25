@@ -11,3 +11,5 @@ test('only future NCAAF main pregame prices from permitted books survive; missin
  for(const bad of [{...price,price:0.0001},{...price,updated_at:undefined},{...price,updated_at:'2026-11-25T13:00:00Z'},{...price,closed_at:'2026-11-25T11:00:00Z'},{...price,is_main_line:false}]){assert.equal(parse({...event,markets:[{market_id:1,period_id:0,participants:[{id:1,name:'Test team',lines:[{prices:{19:bad}}]}]}]}).length,0);}
  assert.throws(()=>parseRundown({}),/Invalid/);
 });
+
+ test('cache diagnostics classify failures without returning provider error text or credentials',async()=>{const {cacheFailure}=await import('../app/lib/private-odds-cache.ts');assert.match(cacheFailure(401,'raw secret must stay hidden'),/authentication rejected/);assert.match(cacheFailure(200,'NOPERM secret'),/permission denied/);assert.match(cacheFailure(429,'secret'),/quota/);assert.ok(!cacheFailure(500,'private-token').includes('private-token'));});
