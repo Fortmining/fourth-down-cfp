@@ -30,7 +30,7 @@ const prefsKey='fourth-down-alert-preferences-v1';
 export default function TeamPage({id}:{id:string}) {
  const [data,setData]=useState<TeamDetail|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(true),[revision,setRevision]=useState(0);
  const [appearance,setAppearance]=useState<Appearance>('dark'),[theme,setTheme]=useState('stadium'),[favorite,setFavorite]=useState(false),[message,setMessage]=useState('');
- useEffect(()=>{setAppearance(readAppearance());try{const t=localStorage.getItem('fourth-down-theme');if(t&&['stadium','turf','prime'].includes(t))setTheme(t);setFavorite(normalizePreferences(JSON.parse(localStorage.getItem(prefsKey)||'null')).favorites.some(t=>t.id===id));}catch{}},[id]);
+ useEffect(()=>{setAppearance(readAppearance());try{const t=localStorage.getItem('fourth-down-theme');if(t&&['stadium','turf','prime','blue'].includes(t))setTheme(t);setFavorite(normalizePreferences(JSON.parse(localStorage.getItem(prefsKey)||'null')).favorites.some(t=>t.id===id));}catch{}},[id]);
  useEffect(()=>{
   const controller=new AbortController();let running=false;
   async function refresh(){if(running)return;if(!validTeamId(id)){setError('This link has an invalid team identifier.');setBusy(false);return;}running=true;setBusy(true);
@@ -47,7 +47,7 @@ export default function TeamPage({id}:{id:string}) {
   <a className="skip" href="#detail">Skip to team</a><div className="siteHeader"><a className="brand" href="/">FOURTH DOWN</a><TrackerNavigation detail/></div>
   <main id="detail"><NewsReviewNotice/><div className="teamToolbar"><button onClick={()=>history.length>1?history.back():location.assign('/')}>← Back</button><button disabled={busy} onClick={()=>setRevision(v=>v+1)}>{busy?'Refreshing…':'Refresh team'}</button>
    <label>Appearance<select aria-label="Appearance" value={appearance} onChange={e=>{const a=e.target.value as Appearance;setAppearance(a);saveAppearance(a);}}><option value="light">Light</option><option value="dark">Dark</option></select></label>
-   <label>Colorway<select aria-label="Colorway" value={theme} onChange={e=>{setTheme(e.target.value);try{localStorage.setItem('fourth-down-theme',e.target.value);}catch{}}}><option value="stadium">Stadium Gold</option><option value="turf">Turf Electric</option><option value="prime">Prime Time</option></select></label></div>
+   <label>Colorway<select aria-label="Colorway" value={theme} onChange={e=>{setTheme(e.target.value);try{localStorage.setItem('fourth-down-theme',e.target.value);}catch{}}}><option value="stadium">Stadium Gold</option><option value="turf">Turf Electric</option><option value="prime">Prime Time</option><option value="blue">Fourth Down Blue</option></select></label></div>
    <header className="teamHero">{data?.logo&&<img src={data.logo} width="88" height="88" alt=""/>}<div><p className="eyebrow">2026 TEAM CENTER</p><h1>{data?.name||(busy?'Loading team…':'Team unavailable')}</h1><p>{data?.conference||'Conference unavailable'}{data?.nickname&&` · ${data.nickname}`}</p></div></header>
    {error&&<p role="alert" className="teamWarning">{error}</p>}
    {!data&&!busy&&<p><a href="/games">Browse games</a> or retry this team.</p>}
