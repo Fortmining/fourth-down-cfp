@@ -7,7 +7,7 @@ export function cacheFailure(status:number,error:unknown){
  const reason=status===401||/wrongpass|unauthorized|unauthenticated|invalid (password|token)/i.test(message)?'authentication rejected':/noperm|readonly|read.only|permission|not allowed/i.test(message)?'command permission denied':status===429||/quota|limit exceeded|too many/i.test(message)?'service quota reached':status===404?'service endpoint not found':'command rejected';
  return `Private odds cache unavailable (HTTP ${status}: ${reason})`;
 }
-async function redis(...command:(string|number)[]){const url=process.env.ODDS_PILOT_REDIS_URL,token=process.env.ODDS_PILOT_REDIS_TOKEN;
+export async function oddsRedis(...command:(string|number)[]){const url=process.env.ODDS_PILOT_REDIS_URL,token=process.env.ODDS_PILOT_REDIS_TOKEN;
  if(!url||!token)throw Error('Private odds requires the existing Redis cache');
  try{if(new URL(url).protocol!=='https:')throw Error();}catch{throw Error('Private odds cache requires an HTTPS REST URL');}
  if(/[\r\n]/.test(token))throw Error('Private odds cache token contains a line break');
@@ -18,41 +18,63 @@ async function redis(...command:(string|number)[]){const url=process.env.ODDS_PI
 /** Authenticated cache-only write/read/delete proof. No provider call or quota reset. */
 export async function probePrivateOddsCache(){
  const nonce=crypto.randomUUID(),key=scope+':probe:'+nonce;
- const result=await redis('EVAL',"redis.call('SET',KEYS[1],ARGV[1],'EX',30);local value=redis.call('GET',KEYS[1]);redis.call('DEL',KEYS[1]);return value",1,key,nonce);
+ const result=await oddsRedis('EVAL',"redis.call('SET',KEYS[1],ARGV[1],'EX',30);local value=redis.call('GET',KEYS[1]);redis.call('DEL',KEYS[1]);return value",1,key,nonce);
  if(result!==nonce)throw Error('Private cache probe did not round-trip');
  return {cacheProbe:'passed',operations:['write','read','delete'],providerCalled:false};
 }
 export const oddsVerificationDates=['2026-11-26','2026-11-27','2026-11-28'] as const;
 const budgetScope=scope+':three-day-et-v2';
-/** User-authorized three-date verification. Distinct Eastern dates, one attempt/date/UTC day,
- * at most three attempts/day and ten/month. Reserve 5,000 points per attempt, record actual
- * X-Datapoints and stop if provider remaining is below that reserve. Legacy counters stay intact.
- * Captured snapshots expire in six hours (below Free's 24-hour retention), never auto-refresh.
+/** Preserve the existing three-date quota namespace and counters. One date attempt per UTC
+ * day, at most three/day and ten/month; 5,000-point reservation per attempt. No resets.
+ * Auto-capture only on an authenticated pregame cache miss/stale read or daily cron.
+ * Each price retains its own capture time: refresh never extends older prices past 24h.
  */
-export async function privateOddsSnapshot(date:string,provider:OddsProvider=therundownProvider,cachedOnly=false,retryTransport=false){
+export function retainedSnapshot(stored:OddsSnapshot,now=Date.now()):OddsSnapshot{
+ if(stored.source){const parsed=inspectRundown(stored.source,Date.parse(stored.observedAt),{scheduledOnly:true,mainOnly:true});stored={...stored,quotes:parsed.quotes,events:parsed.events};}
+ const quotes=stored.quotes.map(q=>({...q,capturedAt:q.capturedAt||stored.observedAt})).filter(q=>{
+  const at=Date.parse(q.capturedAt);return Number.isFinite(at)&&at<=now&&now-at<86400000&&at<Date.parse(q.startsAt);
+ });
+ const {source:unused,...safe}=stored;void unused;
+ return {...safe,quotes};
+}
+export function mergeOddsSnapshots(previous:OddsSnapshot|null,next:OddsSnapshot):OddsSnapshot{
+ const current=retainedSnapshot(next),old=previous?retainedSnapshot(previous):null;
+ const replaced=new Set(current.quotes.map(q=>q.eventId));
+ const events=new Map((old?.events||[]).map(e=>[e.id,e]));
+ for(const event of current.events||[])if(!events.has(event.id)||replaced.has(event.id))events.set(event.id,event);
+ return {...current,quotes:[...(old?.quotes||[]).filter(q=>!replaced.has(q.eventId)),...current.quotes],events:[...events.values()],expiresAt:new Date(Date.parse(next.observedAt)+86400000).toISOString()};
+}
+export async function privateOddsSnapshot(date:string,provider:OddsProvider=therundownProvider,cachedOnly=false){
  if(!oddsVerificationDates.some(d=>d===date))throw Error('Date is outside the authorized November 26–28 Eastern verification window');
- if(Date.parse(date+'T00:00:00Z')+(easternOffset(date)+1440)*60000<=Date.now())throw Error('This Eastern game date has ended; no historical odds request was made');
- if(provider.id==='therundown'&&!(process.env.THERUNDOWN_API_KEY||process.env.rundown))throw Error('Configure the server-side TheRundown key before fetching odds');
- const key=budgetScope+':'+provider.id+':'+date,cached=await redis('GET',key);
- if(cached){const stored=JSON.parse(cached) as OddsSnapshot;if(stored.source){const parsed=inspectRundown(stored.source,Date.parse(stored.observedAt),{scheduledOnly:true,mainOnly:true});stored.quotes=parsed.quotes;stored.events=parsed.events;if(stored.diagnostics)stored.diagnostics={...stored.diagnostics,rawPriceRows:parsed.rawPriceRows,acceptedPriceRows:parsed.quotes.length,rejected:parsed.rejected,marketIds:parsed.marketIds,bookIds:parsed.bookIds};}return {...stored,cached:true};}
- if(cachedOnly)throw Error('No captured private snapshot for this Eastern date. Fetch it once in the private lab.');
+ const key=budgetScope+':'+provider.id+':'+date,cached=await oddsRedis('GET',key);
+ const priorStored=cached?retainedSnapshot(JSON.parse(cached) as OddsSnapshot):null;
+ let previous=priorStored;
+ // Old captures live in separate expiring keys. A new capture cannot prolong their storage.
+ if(previous?.previousSnapshotKey){const older=await oddsRedis('GET',previous.previousSnapshotKey);if(older)previous=mergeOddsSnapshots(retainedSnapshot(JSON.parse(older)),previous);}
+ if(previous&&(cachedOnly||Date.now()-Date.parse(previous.observedAt)<6*3600000))return {...previous,cached:true};
+ if(cachedOnly)throw Error('Pregame odds were not captured for this game.');
+ if(Date.parse(date+'T00:00:00Z')+(easternOffset(date)+1440)*60000<=Date.now()){
+  if(previous)return {...previous,cached:true};throw Error('Pregame odds were not captured for this game.');
+ }
+ if(provider.id==='therundown'&&!(process.env.THERUNDOWN_API_KEY||process.env.rundown))throw Error('Odds capture is temporarily unavailable');
  const now=new Date().toISOString(),day=budgetScope+':day:'+now.slice(0,10),month=budgetScope+':month:'+now.slice(0,7),attempt=day+':date:'+date,remainingKey=budgetScope+':provider-remaining';
- const granted=await redis('EVAL',`local available=redis.call('GET',KEYS[4]);if available and tonumber(available)<5000 then return 0 end
- if redis.call('EXISTS',KEYS[1])==1 then
- -- One explicit transport retry for the observed Nov 27 HTTP 429. Original reservation stays charged.
- if ARGV[1]=='1' and redis.call('SET',KEYS[6],'1','NX','EX',172800) then return 2 end
- return 0 end
+ const granted=await oddsRedis('EVAL',`local available=redis.call('GET',KEYS[4]);if available and tonumber(available)<5000 then return 0 end
+ if redis.call('EXISTS',KEYS[1])==1 then return 0 end
  if tonumber(redis.call('GET',KEYS[2]) or '0')>=3 or tonumber(redis.call('GET',KEYS[3]) or '0')>=10 then return 0 end
- local remaining=redis.call('GET',KEYS[4]);if remaining and tonumber(remaining)<5000 then return 0 end
  redis.call('SET',KEYS[1],'1','EX',172800)
  redis.call('INCR',KEYS[2]);redis.call('EXPIRE',KEYS[2],172800)
  redis.call('INCR',KEYS[3]);redis.call('EXPIRE',KEYS[3],2764800)
  redis.call('INCRBY',KEYS[5],5000);redis.call('EXPIRE',KEYS[5],172800)
- return 1`,6,attempt,day,month,remainingKey,day+':reserved',attempt+':transport-retry',(retryTransport&&date==='2026-11-27')?'1':'0');
- if(granted!==1&&granted!==2)throw Error('Bounded verification limit reached or provider reserve too low. No repeated upstream request was made.');
+ return 1`,5,attempt,day,month,remainingKey,day+':reserved');
+ if(granted!==1){if(previous)return {...previous,cached:true};throw Error('Odds are temporarily unavailable. The daily capture allowance is protected.');}
+ try{
  const snapshot=await provider.fetchPregame(date);
- if(snapshot.datapoints===null)throw Error('Provider omitted X-Datapoints; refresh halted');
- const stored={...snapshot,expiresAt:new Date(Date.parse(snapshot.observedAt)+6*3600000).toISOString()};
- await redis('EVAL',`redis.call('INCRBY',KEYS[1],ARGV[1]);redis.call('EXPIRE',KEYS[1],2764800);redis.call('SET',KEYS[2],ARGV[2],'EX',21600);if ARGV[3]~='' then redis.call('SET',KEYS[3],ARGV[3],'EX',86400) end;return 1`,3,month+':actual',key,remainingKey,snapshot.datapoints,JSON.stringify(stored),snapshot.remaining??'');
- return {...stored,cached:false};
+ if(snapshot.datapoints===null)throw Error('Provider omitted usage accounting; capture stopped');
+ const archiveKey=priorStored?key+':capture:'+Date.parse(priorStored.observedAt):key+':unused';
+ const archiveTtl=priorStored?Math.max(0,Math.floor((Date.parse(priorStored.observedAt)+86400000-Date.now())/1000)):0;
+ const stored={...retainedSnapshot(snapshot),expiresAt:new Date(Date.parse(snapshot.observedAt)+86400000).toISOString(),...(archiveTtl>0?{previousSnapshotKey:archiveKey}:{})};
+ // Raw provider payload is discarded. Price-level retention is also checked on every read.
+ await oddsRedis('EVAL',`redis.call('INCRBY',KEYS[1],ARGV[1]);redis.call('EXPIRE',KEYS[1],2764800);if tonumber(ARGV[4])>0 then redis.call('SET',KEYS[4],ARGV[5],'EX',ARGV[4]) end;redis.call('SET',KEYS[2],ARGV[2],'EX',ARGV[6]);if ARGV[3]~='' then redis.call('SET',KEYS[3],ARGV[3],'EX',86400) end;return 1`,4,month+':actual',key,remainingKey,archiveKey,snapshot.datapoints,JSON.stringify(stored),snapshot.remaining??'',archiveTtl,JSON.stringify(priorStored),Math.max(1,Math.floor((Date.parse(snapshot.observedAt)+86400000-Date.now())/1000)));
+ return {...mergeOddsSnapshots(previous,stored),cached:false};
+ }catch(error){if(previous)return {...previous,cached:true};throw error;}
 }
