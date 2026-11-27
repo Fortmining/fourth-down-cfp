@@ -23,7 +23,14 @@
       "codex/pulse-rss-activation": false,
       "codex/pulse-archive-recovery": false,
       "codex/cfp-edition-alerts": false,
-      "codex/cfp-show-watch": false
+      "codex/cfp-show-watch": false,
+      "fix/remembered-odds-retention": false
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/private/odds/capture",
+      "schedule": "0 14 27,28 11 *"
+    }
+  ]
 }
