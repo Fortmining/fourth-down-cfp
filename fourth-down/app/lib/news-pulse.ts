@@ -35,6 +35,7 @@ export function newsUrl(value:string,source:NewsSource,fixture=false):string|nul
     if((source.id==='ncaa-fbs'||source.id==='ncaa-fcs')&&!/^\/(news\/football\/article|video\/football)\/\d{4}-\d{2}-\d{2}\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
     if(source.id==='cbs-cfb'&&!/^\/college-football\/news\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
     if(source.id==='fox-cfb'&&!/^\/stories\/college-football\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
+    if(source.id==='yahoo-cfb'&&!/^\/college-football\/(articles|news|video)\/[a-z0-9-]+\.html$/.test(u.pathname))return null;
     if(source.id==='nbc-cfb'&&!/^\/college-football\/news\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
     if(source.id==='army-news'&&!/^\/article\/\d+\/[a-z0-9_/-]+$/.test(u.pathname))return null;
     if(source.id==='kff-news'&&!/^\/news\/article\/[a-z0-9-]+\/?$/.test(u.pathname))return null;

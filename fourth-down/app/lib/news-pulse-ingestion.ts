@@ -6,7 +6,7 @@ import {pulseTeams,matchFbsPrograms,categorizeFootball,footballConferences} from
 import {pulseSource,activeRssSources,readableRssSources,type PulseSource} from './pulse-source-registry.ts';
 import {newsSources,normalizeNews,reconcileNews,type Candidate,type MatchTeam,type NewsItem,type NewsPacket} from './news-pulse.ts';
 import seed from '../data/news-permitted-seed.json' with {type:'json'};
-export const NEWS_LIMITS={feedBytes:128*1024,items:100,retentionDays:180,refreshSeconds:600,sources:9,timeoutMs:5000,retries:0};
+export const NEWS_LIMITS={feedBytes:128*1024,items:100,retentionDays:180,refreshSeconds:600,sources:10,timeoutMs:5000,retries:0};
 export const ARMY_FEED='https://www.army.mil/rss/static/0.xml';
 export function newsLiveEnabled(env:Record<string,string|undefined>=process.env){return publicSportsRssEnabled(env)||privateRssReviewEnabled(env)||pulseReleaseEnabled(env)||(env.VERCEL_ENV==='preview'&&env.FOURTH_DOWN_NEWS_PILOT==='protected-preview-v1'&&env.FOURTH_DOWN_NEWS_LIVE==='permitted-v1');}
 export const newsMatchTeams:MatchTeam[]=pulseTeams.map(t=>({id:t.id,name:t.name,aliases:[t.name]}));
@@ -26,14 +26,14 @@ function sourceDate(value:string){const n=Date.parse(value.replace(/\bEDT$/, '-0
 export function parseNewsFeed(input:string,sourceId:string,now:number):NewsItem[]{
  const source=pulseSource(sourceId);if(!source||!(readableSourcePermission(source.permission)||(source.permission==='private-review'&&privateRssReviewEnabled()))||source.adapter!=='rss'||source.availability!=='enabled')throw Error('Source not permission-cleared');const tree=xml(input,source.maxBytes);const document=tree.children[0];const container=local(document)==='rss'?child(document,'channel'):local(document)==='feed'?document:undefined;if(!container)throw Error('Unsupported feed');
  const entries=container.children.filter(n=>['item','entry'].includes(local(n)));if(entries.length>NEWS_LIMITS.items)throw Error('Feed item limit');
- return entries.flatMap(n=>{const title=plain(text(child(n,'title')),250),body=plain(text(child(n,'description')||child(n,'summary')),280),link=n.children.find(c=>local(c)==='link'&&(!c.attrs.rel||c.attrs.rel==='alternate'))||child(n,'link');const url=link?.attrs.href||text(link).trim();let target:URL;try{target=new URL(url);}catch{return [];}const resourceId=sourceId==='army-news'?target.pathname.match(/^\/article\/(\d+)\//)?.[1]:target.pathname.split('/').filter(Boolean).at(-1);const id=sourceId==='army-news'?resourceId:'url-'+createHash('sha256').update(url).digest('hex').slice(0,32);
+ return entries.flatMap(n=>{const yahoo=sourceId==='yahoo-cfb',rawTitle=text(child(n,'title')),rawBody=text(child(n,'description')||child(n,'summary')),title=yahoo?rawTitle:plain(rawTitle,250),body=yahoo?(rawBody.length<=500&&!/[<>\x00-\x1f]/.test(rawBody)?rawBody:''):plain(rawBody,280),link=n.children.find(c=>local(c)==='link'&&(!c.attrs.rel||c.attrs.rel==='alternate'))||child(n,'link');const url=link?.attrs.href||text(link).trim();let target:URL;try{target=new URL(url);}catch{return [];}const resourceId=sourceId==='army-news'?target.pathname.match(/^\/article\/(\d+)\//)?.[1]:target.pathname.split('/').filter(Boolean).at(-1);const id=sourceId==='army-news'?resourceId:'url-'+createHash('sha256').update(url).digest('hex').slice(0,32);
   const publishedAt=sourceDate(text(child(n,'pubDate')||child(n,'published'))),updatedAt=sourceDate(text(child(n,'updated')))||publishedAt;
   if(!id||!resourceId||!publishedAt||!updatedAt||now-Date.parse(publishedAt)>NEWS_LIMITS.retentionDays*86400000||Date.parse(publishedAt)>now)return [];
   if(!sportsRss(sourceId)&&!source.metadataPrefix&&sourceId!=='kff-news'&&/copyright|all rights reserved|used with permission/i.test(body))return [];
   const matched=source.competition==='fcs'?{teamIds:[] as string[],matchEvidence:[] as string[]}:matchFbsPrograms(title,source.scope==='college-football'?source.teamIds:[],sportsRss(sourceId)&&source.competition==='fbs');
   const collegeContext=source.scope==='college-football'||/college football|ncaa football|\bfbs\b|\bCFP (rankings?|committee|playoff)|College Football Playoff/i.test(title)||(matched.teamIds.length>0&&/football|gameday/i.test(title+' '+body));
   if(!collegeContext||/high school|intramural|soccer|\bNFL\b/i.test(title))return [];
-  const category=categorizeFootball(title,true,matched.teamIds.length),credit=plain(text(child(n,'creator')||child(n,'author')),160)||source.name;
+  const category=categorizeFootball(title,true,matched.teamIds.length),byline=plain(text(child(n,'creator')||child(n,'author')),160),publisher=yahoo?plain(text(child(n,'source')||child(n,'publisher')),160):'',credit=[publisher,byline].filter(Boolean).join(' · ')||source.name;
   if(source.metadataPrefix&&credit===source.name)return []; // Syndication requires an actual author byline.
   const media=n.children.flatMap(c=>[c,...c.children]).find(c=>local(c)==='thumbnail'&&c.attrs.url)||n.children.find(c=>local(c)==='enclosure'&&/^image\//.test(c.attrs.type||''));
   let previewImage:Candidate['image'];
