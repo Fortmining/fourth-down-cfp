@@ -12,6 +12,10 @@ The exchange sets a random 256-bit HttpOnly, Secure, SameSite=Strict cookie, sco
 
 Browser storage deletion, a different browser/PWA installation, revocation, or eventual device expiry needs a new one-time approval. There is no way to securely recognize an unapproved browser without that initial approval. Approval links are private bearer capabilities: deliver directly to the intended person and never publish them in source or PRs.
 
+## Safari, ChatGPT browser and installed PWA
+
+These may have separate cookie storage. Opening a link in ChatGPT does not approve the installed PWA, and a consumed link cannot be reused. For this case administrators request `{person: 0, format: "code"}` from the existing protected devices endpoint. A random 48-bit, one-use approval code is returned, valid for 24 hours. The user enters it once in the Odds panel inside the actual PWA/browser. Codes accept spacing, dashes and either letter case. This exchanges for the same persistent secure device cookie; no developer token or provider key is entered. A shared Redis limit permits at most 20 manual-code attempts per 15-minute bucket, across instances. Existing link approvals remain supported. Separate installations need distinct codes.
+
 ## Capture and retention
 
 Only November 26–28 Eastern dates remain enabled. The Vercel cron, scheduled only for November 27 and 28, invokes `/api/private/odds/capture` at 14:00 UTC (9 AM ET in November); it requires the existing CRON_SECRET, Production environment, and both feature flags. Outside the window it returns inactive without Redis/provider calls. No QStash schedules, push paths, or paid services change.
