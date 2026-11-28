@@ -7,7 +7,7 @@ export type NewsKind = 'news' | 'highlight' | 'analysis' | 'recap' | 'video';
 export type NewsSource = {
   id: string; name: string; home: string; hosts: string[];
   ownershipEvidence: string; permissionEvidence: string;
-  permission: 'documented-api' | 'pending' | 'granted' | 'private-review' | 'owner-authorized'; imageHosts?:string[]; connected: boolean;
+  permission: 'documented-api' | 'pending' | 'granted' | 'private-review' | 'owner-authorized'; imageHosts?:string[];feedPreview?:boolean;logo?:string; connected: boolean;
   minimumPollMinutes: number | null;
 };
 export const newsSources:NewsSource[]=pulseSources;
@@ -22,7 +22,7 @@ export type Candidate = {
   // Only a verified provider/editor can supply these identities, never headline similarity.
   verifiedStoryKey?:string; national?:boolean; fixture?:boolean;
   contentEvidence?:{url:string;resourceId:string;resourceType:'video'|'article';verifiedAt:string};
-  image?:{url:string;contentUrl:string;verifiedAt:string;permission:'provider-thumbnail'|'licensed';attribution:string};
+  image?:{url:string;previewUrl?:string;contentUrl:string;verifiedAt:string;permission:'provider-thumbnail'|'licensed'|'feed-thumbnail';attribution:string};
 };
 export type NewsItem = Omit<Candidate,'state'> & {state?:Candidate['state']|'conflicted';teamIds:string[]; gameId?:string; sourceName:string; matchEvidence:string[]; clusterId:string};
 const safeId = (v:string) => typeof v==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(v);
@@ -33,6 +33,9 @@ export function newsUrl(value:string,source:NewsSource,fixture=false):string|nul
     if(u.protocol!=='https:' || u.username || u.password || u.port || !source.hosts.includes(u.hostname))return null;
     if(source.id==='espn-ncf'&&!/^\/college-football\/(story|insider|insider\/story|recruiting|play|video|news|columns)(?:\/|$)/.test(u.pathname))return null;
     if((source.id==='ncaa-fbs'||source.id==='ncaa-fcs')&&!/^\/(news\/football\/article|video\/football)\/\d{4}-\d{2}-\d{2}\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
+    if(source.id==='cbs-cfb'&&!/^\/college-football\/news\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
+    if(source.id==='fox-cfb'&&!/^\/stories\/college-football\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
+    if(source.id==='nbc-cfb'&&!/^\/college-football\/news\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
     if(source.id==='army-news'&&!/^\/article\/\d+\/[a-z0-9_/-]+$/.test(u.pathname))return null;
     if(source.id==='kff-news'&&!/^\/news\/article\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
     if(['tennessee-lookout','kentucky-lantern','stateline'].includes(source.id)&&!/^\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+\/?$/.test(u.pathname))return null;
