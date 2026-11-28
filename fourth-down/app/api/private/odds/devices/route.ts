@@ -5,7 +5,7 @@ const headers={'Cache-Control':'private, no-store','Vary':'Authorization'};
 export async function POST(request:Request){
  if(!privateOddsEnabled()||!oddsAdmin(request))return new Response(null,{status:401,headers});
  const body=await request.json().catch(()=>null);
- try{const approval=await issueDeviceApproval(body?.person);return NextResponse.json({approval,expiresIn:86400},{headers});}catch{return NextResponse.json({error:'Unable to create device approval'},{status:400,headers});}
+ try{const approval=await issueDeviceApproval(body?.person,body?.format==='code');return NextResponse.json({approval,expiresIn:86400},{headers});}catch{return NextResponse.json({error:'Unable to create device approval'},{status:400,headers});}
 }
 export async function DELETE(request:Request){
  if(!privateOddsEnabled()||!oddsAdmin(request))return new Response(null,{status:401,headers});

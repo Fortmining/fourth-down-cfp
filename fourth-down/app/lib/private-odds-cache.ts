@@ -44,6 +44,12 @@ export function mergeOddsSnapshots(previous:OddsSnapshot|null,next:OddsSnapshot)
  for(const event of current.events||[])if(!events.has(event.id)||replaced.has(event.id))events.set(event.id,event);
  return {...current,quotes:[...(old?.quotes||[]).filter(q=>!replaced.has(q.eventId)),...current.quotes],events:[...events.values()],expiresAt:new Date(Date.parse(next.observedAt)+86400000).toISOString()};
 }
+export function oddsRefreshDue(date:string,observedAt:string,now=Date.now()){
+ // Preserve an existing advance capture until the game-date 9 AM refresh. Otherwise
+ // a Friday-night UTC rollover could spend Saturday's only date attempt too early.
+ const morning=Date.parse(date+'T00:00:00Z')+(easternOffset(date)+9*60)*60000;
+ return now>=morning&&now-Date.parse(observedAt)>=6*3600000;
+}
 export async function privateOddsSnapshot(date:string,provider:OddsProvider=therundownProvider,cachedOnly=false){
  if(!oddsVerificationDates.some(d=>d===date))throw Error('Date is outside the authorized November 26–28 Eastern verification window');
  const key=budgetScope+':'+provider.id+':'+date,cached=await oddsRedis('GET',key);
@@ -51,7 +57,7 @@ export async function privateOddsSnapshot(date:string,provider:OddsProvider=ther
  let previous=priorStored;
  // Old captures live in separate expiring keys. A new capture cannot prolong their storage.
  if(previous?.previousSnapshotKey){const older=await oddsRedis('GET',previous.previousSnapshotKey);if(older)previous=mergeOddsSnapshots(retainedSnapshot(JSON.parse(older)),previous);}
- if(previous&&(cachedOnly||Date.now()-Date.parse(previous.observedAt)<6*3600000))return {...previous,cached:true};
+ if(previous&&(cachedOnly||!oddsRefreshDue(date,previous.observedAt)))return {...previous,cached:true};
  if(cachedOnly)throw Error('Pregame odds were not captured for this game.');
  if(Date.parse(date+'T00:00:00Z')+(easternOffset(date)+1440)*60000<=Date.now()){
   if(previous)return {...previous,cached:true};throw Error('Pregame odds were not captured for this game.');
