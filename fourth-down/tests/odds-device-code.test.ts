@@ -17,3 +17,11 @@ test('manual code attempt limit fails before approval lookup or registration',as
  globalThis.fetch=async()=>{calls++;return Response.json({result:0});};
  try{await assert.rejects(()=>enrollDevice('abcd-1234-ef56'),/limited/);assert.equal(calls,1);}finally{globalThis.fetch=before;process.env=env;}
 });
+
+test('Friday-night UTC rollover does not spend the Saturday morning refresh early',async()=>{
+ const {oddsRefreshDue}=await import('../app/lib/private-odds-cache.ts');
+ const observed='2026-11-27T19:30:00Z';
+ assert.equal(oddsRefreshDue('2026-11-28',observed,Date.parse('2026-11-28T01:31:00Z')),false);
+ assert.equal(oddsRefreshDue('2026-11-28',observed,Date.parse('2026-11-28T13:59:00Z')),false);
+ assert.equal(oddsRefreshDue('2026-11-28',observed,Date.parse('2026-11-28T14:00:00Z')),true);
+});
