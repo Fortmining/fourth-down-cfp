@@ -1,0 +1,4 @@
+'use client';
+import {useState} from 'react';
+const marks:Record<string,string>={'espn-ncf':'https://a.espncdn.com/favicon.ico','ncaa-fbs':'https://www.ncaa.com/favicon.ico','ncaa-fcs':'https://www.ncaa.com/favicon.ico','cbs-cfb':'https://sports.cbsimg.net/fly/images/cbssports/logo-digital.png','fox-cfb':'https://b.fssta.com/uploads/application/fscom/fox-sports-logo-black.png','nbc-cfb':'https://www.nbcsports.com/favicon-32x32.png'};
+export default function PublisherMark({id,name,large=false}:{id:string;name:string;large?:boolean}){const [failed,setFailed]=useState(false),url=marks[id];return <span className={'pulsePublisherMark'+(large?' isLarge':'')} aria-hidden="true">{url&&!failed?<img src={url} alt="" width={large?48:22} height={large?48:22} loading="lazy" referrerPolicy="no-referrer" onError={()=>setFailed(true)}/>:<span>{name.replace(/[^A-Za-z ]/g,'').split(' ').map(w=>w[0]).join('').slice(0,3)}</span>}</span>;}

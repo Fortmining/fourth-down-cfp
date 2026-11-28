@@ -20,7 +20,13 @@ export function newsCardImage(item:NewsItem,source:NewsSource,now=Date.now()){
  try{const u=new URL(image.url);if(u.protocol!=='https:'||u.username||u.password||u.port)return null;
   if((source.id==='tennessee-youtube'||source.id.startsWith('yt-'))){
    if(image.permission!=='provider-thumbnail'||u.hostname!=='i.ytimg.com'||!new RegExp('^/vi(?:_webp)?/'+item.contentEvidence!.resourceId+'/').test(u.pathname))return null;
-  }else if(image.permission!=='licensed'||!source.imageHosts?.includes(u.hostname))return null;
+  }else if((image.permission!=='licensed'&&!(image.permission==='feed-thumbnail'&&source.feedPreview))||!source.imageHosts?.includes(u.hostname))return null;
   return image.url;
  }catch{return null;}
+}
+
+/** Full-size image only when supplied by the same authorized feed; never derive URLs. */
+export function newsPreviewImage(item:NewsItem,source:NewsSource,now=Date.now()){
+ const thumbnail=newsCardImage(item,source,now);if(!thumbnail||!item.image?.previewUrl)return thumbnail;
+ try{const url=new URL(item.image.previewUrl);return source.feedPreview&&url.protocol==='https:'&&!url.username&&!url.password&&!url.port&&source.imageHosts?.includes(url.hostname)?url.href:thumbnail;}catch{return thumbnail;}
 }

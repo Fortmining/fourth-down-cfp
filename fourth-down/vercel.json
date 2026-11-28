@@ -25,7 +25,8 @@
       "codex/cfp-edition-alerts": false,
       "codex/cfp-show-watch": false,
       "fix/remembered-odds-retention": false,
-      "fix/pwa-device-approval": false
+      "fix/pwa-device-approval": false,
+      "feat/compact-pulse-reader": false
     }
   },
   "crons": [
